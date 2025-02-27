@@ -13,6 +13,22 @@ impl Color {
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Color {r, g, b, a}
     }
+
+    pub fn values_as_str(&self, max: usize) -> String {
+        let mut data: Vec<f32> = Vec::with_capacity(3);
+        data.push(self.r);
+        data.push(self.g);
+        data.push(self.b);
+
+        data.iter().map(|val| {
+            match val {
+                x if x > &1.0 => max,
+                x if x < &0.0 => 0,
+                _ => (max as f32 * val) as usize
+            }
+        })
+        .fold(String::new(), |s1, s2| format!("{}{} ", s1, s2))
+    }
 }
 
 impl ops::Add for Color {

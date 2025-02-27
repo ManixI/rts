@@ -13,7 +13,7 @@ struct Canvas{
 
 #[allow(dead_code)]
 impl Canvas {
-    fn new(height: usize, width: usize) -> Canvas {
+    fn new(width: usize, height: usize) -> Canvas {
         Canvas {
             height,
             width,
@@ -28,6 +28,13 @@ impl Canvas {
     fn get_header(&self) -> String {
         format!("P3\n{} {}\n255\n", self.width, self.height)
     }
+
+    fn get_canvas_as_ppm_data(&self) -> String {
+        self.pixels.iter().map(|row| {
+            row.iter().fold(String::new(), |s, c| format!("{}{}", s, c.values_as_str(255)))
+        })
+        .fold(String::new(), |s, val| format!("{}{}\n", s, val))
+    } 
 
     fn to_file(&self, filename: &str) -> std::io::Result<()> {
         let mut file = File::create(filename)?;
@@ -45,8 +52,8 @@ mod tests{
     #[test]
     fn test_create() {
         let c = Canvas::new(10, 20);
-        assert_eq!(c.height, 10);
-        assert_eq!(c.width, 20);
+        assert_eq!(c.width, 10);
+        assert_eq!(c.height, 20);
         let test_color = Color::new(0.0, 0.0, 0.0, 0.0);
         for row in c.pixels {
             for val in row {
@@ -74,12 +81,19 @@ mod tests{
 
     #[test]
     fn test_header() {
-        let c = Canvas::new(5, 3);
+        let c = Canvas::new(3, 5);
         assert_eq!(c.get_header(), "P3\n3 5\n255\n")
     }
 
     #[test]
     fn test_file_data() {
-        
+        let mut c = Canvas::new(5, 3);
+        c.set_pixel(0, 0, Color::new(1.5, 0.0, 0.0, 0.0));
+        c.set_pixel(2, 1, Color::new(0.0, 0.5, 0.0, 0.0));
+        c.set_pixel(4, 2, Color::new(-0.5, 0.0, 1.0, 1.0));
+
+        assert_eq!(c.get_canvas_as_ppm_data(), 
+        "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0 \n0 0 0 0 0 0 0 127 0 0 0 0 0 0 0 \n0 0 0 0 0 0 0 0 0 0 0 0 0 0 255 \n");
+        //println!("{}", c.get_canvas_as_ppm_data())
     }
 }

@@ -13,7 +13,7 @@ struct Canvas{
 
 #[allow(dead_code)]
 impl Canvas {
-    fn new(width: usize, height: usize) -> Canvas {
+    pub fn new(width: usize, height: usize) -> Canvas {
         Canvas {
             height,
             width,
@@ -21,7 +21,7 @@ impl Canvas {
         }
     }
 
-    fn set_pixel(&mut self, x: usize, y: usize, c: Color) {
+    pub fn set_pixel(&mut self, x: usize, y: usize, c: Color) {
         self.pixels[y][x] = c;
     }
 
@@ -67,9 +67,10 @@ impl Canvas {
         new_out
     } 
 
-    fn to_file(&self, filename: &str) -> std::io::Result<()> {
+    pub fn to_file(&self, filename: &str) -> std::io::Result<()> {
         let mut file = File::create(filename)?;
         file.write(self.get_header().as_bytes())?;
+        file.write(self.get_canvas_as_ppm_data().as_bytes())?;
 
         Ok(())
     }
@@ -142,5 +143,13 @@ mod tests{
 255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204
 153 255 204 153 255 204 153 255 204 153 255 204 153
 ");
+    }
+
+    // need to manually check output with gimp
+    #[test]
+    #[ignore]
+    fn test_write_to_file() {
+        let c = Canvas::new(500, 500);
+        c.to_file("test.ppm").unwrap();
     }
 }

@@ -18,7 +18,7 @@ impl Coord {
     /// * `w: f32` - w val
     /// 
     /// returns `Self`
-    fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
+    pub fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
         Coord { x, y, z, w }
     }
 
@@ -26,11 +26,11 @@ impl Coord {
     //    Coord { x: x as f32, y: y as f32, z: z as f32, w: w as f32 }
     //}
 
-    fn point(x: f32, y: f32, z: f32) -> Self {
+    pub fn point(x: f32, y: f32, z: f32) -> Self {
         Coord {x, y, z, w: 1.0}
     }
 
-    fn vec(x: f32, y: f32, z: f32) -> Self {
+    pub fn vec(x: f32, y: f32, z: f32) -> Self {
         Coord {x, y, z, w: 0.0}
     }
 

@@ -1,0 +1,133 @@
+use std::ops;
+
+#[derive(Debug, Clone, Copy)]
+struct Color {
+    r: f32, // red
+    g: f32, // green
+    b: f32, // blue
+    a: f32  // alpha
+}
+
+impl Color {
+    fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
+        Color {r, g, b, a}
+    }
+}
+
+impl ops::Add for Color {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Color {
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+            a: self.a + rhs.a
+        }
+    }
+}
+
+impl ops::Sub for Color {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Color {
+            r: self.r - rhs.r,
+            g: self.g - rhs.g,
+            b: self.b - rhs.b,
+            a: self.a - rhs.a,
+        }
+    }
+}
+
+impl ops::Mul<Color> for Color {
+    type Output = Self;
+    // technically the Hadamard product
+    fn mul(self, rhs: Color) -> Self::Output {
+        Color {
+            r: self.r * rhs.r,
+            g: self.g * rhs.g,
+            b: self.b * rhs.b,
+            a: self.a * rhs.a,
+        }
+    }
+}
+
+impl ops::Mul<f32> for Color {
+    type Output = Self;
+    fn mul(self, rhs: f32) -> Self::Output {
+        Color {
+            r: self.r * rhs,
+            g: self.g * rhs,
+            b: self.b * rhs,
+            a: self.a * rhs,
+        }
+    }
+}
+
+impl PartialEq for Color {
+    // TODO: should probably implement epsilon for this
+    fn eq(&self, other: &Self) -> bool {
+        self.r == other.r &&
+        self.g == other.g &&
+        self.b == other.b &&
+        self.a == other.a
+    }
+}
+
+impl Eq for Color {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EPSILON: f32 = 0.000005;
+
+    fn test_eq_floats(a: f32, b: f32) -> bool {
+        (a - b).abs() < EPSILON
+    }
+
+    fn test_eq_colors(a: Color, b: Color) -> bool {
+        test_eq_floats(a.r, b.r) &&
+        test_eq_floats(a.g, b.g) &&
+        test_eq_floats(a.b, b.b) &&
+        test_eq_floats(a.a, b.a)
+    }
+
+    #[test]
+    fn test_create() {
+        let c = Color::new(-0.5, 0.4, 1.7, 0.0);
+        assert!(test_eq_floats(c.r, -0.5));
+        assert!(test_eq_floats(c.g, 0.4));
+        assert!(test_eq_floats(c.b, 1.7));
+        assert!(test_eq_floats(c.a, 0.0));
+    }
+
+    #[test]
+    fn test_add() {
+        let c1 = Color::new(0.9, 0.6, 0.75, 0.5);
+        let c2 = Color::new(0.7, 0.1, 0.25, 1.5);
+        let n = c1 + c2;
+        assert!(test_eq_colors(n, Color::new(1.6, 0.7, 1.0, 2.0)));
+    }
+
+    #[test]
+    fn test_sub() {
+        let c1 = Color::new(0.9, 0.6, 0.75, 0.5);
+        let c2 = Color::new(0.7, 0.1, 0.25, 1.5);
+        let n = c1 - c2;
+        assert!(test_eq_colors(n, Color::new(0.2, 0.5, 0.5, -1.0)));
+    }
+
+    #[test]
+    fn test_mul_scalar() {
+        let c = Color::new(0.2, 0.3, 0.4, 0.5);
+        assert_eq!(c * 2.0, Color::new(0.4, 0.6, 0.8, 1.0));
+    }
+
+    #[test]
+    fn test_mul_colors() {
+        let c1 = Color::new(1.0, 0.2, 0.4, 0.0);
+        let c2 = Color::new(0.9, 1.0, 0.1, 0.0);
+        let n = c1 * c2;
+        assert!(test_eq_colors(n, Color::new(0.9, 0.2, 0.04, 0.0)))
+    }
+}

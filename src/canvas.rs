@@ -30,10 +30,41 @@ impl Canvas {
     }
 
     fn get_canvas_as_ppm_data(&self) -> String {
-        self.pixels.iter().map(|row| {
-            row.iter().fold(String::new(), |s, c| format!("{}{}", s, c.values_as_str(255)))
+        let out = self.pixels.iter().map(|row| {
+            row.iter()
+            .fold(String::new(), |s, c| format!("{}{}", s, c.values_as_str(255)))
         })
-        .fold(String::new(), |s, val| format!("{}{}\n", s, val))
+        .fold(String::new(), |s, val: String| format!("{}{}\n", s, val));
+
+        let mut new_out = String::new();
+        for line in out.lines() {
+            let mut row = String::new();
+            if line.len() > 70 {
+                let vals = line.split_ascii_whitespace();
+                let mut count = 0;
+
+                for val in vals {
+                    if count + val.len() > 70 {
+                        row = row.trim().to_string();
+                        row += "\n";
+                        row += val;
+                        row += " ";
+                        count = val.len() + 1;
+                    } else {
+                        row += val;
+                        row += " ";
+                        count += val.len() + 1;
+                    }
+                }
+            } else {
+                row = line.to_string();
+            }
+            
+            new_out += &row.trim();
+            new_out += "\n";
+        }
+
+        new_out
     } 
 
     fn to_file(&self, filename: &str) -> std::io::Result<()> {
@@ -92,8 +123,24 @@ mod tests{
         c.set_pixel(2, 1, Color::new(0.0, 0.5, 0.0, 0.0));
         c.set_pixel(4, 2, Color::new(-0.5, 0.0, 1.0, 1.0));
 
+
         assert_eq!(c.get_canvas_as_ppm_data(), 
-        "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0 \n0 0 0 0 0 0 0 127 0 0 0 0 0 0 0 \n0 0 0 0 0 0 0 0 0 0 0 0 0 0 255 \n");
-        //println!("{}", c.get_canvas_as_ppm_data())
+        "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 127 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 255\n");
+    }
+
+    #[test]
+    fn test_file_data_line_length() {
+        let mut c = Canvas::new(10, 2);
+        let test_color = Color::new(1.0, 0.8, 0.6, 0.0);
+        for x in 0..c.width {
+            for y in 0..c.height {
+                c.set_pixel(x, y, test_color);
+            }
+        }
+        assert_eq!(c.get_canvas_as_ppm_data(), "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204
+153 255 204 153 255 204 153 255 204 153 255 204 153
+255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204
+153 255 204 153 255 204 153 255 204 153 255 204 153
+");
     }
 }

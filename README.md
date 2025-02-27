@@ -1,1 +1,1 @@
-# (Ray Chasing Challenge)[http://raytracerchallenge.com/]
+# [Ray Chasing Challenge](http://raytracerchallenge.com/)

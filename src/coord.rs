@@ -1,4 +1,4 @@
-use std:: ops;
+use std::ops;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 struct Coord{

@@ -1,15 +1,16 @@
 use std::ops;
 
 #[derive(Debug, Clone, Copy)]
-struct Color {
+pub struct Color {
     r: f32, // red
     g: f32, // green
     b: f32, // blue
     a: f32  // alpha
 }
 
+#[allow(dead_code)]
 impl Color {
-    fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
+    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Color {r, g, b, a}
     }
 }

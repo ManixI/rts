@@ -1,7 +1,7 @@
 use std::ops;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-struct Coord{
+pub struct Coord{
     x: f32,
     y: f32,
     z: f32,
@@ -20,6 +20,18 @@ impl Coord {
     /// returns `Self`
     pub fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
         Coord { x, y, z, w }
+    }
+
+    pub fn get_x(&self) -> f32 {
+        self.x
+    }
+
+    pub fn get_y(&self) -> f32 {
+        self.y
+    }
+
+    pub fn get_z(&self) -> f32 {
+        self.z
     }
 
     //fn new(x: usize, y: usize, z: usize, w: usize) -> Self {
@@ -65,11 +77,11 @@ impl Coord {
         Coord { x: 0.0, y: 0.0, z: 0.0, w: 0.0 }.sub(self)
     }
 
-    fn magnitude(&self) -> f32 {
+    pub fn magnitude(&self) -> f32 {
         (self.x*self.x + self.y*self.y + self.z*self.z + self.w*self.w).sqrt()
     }
 
-    fn normalized(&self) -> Coord {
+    pub fn normalized(&self) -> Coord {
         let mag = self.magnitude();
         Coord {
             x: self.x / mag,
@@ -82,7 +94,7 @@ impl Coord {
     /// dot product of two vectors
     /// it makes no sense to call this on points, as it calculates angle
     /// will throw error if called on points
-    fn dot(self, other: Coord) -> f32 {
+    pub fn dot(self, other: Coord) -> f32 {
         // TODO: if should only be compiled if in compiling for debug
         if self.is_point() || other.is_point() {
             panic!("do not call dot product on points")
@@ -94,7 +106,7 @@ impl Coord {
         //self.w * other.w
     }
 
-    fn cross(self, other: Self) -> Self {
+    pub fn cross(self, other: Self) -> Self {
         if self.is_point() || other.is_point() {
             panic!("do not call cross product on points")
         }
@@ -150,6 +162,15 @@ impl ops::Div<f32> for Coord {
             z: self.z / rhs,
             w: self.w / rhs
         }
+    }
+}
+
+impl ops::AddAssign for Coord {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x = self.x + rhs.x;
+        self.y = self.y + rhs.y;
+        self.z = self.z + rhs.z;
+        self.w = self.w + rhs.w;
     }
 }
 

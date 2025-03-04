@@ -7,22 +7,29 @@ use coord::Coord;
 struct Shot {
     pos: Coord,
     vel: Coord,
+    test: usize,
 }
 
 impl Shot {
     fn new(pos: Coord, vel: Coord) -> Self {
-        Shot { pos, vel }
+        Shot { pos, vel , test: 0}
     }
 
     fn run_tick(&mut self, effects: Coord) {
         self.vel += effects;
-        self.pos += self.pos;
-        println!("({}, {})", self.pos.get_x(), self.pos.get_y());
-        println!("{:?}", self.vel)
+        self.pos += self.vel;
+        self.test += 1;
+        //println!("({}, {})", self.pos.get_x(), self.pos.get_y());
+        //println!("{:?}, {}", self.vel, self.test);
+        //*self
     }
 
     fn get_pos(&self) -> Coord {
         self.pos
+    }
+
+    fn get_height(&self) -> f32 {
+        self.pos.get_y()
     }
 }
 
@@ -49,13 +56,23 @@ impl Environment {
     }
 
     fn run_tick(&mut self) -> usize {
-        self.shots.iter().map(|s| s.run_tick(self.combine)).collect::<Vec<Shot>>();
+        //self.shots.iter().map(|s| s.run_tick(self.combine)).collect::<Vec<Shot>>();
+        /*self.shots = self.shots
+        .iter_mut()
+        .map(|s| s.run_tick(self.combine))
+        .filter(|s| s.get_height() > 0.0)
+        .collect::<Vec<Shot>>();*/
 
-        self.shots.retain(|s| {
+        for shot in self.shots.iter_mut() {
+            shot.run_tick(self.combine);
+        }
+        self.shots.retain(|s| s.get_height() > 0.0);
+
+        /*self.shots.retain(|s: &mut Shot| {
             //let s = *s;
             s.run_tick(self.combine);
             s.get_pos().get_y() > 0.0
-        });
+        });*/
 
         self.shots.len()
     }

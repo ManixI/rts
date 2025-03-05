@@ -1,5 +1,6 @@
 mod coord;
 mod canvas;
+mod matrix;
 
 use canvas::Canvas;
 use coord::Coord;
@@ -30,6 +31,7 @@ impl Shot {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 struct Environment {
     wind: Coord,
@@ -39,6 +41,7 @@ struct Environment {
     canvas: Canvas
 }
 
+#[allow(dead_code)]
 impl Environment {
     fn new(wind: f32, gravity: f32, height: usize, width: usize) -> Self {
         Environment {

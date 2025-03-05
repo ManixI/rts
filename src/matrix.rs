@@ -27,6 +27,17 @@ impl Matrix {
         }
         Matrix { data }
     }
+
+    /// returns transposed version of matrix
+    pub fn transpose(&self) -> Self {
+        let mut new = vec![vec![0.0; self.data.len()]; self.data.len()];
+        for i in 0..self.data.len() {
+            for j in 0..self.data.len() {
+                new[j][i] = self.data[i][j];
+            }
+        }
+        Self::new(new).unwrap()
+    }
 }
 
 // TODO: optimize this
@@ -208,6 +219,24 @@ mod tests {
         ];
         let mat = Matrix::new(data2).unwrap();
         assert_eq!(mat.clone() * Matrix::identity(4), mat);
+    }
+
+    #[test]
+    fn test_transpose() {
+        let data1 = vec![
+            vec![0.0, 9.0, 3.0, 0.0],
+            vec![9.0, 8.0, 0.0, 8.0],
+            vec![1.0, 8.0, 5.0, 3.0],
+            vec![0.0, 0.0, 5.0, 8.0],
+        ];
+        let data2 = vec![
+            vec![0.0, 9.0, 1.0, 0.0],
+            vec![9.0, 8.0, 8.0, 0.0],
+            vec![3.0, 0.0, 5.0, 5.0],
+            vec![0.0, 8.0, 3.0, 8.0],
+        ];
+        let mat = Matrix::new(data1).unwrap();
+        assert_eq!(mat.transpose(), Matrix::new(data2).unwrap());
     }
 }
 

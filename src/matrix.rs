@@ -73,6 +73,29 @@ mod tests {
         assert_eq!(mat.data[1][0], 1.0);
         assert_eq!(mat.data[1][1], -2.0);
     }
+
+    #[test]
+    fn test_mat_equality() {
+        let data1 = vec![
+            vec![1.0, 2.0, 3.0, 4.0],
+            vec![5.0, 6.0, 7.0, 8.0],
+            vec![9.0, 8.0, 7.0, 6.0],
+            vec![5.0, 4.0, 3.0, 2.0],
+        ];
+        let mat1 = Matrix::new(data1.clone()).unwrap();
+        let mat2 = Matrix::new(data1.clone()).unwrap();
+        assert!(mat1 == mat2);
+        
+        let data2 = vec![
+            vec![2.0, 3.0, 4.0, 5.0],
+            vec![6.0, 7.0, 8.0, 9.0],
+            vec![8.0, 7.0, 8.0, 5.0],
+            vec![4.0, 3.0, 2.0, 1.0],
+        ];
+        let mat3 = Matrix::new(data2.clone()).unwrap();
+        assert!(mat1 != mat3);
+        assert!(mat2 != mat3);
+    }
 }
 
 /*struct Mat2x2 {

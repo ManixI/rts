@@ -1,6 +1,7 @@
 use std::ops;
 
 // TODO: optimize this to use arrays, generic traits, etc.
+// TODO: replace options with results to better do error handling
 #[derive(Debug, Clone, PartialEq)]
 pub struct Matrix {
     data: Vec<Vec<f32>>,
@@ -38,6 +39,41 @@ impl Matrix {
         }
         Self::new(new).unwrap()
     }
+
+    pub fn invert(&self) -> Self {
+        self.clone()
+    }
+
+    fn determinate_2x2(&self) -> f32 {
+        self.data[0][0] * self.data[1][1] - self.data[1][0] * self.data[0][1]
+    }
+
+    // create a submatrix by removing 1 row and 1 col
+    fn sub_matrix(&self, row_num: i32, col_num: i32) -> Option<Self> {
+        if self.data.len() <= 2 {
+            return None;
+        }
+        let mut out = Vec::with_capacity(self.data.len()-1);
+
+        let mut r = -1;
+        for row in self.data.as_slice() {
+            r += 1;
+            if r == row_num {
+                continue;
+            }
+            let mut new = Vec::with_capacity(self.data.len()-1);
+            let mut c = -1;
+            for val in row {
+                c += 1;
+                if c == col_num {
+                    continue;
+                }
+                new.push(*val);
+            }
+            out.push(new);
+        } 
+        Self::new(out)
+    }  
 }
 
 // TODO: optimize this
@@ -85,6 +121,8 @@ impl ops::Mul<Vec<f32>> for Matrix {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
 
     #[test]
@@ -237,6 +275,45 @@ mod tests {
         ];
         let mat = Matrix::new(data1).unwrap();
         assert_eq!(mat.transpose(), Matrix::new(data2).unwrap());
+    }
+
+    #[test]
+    fn test_determinate2x2() {
+        let data = vec![
+            vec![1.0, 5.0],
+            vec![-3.0, 2.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        assert_eq!(mat.determinate_2x2(), 17.0)
+    }
+
+    #[test]
+    fn test_sub_matrix() {
+        let data = vec![
+            vec![1.0, 5.0, 0.0],
+            vec![-3.0, 2.0, 7.0],
+            vec![0.0, 6.0, -3.0],
+        ];
+        let expected = vec![
+            vec![-3.0, 2.0],
+            vec![0.0, 6.0],
+        ];
+        let mat = Matrix::new(data).unwrap().sub_matrix(0, 2).unwrap();
+        assert_eq!(mat, Matrix::new(expected).unwrap());
+
+        let data = vec![
+            vec![-6.0, 1.0, 1.0, 6.0],
+            vec![-8.0, 5.0, 8.0, 6.0],
+            vec![-1.0, 0.0, 8.0, 2.0],
+            vec![-7.0, 1.0, -1.0, 1.0],
+        ];
+        let expected = vec![
+            vec![-6.0, 1.0, 6.0],
+            vec![-8.0, 8.0, 6.0],
+            vec![-7.0, -1.0, 1.0],
+        ];
+        let mat = Matrix::new(data).unwrap().sub_matrix(2, 1).unwrap();
+        assert_eq!(mat, Matrix::new(expected).unwrap())
     }
 }
 

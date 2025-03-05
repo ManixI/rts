@@ -1,11 +1,11 @@
-mod color;
+pub mod color;
 use color::*;
 
 use std::fs::File;
 use std::io::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
-struct Canvas{
+pub struct Canvas{
     height: usize,
     width: usize,
     pixels: Vec<Vec<Color>>,
@@ -22,6 +22,9 @@ impl Canvas {
     }
 
     pub fn set_pixel(&mut self, x: usize, y: usize, c: Color) {
+        if y >= self.height || x >= self.width {
+            return
+        }
         self.pixels[y][x] = c;
     }
 
@@ -73,6 +76,14 @@ impl Canvas {
         file.write(self.get_canvas_as_ppm_data().as_bytes())?;
 
         Ok(())
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.height
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.width
     }
 }
 

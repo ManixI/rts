@@ -20,7 +20,8 @@ impl Matrix {
     }
 }
 
-impl ops::Mul for Matrix {
+// TODO: optimize this
+impl ops::Mul<Matrix> for Matrix {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -37,6 +38,28 @@ impl ops::Mul for Matrix {
             out.push(new);
         }
         Self::new(out).unwrap()
+    }
+}
+
+impl ops::Mul<Vec<f32>> for Matrix {
+    type Output = Vec<f32>;
+
+    fn mul(self, rhs: Vec<f32>) -> Self::Output {
+        assert_eq!(rhs.len(), self.data.len());
+        for row in self.data.iter() {
+            assert_eq!(rhs.len(), row.len());
+        }
+        let mut out = Vec::with_capacity(rhs.len());
+
+        for row in self.data {
+            let mut acc = 0.0;
+            for i in 0..rhs.len() {
+                acc += row[i] * rhs[i];
+            }
+            out.push(acc)
+        }
+
+        out
     }
 }
 
@@ -143,6 +166,19 @@ mod tests {
         ];
 
         assert_eq!(mat3, Matrix::new(data3).unwrap())
+    }
+
+    #[test]
+    fn test_mat_tuple_mul() {
+        let data = vec![
+            vec![1.0, 2.0, 3.0, 4.0],
+            vec![2.0, 4.0, 4.0, 2.0],
+            vec![8.0, 6.0, 4.0, 1.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        let tuple = vec![1.0, 2.0, 3.0, 1.0];
+        assert_eq!(mat * tuple, vec![18.0, 24.0, 33.0, 1.0])
     }
 }
 

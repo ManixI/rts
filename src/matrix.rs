@@ -74,9 +74,18 @@ impl Matrix {
         } 
         Self::new(out)
     }  
+
+    fn minor(&self, row_num: i32, col_num: i32) -> Option<f32> {
+        let sub = self.sub_matrix(row_num, col_num).expect("bad matrix");
+        if sub.data.len() != 2 {
+            return None;
+        }
+        Some(sub.determinate_2x2())
+    }
 }
 
 // TODO: optimize this
+// TODO: error handling for mis-matched multiplication
 impl ops::Mul<Matrix> for Matrix {
     type Output = Self;
 
@@ -122,7 +131,6 @@ impl ops::Mul<Vec<f32>> for Matrix {
 #[cfg(test)]
 mod tests {
     use std::vec;
-
     use super::*;
 
     #[test]
@@ -314,6 +322,17 @@ mod tests {
         ];
         let mat = Matrix::new(data).unwrap().sub_matrix(2, 1).unwrap();
         assert_eq!(mat, Matrix::new(expected).unwrap())
+    }
+
+    #[test]
+    fn test_minor() {
+        let data = vec![
+            vec![3.0, 5.0, 0.0],
+            vec![2.0, -1.0, -7.0],
+            vec![6.0, -1.0, 5.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        assert_eq!(mat.minor(1, 0).unwrap(), 25.0);
     }
 }
 

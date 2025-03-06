@@ -76,11 +76,19 @@ impl Matrix {
     }  
 
     fn minor(&self, row_num: i32, col_num: i32) -> Option<f32> {
-        let sub = self.sub_matrix(row_num, col_num).expect("bad matrix");
+        let sub = self.sub_matrix(row_num, col_num).expect("bad matrix in minor");
         if sub.data.len() != 2 {
             return None;
         }
         Some(sub.determinate_2x2())
+    }
+
+    fn cofactor(&self, row_num: i32, col_num: i32) -> f32 {
+        let out = self.minor(row_num, col_num).expect("bad matrix in cofactor");
+        if (row_num + col_num) % 2 == 1 {
+            return -out;
+        }
+        out
     }
 }
 
@@ -333,6 +341,20 @@ mod tests {
         ];
         let mat = Matrix::new(data).unwrap();
         assert_eq!(mat.minor(1, 0).unwrap(), 25.0);
+    }
+
+    #[test]
+    fn test_cofactor() {
+        let data = vec![
+            vec![3.0, 5.0, 0.0],
+            vec![2.0, -1.0, -7.0],
+            vec![6.0, -1.0, 5.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        assert_eq!(mat.minor(0, 0).unwrap(), -12.0);
+        assert_eq!(mat.cofactor(0, 0), -12.0);
+        assert_eq!(mat.minor(1, 0).unwrap(), 25.0);
+        assert_eq!(mat.cofactor(1, 0), -25.0);
     }
 }
 

@@ -40,10 +40,6 @@ impl Matrix {
         Self::new(new).unwrap()
     }
 
-    pub fn invert(&self) -> Self {
-        self.clone()
-    }
-
     fn determinate_2x2(&self) -> f32 {
         self.data[0][0] * self.data[1][1] - self.data[1][0] * self.data[0][1]
     }
@@ -78,6 +74,7 @@ impl Matrix {
     fn minor(&self, row_num: i32, col_num: i32) -> Option<f32> {
         let sub = self.sub_matrix(row_num, col_num).expect("\n ERROR: bad matrix in minor\n");
         if sub.data.len() >= 2 {
+            // recursively call determinate func to get minors util reaches 2x2 size
             return Some(sub.determinate());
         } else if sub.data.len() < 2 {
             return None;
@@ -102,6 +99,26 @@ impl Matrix {
             det += val * self.cofactor(0, idx as i32);
         }
         det
+    }
+
+    pub fn invert(&self) -> Option<Self> {
+        if self.determinate() == 0.0 {
+            return None;
+        }
+        let mut new = vec![vec![0.0; self.data.len()]; self.data.len()];
+        for i in 0..self.data.len() {
+            for j in 0..self.data.len() {
+                new[i][j] = self.cofactor(i as i32, j as i32);
+            }
+        }
+        let mut out = Self::new(new).unwrap().transpose();
+        let det = self.determinate();
+        for i in 0..self.data.len() {
+            for j in 0..self.data.len() {
+                out.data[i][j] /= det;
+            }
+        }
+        Some(out)
     }
 }
 
@@ -370,7 +387,6 @@ mod tests {
         assert_eq!(mat.cofactor(1, 0), -25.0);
     }
 
-
     #[test]
     fn test_determinate() {
         let data = vec![
@@ -396,6 +412,55 @@ mod tests {
         assert_eq!(mat.cofactor(0, 2), 210.0);
         assert_eq!(mat.cofactor(0, 3), 51.0);
         assert_eq!(mat.determinate(), -4071.0);
+    }
+
+    #[test]
+    fn test_is_invertable() {
+        let data = vec![
+            vec![6.0, 4.0, 4.0, 4.0],
+            vec![5.0, 5.0, 7.0, 6.0],
+            vec![4.0, -9.0, 3.0, -7.0],
+            vec![9.0, 1.0, 7.0, -6.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        assert_eq!(mat.determinate(), -2120.0);
+        assert_eq!(mat.invert().is_some(), true);
+
+        let data = vec![
+            vec![-4.0, 2.0, -2.0, -3.0],
+            vec![9.0, 6.0, 2.0, 6.0],
+            vec![0.0, -5.0, 1.0, -5.0],
+            vec![0.0, 0.0, 0.0, 0.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        assert_eq!(mat.determinate(), 0.0);
+        assert_eq!(mat.invert(), None);
+    }
+        
+    #[test]
+    fn test_invert() {
+        let data = vec![
+            vec![-5.0, 2.0, 6.0, -8.0],
+            vec![1.0, -5.0, 1.0, 8.0],
+            vec![7.0, 7.0, -6.0, -7.0],
+            vec![1.0, -3.0, 7.0, 4.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        let inverse = mat.invert().unwrap();
+        assert_eq!(mat.determinate(), 532.0);
+        assert_eq!(mat.cofactor(2, 3), -160.0);
+        assert_eq!(inverse.data[3][2], -160.0/532.0);
+        assert_eq!(mat.cofactor(3, 2), 105.0);
+        assert_eq!(inverse.data[2][3], 105.0/532.0);
+
+        let test = vec![
+            vec![0.21804512, 0.45112783, 0.24060151, -0.04511278],
+            vec![-0.80827070, -1.456767, -0.44360903, 0.5206767],
+            vec![-0.078947365, -0.22368420, -0.05263158, 0.19736843],
+            vec![-0.52255636, -0.81390977, -0.30075186, 0.30639097],
+        ];
+        let test_mat = Matrix::new(test).unwrap();
+        assert_eq!(inverse, test_mat);
     }
 }
 

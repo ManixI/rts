@@ -15,7 +15,7 @@ impl Matrix {
                 return None;
             }
         }
-        if data.len() != 2 && data.len() != 3 && data.len() != 4 {
+        if data.len() < 2 || data.len() > 4 {
             return None;
         }
         Some(Self{data})
@@ -50,7 +50,7 @@ impl Matrix {
 
     // create a submatrix by removing 1 row and 1 col
     fn sub_matrix(&self, row_num: i32, col_num: i32) -> Option<Self> {
-        if self.data.len() <= 2 {
+        if self.data.len() <= 1 {
             return None;
         }
         let mut out = Vec::with_capacity(self.data.len()-1);
@@ -76,19 +76,32 @@ impl Matrix {
     }  
 
     fn minor(&self, row_num: i32, col_num: i32) -> Option<f32> {
-        let sub = self.sub_matrix(row_num, col_num).expect("bad matrix in minor");
-        if sub.data.len() != 2 {
+        let sub = self.sub_matrix(row_num, col_num).expect("\n ERROR: bad matrix in minor\n");
+        if sub.data.len() >= 2 {
+            return Some(sub.determinate());
+        } else if sub.data.len() < 2 {
             return None;
         }
         Some(sub.determinate_2x2())
     }
 
     fn cofactor(&self, row_num: i32, col_num: i32) -> f32 {
-        let out = self.minor(row_num, col_num).expect("bad matrix in cofactor");
+        let out = self.minor(row_num, col_num).expect("\nERROR: bad matrix in cofactor\n");
         if (row_num + col_num) % 2 == 1 {
             return -out;
         }
         out
+    }
+
+    pub fn determinate(&self) -> f32 {
+        if self.data.len() == 2 {
+            return self.determinate_2x2();
+        }
+        let mut det = 0.0;
+        for (idx, val) in self.data[0].iter().enumerate() {
+            det += val * self.cofactor(0, idx as i32);
+        }
+        det
     }
 }
 
@@ -355,6 +368,34 @@ mod tests {
         assert_eq!(mat.cofactor(0, 0), -12.0);
         assert_eq!(mat.minor(1, 0).unwrap(), 25.0);
         assert_eq!(mat.cofactor(1, 0), -25.0);
+    }
+
+
+    #[test]
+    fn test_determinate() {
+        let data = vec![
+            vec![1.0, 2.0, 6.0],
+            vec![-5.0, 8.0, -4.0],
+            vec![2.0, 6.0, 4.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        assert_eq!(mat.cofactor(0, 0), 56.0);
+        assert_eq!(mat.cofactor(0, 1), 12.0);
+        assert_eq!(mat.cofactor(0, 2), -46.0);
+        assert_eq!(mat.determinate(), -196.0);
+
+        let data = vec![
+            vec![-2.0, -8.0, 3.0, 5.0],
+            vec![-3.0, 1.0, 7.0, 3.0],
+            vec![1.0, 2.0, -9.0, 6.0],
+            vec![-6.0, 7.0, 7.0, -9.0],
+        ];
+        let mat = Matrix::new(data).unwrap();
+        assert_eq!(mat.cofactor(0, 0), 690.0);
+        assert_eq!(mat.cofactor(0, 1), 447.0);
+        assert_eq!(mat.cofactor(0, 2), 210.0);
+        assert_eq!(mat.cofactor(0, 3), 51.0);
+        assert_eq!(mat.determinate(), -4071.0);
     }
 }
 

@@ -123,10 +123,12 @@ impl Matrix {
 }
 
 // TODO: optimize this
+// TODO: multiplication should not consume variables
 // TODO: error handling for mis-matched multiplication
 impl ops::Mul<Matrix> for Matrix {
     type Output = Self;
 
+    /// remember, order matters for matrix multiplication
     fn mul(self, rhs: Self) -> Self::Output {
         let mut out = Vec::with_capacity(self.data.len());
         for row in 0..self.data.len() {
@@ -170,6 +172,30 @@ impl ops::Mul<Vec<f32>> for Matrix {
 mod tests {
     use std::vec;
     use super::*;
+
+    /// Tests roughly equal, necessary if testing floating point operations
+    const EPSILON: f32 = 0.00001;
+    fn test_roughly_equal(a: &Matrix, b: &Matrix) -> bool {
+        if a.data.len() != b.data.len() {
+            println!("\na and b have different number of columns\n");
+            return false;
+        }
+        for (row_a, row_b) in a.data.iter().zip(b.data.clone()) {
+            if row_a.len() != row_b.len() {
+                println!("\na and b have different number of rows");
+                return false;
+            }
+        }
+        for (row_a, row_b) in a.data.iter().zip(b.data.clone()) {
+            for (val_a, val_b) in row_a.iter().zip(row_b) {
+                if (val_a-val_b).abs() > EPSILON {
+                    println!("\n{} !~= {}\n", val_a, val_b);
+                    return false;
+                }
+            }
+        }
+        true
+    }
 
     #[test]
     fn test_new_mat_4x4() {
@@ -461,6 +487,27 @@ mod tests {
         ];
         let test_mat = Matrix::new(test).unwrap();
         assert_eq!(inverse, test_mat);
+    }
+
+    #[test]
+    fn test_invert_2() {
+        let data1 = vec![
+            vec![3.0, -9.0, 7.0, 3.0],
+            vec![3.0, -8.0, 2.0, -9.0],
+            vec![-4.0, 4.0, 4.0, 1.0],
+            vec![-6.0, 5.0, -1.0, 1.0],
+        ];
+        let data2 = vec![
+            vec![8.0, 2.0, 2.0, 2.0],
+            vec![3.0, -1.0, 7.0, 0.0],
+            vec![7.0, -1.0, 5.0, 4.0],
+            vec![6.0, -2.0, 0.0, 5.0],
+        ];
+        let a = Matrix::new(data1).unwrap();
+        let b = Matrix::new(data2).unwrap();
+        let c = a.clone() * b.clone();
+        assert!(test_roughly_equal(&(c * b.invert().unwrap()), &a));
+        //assert_eq!(c * b.invert().unwrap(), a);
     }
 }
 

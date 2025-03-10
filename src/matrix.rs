@@ -28,7 +28,7 @@ impl Matrix {
         Matrix { data }
     }
 
-    pub fn from_coord(vec: Coord) -> Self {
+    pub fn translation_from_coord(vec: Coord) -> Self {
         let mut new = Self::identity(4);
         new.data[0][3] = vec.get_x();
         new.data[1][3] = vec.get_y();
@@ -118,7 +118,7 @@ impl Matrix {
         det
     }
 
-    pub fn invert(&self) -> Option<Self> {
+    pub fn inverse(&self) -> Option<Self> {
         if self.determinate() == 0.0 {
             return None;
         }
@@ -198,7 +198,7 @@ impl ops::Mul<Coord> for Matrix {
         }
         let mut data = Vec::with_capacity(4);
         for row in self.data {
-            data.push(row[0]*rhs.get_x() + row[1]*rhs.get_y() + row[3]*rhs.get_z() + row[4]*rhs.get_w())
+            data.push(row[0]*rhs.get_x() + row[1]*rhs.get_y() + row[2]*rhs.get_z() + row[3]*rhs.get_w())
         }
         Coord::new(data[0], data[1], data[2], data[3])
     }
@@ -480,7 +480,7 @@ mod tests {
         ];
         let mat = Matrix::new(data);
         assert_eq!(mat.determinate(), -2120.0);
-        assert_eq!(mat.invert().is_some(), true);
+        assert_eq!(mat.inverse().is_some(), true);
 
         let data = vec![
             vec![-4.0, 2.0, -2.0, -3.0],
@@ -490,7 +490,7 @@ mod tests {
         ];
         let mat = Matrix::new(data);
         assert_eq!(mat.determinate(), 0.0);
-        assert_eq!(mat.invert(), None);
+        assert_eq!(mat.inverse(), None);
     }
         
     #[test]
@@ -502,7 +502,7 @@ mod tests {
             vec![1.0, -3.0, 7.0, 4.0],
         ];
         let mat = Matrix::new(data);
-        let inverse = mat.invert().unwrap();
+        let inverse = mat.inverse().unwrap();
         assert_eq!(mat.determinate(), 532.0);
         assert_eq!(mat.cofactor(2, 3), -160.0);
         assert_eq!(inverse.data[3][2], -160.0/532.0);
@@ -536,14 +536,14 @@ mod tests {
         let a = Matrix::new(data1);
         let b = Matrix::new(data2);
         let c = a.clone() * b.clone();
-        assert!(test_roughly_equal(&(c * b.invert().unwrap()), &a));
+        assert!(test_roughly_equal(&(c * b.inverse().unwrap()), &a));
         //assert_eq!(c * b.invert().unwrap(), a);
     }
 
     #[test]
-    fn test_from_coord() {
+    fn test_translation() {
         let vec = Coord::point(5.0, -3.0, 2.0);
-        let mat = Matrix::from_coord(vec);
+        let mat = Matrix::translation_from_coord(vec);
         let data = vec![
             vec![1.0, 0.0, 0.0, 5.0],
             vec![0.0, 1.0, 0.0, -3.0],
@@ -555,11 +555,22 @@ mod tests {
 
         let mat = Matrix::translation(5.0, -3.0, 2.0);
         assert_eq!(mat, test);
+        
+        // test translation
+        let mat = Matrix::translation_from_coord(Coord::vec(5.0, -3.0, 2.0));
+        let p = Coord::point(-3.0, 4.0, 5.0);
+        assert_eq!(mat * p, Coord::point(2.0, 1.0, 7.0));
+
+        // test inverse translation
+        let mat = Matrix::translation(5.0, -3.0, 2.0);
+        let inv = mat.inverse().expect("inverse was none");
+        let p = Coord::point(-3.0, 4.0, 5.0);
+        assert_eq!(inv * p, Coord::point(-8.0, 7.0, 3.0));
     }
 
     #[test]
-    fn test_coord_multiplication() {
-        
+    fn test_scaling() {
+
     }
 }
 

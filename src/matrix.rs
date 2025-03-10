@@ -188,7 +188,6 @@ impl Matrix {
         Some(out)
     }
 
-
 }
 
 // TODO: optimize this

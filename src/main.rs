@@ -2,9 +2,12 @@ mod coord;
 mod canvas;
 mod matrix;
 
+use std::f32;
+
 use canvas::Canvas;
 use coord::Coord;
 use canvas::color::Color;
+use matrix::Matrix;
 
 #[derive(Debug, Clone, Copy)]
 struct Shot {
@@ -84,4 +87,14 @@ fn main() {
         //println!("dist: {}", env.get_shots()[0].get_pos().get_x());
     }
     let _ = env.draw_canvas("out.ppm");
+
+    let mut clockface = Canvas::new(100, 100);
+    let white = Color::new(1.0, 1.0, 1.0, 0.0);
+    let step = f32::consts::PI/6.0;
+    for spot in 0..12 {
+        let point = Matrix::translation(50.0, 50.0, 0.0) * Matrix::rotate_z(step * spot as f32) * Matrix::translation(25.0, 0.0, 0.0) * Coord::point(0.0, 0.0, 0.0);
+        clockface.set_pixel(point.get_x() as usize, point.get_y() as usize, white);
+        println!("{:?}", point);
+    }
+    let _ = clockface.to_file("clock.ppm");
 }

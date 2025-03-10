@@ -197,7 +197,7 @@ impl Matrix {
 impl ops::Mul<Matrix> for Matrix {
     type Output = Self;
 
-    /// remember, order matters for matrix multiplication
+    /// remember, order matters for matrix multiplication, it is not communicative
     fn mul(self, rhs: Self) -> Self::Output {
         assert_eq!(self.data.len(), rhs.data.len());
         let mut out = Vec::with_capacity(self.data.len());
@@ -722,6 +722,26 @@ mod tests {
 
         let mat = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         assert_eq!(mat * p, Coord::point(2.0, 3.0, 7.0));
+    }
+
+    #[test]
+    fn test_sequence() {
+        let p = Coord::point(1.0, 0.0, 1.0);
+        let a = Matrix::rotate_x(f32::consts::PI/2.0);
+        let b = Matrix::scaling(5.0, 5.0, 5.0);
+        let c = Matrix::translation(10.0, 5.0, 7.0);
+
+        let p2 = a.clone() * p;
+        assert!(test_roughly_equal_coords(p2, Coord::point(1.0, -1.0, 0.0)));
+
+        let p3 = b.clone() * p2;
+        assert!(test_roughly_equal_coords(p3, Coord::point(5.0, -5.0, 0.0)));
+
+        let p4 = c.clone() * p3;
+        assert!(test_roughly_equal_coords(p4, Coord::point(15.0, 0.0, 7.0)));
+
+        let transform = c * b * a;
+        assert!(test_roughly_equal_coords(transform * p, Coord::point(15.0, 0.0, 7.0)));
     }
 }
 

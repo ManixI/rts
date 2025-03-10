@@ -29,6 +29,46 @@ impl Color {
         })
         .fold(String::new(), |s1, s2| format!("{}{} ", s1, s2))
     }
+
+    #[inline]
+    pub fn white() -> Self {
+        Self::new(1.0, 1.0, 1.0, 0.0)
+    }
+
+    #[inline]
+    pub fn red() -> Self {
+        Self::new(1.0, 0.0, 0.0, 0.0)
+    }
+
+    #[inline]
+    pub fn green() -> Self {
+        Self::new(0.0, 1.0, 0.0, 0.0)
+    }
+
+    #[inline]
+    pub fn blue() -> Self {
+        Self::new(0.0, 0.0, 1.0, 0.0)
+    }
+
+    #[inline]
+    pub fn black() -> Self {
+        Self::new(0.0, 0.0, 0.0, 0.0)
+    }
+
+    #[inline]
+    pub fn yellow() -> Self {
+        Self::red() + Self::green()
+    }
+
+    #[inline]
+    pub fn purple() -> Self {
+        Self::red() + Self::blue()
+    }
+
+    #[inline]
+    pub fn turquoise() -> Self {
+        Self::blue() + Self::green()
+    }
 }
 
 impl ops::Add for Color {

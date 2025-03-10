@@ -1,5 +1,7 @@
 use std::ops;
 
+use crate::matrix::Matrix;
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Coord{
     x: f32,
@@ -153,6 +155,14 @@ impl ops::Mul<f32> for Coord {
             z: self.z * rhs,
             w: self.w * rhs
         }
+    }
+}
+
+impl ops::Mul<Matrix> for Coord{
+    type Output = Self;
+
+    fn mul(self, rhs: Matrix) -> Self::Output {
+        rhs * self
     }
 }
 

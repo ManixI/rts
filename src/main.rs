@@ -1,6 +1,7 @@
 mod coord;
 mod canvas;
 mod matrix;
+mod ray;
 
 use std::f32;
 

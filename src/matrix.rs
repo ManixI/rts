@@ -88,6 +88,16 @@ impl Matrix {
         Coord::vec(self.data[0][3], self.data[1][3], self.data[2][3])
     }
 
+    pub fn shearing(xy: f32, xz: f32, yx: f32, yz: f32, zx: f32, zy: f32) -> Self {
+        let mut new = Self::identity(4);
+        new.data[0][1] = xy;
+        new.data[0][2] = xz;
+        new.data[1][0] = yx;
+        new.data[1][2] = yz;
+        new.data[2][0] = zx;
+        new.data[2][1] = zy;
+        new
+    }
     /// returns transposed version of matrix
     pub fn transpose(&self) -> Self {
         let mut new = vec![vec![0.0; self.data.len()]; self.data.len()];
@@ -690,6 +700,28 @@ mod tests {
         let full_quarter = Matrix::rotate_z(f32::consts::PI / 2.0);
         assert!(test_roughly_equal_coords(half_quarter * p, Coord::point(-(2_f32.sqrt())/2.0, 2_f32.sqrt()/2.0, 0.0)));
         assert!(test_roughly_equal_coords(full_quarter * p, Coord::point(-1.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn test_shearing() {
+        let p = Coord::point(2.0, 3.0, 4.0);
+        let mat = Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(mat * p, Coord::point(5.0, 3.0, 4.0));
+
+        let mat = Matrix::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(mat * p, Coord::point(6.0, 3.0, 4.0));
+       
+        let mat = Matrix::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        assert_eq!(mat * p, Coord::point(2.0, 5.0, 4.0));
+        
+        let mat = Matrix::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        assert_eq!(mat * p, Coord::point(2.0, 7.0, 4.0));
+
+        let mat = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        assert_eq!(mat * p, Coord::point(2.0, 3.0, 6.0));
+
+        let mat = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        assert_eq!(mat * p, Coord::point(2.0, 3.0, 7.0));
     }
 }
 

@@ -57,6 +57,15 @@ impl Matrix {
         Self::scaling(vec.get_x(), vec.get_y(), vec.get_z())
     }
 
+    pub fn rotate_x(r: f32) -> Self {
+        let mut new = Matrix::identity(4);
+        new.data[1][1] = r.cos();
+        new.data[1][2] = -(r.sin());
+        new.data[2][1] = r.sin();
+        new.data[2][2] = r.cos();
+        new
+    }
+
     pub fn to_vec(&self) -> Coord {
         Coord::vec(self.data[0][3], self.data[1][3], self.data[2][3])
     }
@@ -219,7 +228,7 @@ impl ops::Mul<Coord> for Matrix {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
+    use std::{f32, vec};
     use super::*;
 
     /// Tests roughly equal, necessary if testing floating point operations
@@ -242,6 +251,26 @@ mod tests {
                     return false;
                 }
             }
+        }
+        true
+    }
+
+    fn test_roughly_equal_coords(a: Coord, b: Coord) -> bool {
+        if (a.get_x() - b.get_x()).abs() > EPSILON {
+            println!("\nERROR: x values {} and {} are too far apart.\n", a.get_x(), b.get_x());
+            return false;
+        }
+        if (a.get_y() - b.get_y()).abs() > EPSILON {
+            println!("\nERROR: y values {} and {} are too far apart.\n", a.get_y(), b.get_y());
+            return false;
+        }
+        if (a.get_z() - b.get_z()).abs() > EPSILON {
+            println!("\nERROR: z values {} and {} are too far apart.\n", a.get_z(), b.get_z());
+            return false;
+        }
+        if (a.get_w() - b.get_w()).abs() > EPSILON {
+            println!("\nERROR: w values {} and {} are too far apart.\n", a.get_w(), b.get_w());
+            return false;
         }
         true
     }
@@ -613,6 +642,18 @@ mod tests {
         let mat = Matrix::scaling(-1.0, 1.0, 1.0);
         let p = Coord::point(2.0, 3.0, 4.0);
         assert_eq!(mat * p, Coord::point(-2.0, 3.0, 4.0));
+    }
+
+    #[test]
+    fn test_rotation_x() {
+        let p = Coord::point(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotate_x(f32::consts::PI / 4.0);
+        let full_quarter = Matrix::rotate_x(f32::consts::PI / 2.0);
+        assert!(test_roughly_equal_coords(half_quarter.clone() * p, Coord::point(0.0, 2.0_f32.sqrt()/2.0, 2.0_f32.sqrt()/2.0)));
+        assert!(test_roughly_equal_coords(full_quarter * p, Coord::point(0.0, 0.0, 1.0)));
+
+        let inv = half_quarter.inverse().expect("rotation inverse was none");
+        assert!(test_roughly_equal_coords(inv * p, Coord::point(0.0, 2.0_f32.sqrt()/2.0, -(2.0_f32.sqrt())/2.0)));
     }
 }
 

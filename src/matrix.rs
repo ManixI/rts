@@ -1,4 +1,5 @@
 use std::ops;
+use super::Coord;
 
 // TODO: optimize this to use arrays, generic traits, etc.
 // TODO: replace options with results to better do error handling
@@ -9,24 +10,42 @@ pub struct Matrix {
 
 #[allow(dead_code)]
 impl Matrix {
-    pub fn new(data: Vec<Vec<f32>>) -> Option<Self> {
+    /// expects a 2d vec that is square and of a size 2x2 - 4x4
+    pub fn new(data: Vec<Vec<f32>>) -> Self {
+        assert!(data.len() >= 2 && data.len() <= 4);
         for row in data.iter() {
-            if row.len() != data.len() {
-                return None;
-            }
+            assert!(row.len() == data.len());
         }
-        if data.len() < 2 || data.len() > 4 {
-            return None;
-        }
-        Some(Self{data})
+        Self{data}
     }
 
     pub fn identity(size: usize) -> Self {
+        assert!(size >= 2 && size <= 4);
         let mut data = vec![vec![0.0; size]; size];
         for i in 0..size {
             data[i][i] = 1.0;
         }
         Matrix { data }
+    }
+
+    pub fn from_coord(vec: Coord) -> Self {
+        let mut new = Self::identity(4);
+        new.data[0][3] = vec.get_x();
+        new.data[1][3] = vec.get_y();
+        new.data[2][3] = vec.get_z();
+        new
+    }
+
+    pub fn translation(x: f32, y: f32, z: f32) -> Self {
+        let mut new = Self::identity(4);
+        new.data[0][3] = x;
+        new.data[1][3] = y;
+        new.data[2][3] = z;
+        new
+    }
+
+    pub fn to_vec(&self) -> Coord {
+        Coord::vec(self.data[0][3], self.data[1][3], self.data[2][3])
     }
 
     /// returns transposed version of matrix
@@ -37,7 +56,7 @@ impl Matrix {
                 new[j][i] = self.data[i][j];
             }
         }
-        Self::new(new).unwrap()
+        Self::new(new)
     }
 
     fn determinate_2x2(&self) -> f32 {
@@ -45,10 +64,8 @@ impl Matrix {
     }
 
     // create a submatrix by removing 1 row and 1 col
-    fn sub_matrix(&self, row_num: i32, col_num: i32) -> Option<Self> {
-        if self.data.len() <= 1 {
-            return None;
-        }
+    fn sub_matrix(&self, row_num: i32, col_num: i32) -> Self {
+        assert!(self.data.len() > 1);
         let mut out = Vec::with_capacity(self.data.len()-1);
 
         let mut r = -1;
@@ -72,7 +89,7 @@ impl Matrix {
     }  
 
     fn minor(&self, row_num: i32, col_num: i32) -> Option<f32> {
-        let sub = self.sub_matrix(row_num, col_num).expect("\n ERROR: bad matrix in minor\n");
+        let sub = self.sub_matrix(row_num, col_num);
         if sub.data.len() >= 2 {
             // recursively call determinate func to get minors util reaches 2x2 size
             return Some(sub.determinate());
@@ -111,7 +128,7 @@ impl Matrix {
                 new[i][j] = self.cofactor(i as i32, j as i32);
             }
         }
-        let mut out = Self::new(new).unwrap().transpose();
+        let mut out = Self::new(new).transpose();
         let det = self.determinate();
         for i in 0..self.data.len() {
             for j in 0..self.data.len() {
@@ -120,6 +137,8 @@ impl Matrix {
         }
         Some(out)
     }
+
+
 }
 
 // TODO: optimize this
@@ -130,6 +149,7 @@ impl ops::Mul<Matrix> for Matrix {
 
     /// remember, order matters for matrix multiplication
     fn mul(self, rhs: Self) -> Self::Output {
+        assert_eq!(self.data.len(), rhs.data.len());
         let mut out = Vec::with_capacity(self.data.len());
         for row in 0..self.data.len() {
             let mut new = Vec::with_capacity(self.data.len());
@@ -142,7 +162,7 @@ impl ops::Mul<Matrix> for Matrix {
             }
             out.push(new);
         }
-        Self::new(out).unwrap()
+        Self::new(out)
     }
 }
 
@@ -165,6 +185,22 @@ impl ops::Mul<Vec<f32>> for Matrix {
         }
 
         out
+    }
+}
+
+impl ops::Mul<Coord> for Matrix {
+    type Output = Coord;
+
+    fn mul(self, rhs: Coord) -> Self::Output {
+        assert_eq!(self.data.len(), 4);
+        for row in self.data.iter() {
+            assert_eq!(row.len(), 4);
+        }
+        let mut data = Vec::with_capacity(4);
+        for row in self.data {
+            data.push(row[0]*rhs.get_x() + row[1]*rhs.get_y() + row[3]*rhs.get_z() + row[4]*rhs.get_w())
+        }
+        Coord::new(data[0], data[1], data[2], data[3])
     }
 }
 
@@ -206,8 +242,6 @@ mod tests {
             vec![13.5, 14.5, 15.5, 16.5]
         ];
         let mat = Matrix::new(data);
-        assert!(mat.is_some());
-        let mat = mat.unwrap();
         assert!(mat.data[0][0] == 1.0);
         assert!(mat.data[0][3] == 4.0);
         assert!(mat.data[1][0] == 5.5);
@@ -225,8 +259,6 @@ mod tests {
             vec![0.0, 1.0, 1.0],
         ];
         let mat = Matrix::new(data);
-        assert!(mat.is_some());
-        let mat = mat.unwrap();
         assert!(mat.data[0][0] == -3.0);
         assert!(mat.data[1][1] == -2.0);
         assert!(mat.data[2][2] == 1.0)
@@ -239,8 +271,6 @@ mod tests {
             vec![1.0, -2.0],
         ];
         let mat = Matrix::new(data);
-        assert!(mat.is_some());
-        let mat = mat.unwrap();
         assert_eq!(mat.data[0][0], -3.0);
         assert_eq!(mat.data[0][1], 5.0);
         assert_eq!(mat.data[1][0], 1.0);
@@ -255,8 +285,8 @@ mod tests {
             vec![9.0, 8.0, 7.0, 6.0],
             vec![5.0, 4.0, 3.0, 2.0],
         ];
-        let mat1 = Matrix::new(data1.clone()).unwrap();
-        let mat2 = Matrix::new(data1.clone()).unwrap();
+        let mat1 = Matrix::new(data1.clone());
+        let mat2 = Matrix::new(data1.clone());
         assert!(mat1 == mat2);
         
         let data2 = vec![
@@ -265,7 +295,7 @@ mod tests {
             vec![8.0, 7.0, 8.0, 5.0],
             vec![4.0, 3.0, 2.0, 1.0],
         ];
-        let mat3 = Matrix::new(data2.clone()).unwrap();
+        let mat3 = Matrix::new(data2.clone());
         assert!(mat1 != mat3);
         assert!(mat2 != mat3);
     }
@@ -284,8 +314,8 @@ mod tests {
             vec![4.0, 3.0, 6.0, 5.0],
             vec![1.0, 2.0, 7.0, 8.0],
         ];
-        let mat1 = Matrix::new(data1).unwrap();
-        let mat2 = Matrix::new(data2).unwrap();
+        let mat1 = Matrix::new(data1);
+        let mat2 = Matrix::new(data2);
         let mat3 = mat1 * mat2;
 
         let data3 = vec![
@@ -295,7 +325,7 @@ mod tests {
             vec![16.0, 26.0, 46.0, 42.0],
         ];
 
-        assert_eq!(mat3, Matrix::new(data3).unwrap())
+        assert_eq!(mat3, Matrix::new(data3))
     }
 
     #[test]
@@ -306,7 +336,7 @@ mod tests {
             vec![8.0, 6.0, 4.0, 1.0],
             vec![0.0, 0.0, 0.0, 1.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         let tuple = vec![1.0, 2.0, 3.0, 1.0];
         assert_eq!(mat * tuple, vec![18.0, 24.0, 33.0, 1.0])
     }
@@ -319,7 +349,7 @@ mod tests {
             vec![0.0, 0.0, 1.0, 0.0],
             vec![0.0, 0.0, 0.0, 1.0],
         ];
-        assert_eq!(Matrix::identity(4), Matrix::new(data1).unwrap());
+        assert_eq!(Matrix::identity(4), Matrix::new(data1));
 
         let data2 = vec![
             vec![0.0, 1.0, 2.0, 4.0],
@@ -327,7 +357,7 @@ mod tests {
             vec![2.0, 4.0, 8.0, 16.0],
             vec![4.0, 8.0, 16.0, 32.0],
         ];
-        let mat = Matrix::new(data2).unwrap();
+        let mat = Matrix::new(data2);
         assert_eq!(mat.clone() * Matrix::identity(4), mat);
     }
 
@@ -345,8 +375,8 @@ mod tests {
             vec![3.0, 0.0, 5.0, 5.0],
             vec![0.0, 8.0, 3.0, 8.0],
         ];
-        let mat = Matrix::new(data1).unwrap();
-        assert_eq!(mat.transpose(), Matrix::new(data2).unwrap());
+        let mat = Matrix::new(data1);
+        assert_eq!(mat.transpose(), Matrix::new(data2));
     }
 
     #[test]
@@ -355,7 +385,7 @@ mod tests {
             vec![1.0, 5.0],
             vec![-3.0, 2.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         assert_eq!(mat.determinate_2x2(), 17.0)
     }
 
@@ -370,8 +400,8 @@ mod tests {
             vec![-3.0, 2.0],
             vec![0.0, 6.0],
         ];
-        let mat = Matrix::new(data).unwrap().sub_matrix(0, 2).unwrap();
-        assert_eq!(mat, Matrix::new(expected).unwrap());
+        let mat = Matrix::new(data).sub_matrix(0, 2);
+        assert_eq!(mat, Matrix::new(expected));
 
         let data = vec![
             vec![-6.0, 1.0, 1.0, 6.0],
@@ -384,8 +414,8 @@ mod tests {
             vec![-8.0, 8.0, 6.0],
             vec![-7.0, -1.0, 1.0],
         ];
-        let mat = Matrix::new(data).unwrap().sub_matrix(2, 1).unwrap();
-        assert_eq!(mat, Matrix::new(expected).unwrap())
+        let mat = Matrix::new(data).sub_matrix(2, 1);
+        assert_eq!(mat, Matrix::new(expected))
     }
 
     #[test]
@@ -395,7 +425,7 @@ mod tests {
             vec![2.0, -1.0, -7.0],
             vec![6.0, -1.0, 5.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         assert_eq!(mat.minor(1, 0).unwrap(), 25.0);
     }
 
@@ -406,7 +436,7 @@ mod tests {
             vec![2.0, -1.0, -7.0],
             vec![6.0, -1.0, 5.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         assert_eq!(mat.minor(0, 0).unwrap(), -12.0);
         assert_eq!(mat.cofactor(0, 0), -12.0);
         assert_eq!(mat.minor(1, 0).unwrap(), 25.0);
@@ -420,7 +450,7 @@ mod tests {
             vec![-5.0, 8.0, -4.0],
             vec![2.0, 6.0, 4.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         assert_eq!(mat.cofactor(0, 0), 56.0);
         assert_eq!(mat.cofactor(0, 1), 12.0);
         assert_eq!(mat.cofactor(0, 2), -46.0);
@@ -432,7 +462,7 @@ mod tests {
             vec![1.0, 2.0, -9.0, 6.0],
             vec![-6.0, 7.0, 7.0, -9.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         assert_eq!(mat.cofactor(0, 0), 690.0);
         assert_eq!(mat.cofactor(0, 1), 447.0);
         assert_eq!(mat.cofactor(0, 2), 210.0);
@@ -448,7 +478,7 @@ mod tests {
             vec![4.0, -9.0, 3.0, -7.0],
             vec![9.0, 1.0, 7.0, -6.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         assert_eq!(mat.determinate(), -2120.0);
         assert_eq!(mat.invert().is_some(), true);
 
@@ -458,7 +488,7 @@ mod tests {
             vec![0.0, -5.0, 1.0, -5.0],
             vec![0.0, 0.0, 0.0, 0.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         assert_eq!(mat.determinate(), 0.0);
         assert_eq!(mat.invert(), None);
     }
@@ -471,7 +501,7 @@ mod tests {
             vec![7.0, 7.0, -6.0, -7.0],
             vec![1.0, -3.0, 7.0, 4.0],
         ];
-        let mat = Matrix::new(data).unwrap();
+        let mat = Matrix::new(data);
         let inverse = mat.invert().unwrap();
         assert_eq!(mat.determinate(), 532.0);
         assert_eq!(mat.cofactor(2, 3), -160.0);
@@ -485,7 +515,7 @@ mod tests {
             vec![-0.078947365, -0.22368420, -0.05263158, 0.19736843],
             vec![-0.52255636, -0.81390977, -0.30075186, 0.30639097],
         ];
-        let test_mat = Matrix::new(test).unwrap();
+        let test_mat = Matrix::new(test);
         assert_eq!(inverse, test_mat);
     }
 
@@ -503,11 +533,33 @@ mod tests {
             vec![7.0, -1.0, 5.0, 4.0],
             vec![6.0, -2.0, 0.0, 5.0],
         ];
-        let a = Matrix::new(data1).unwrap();
-        let b = Matrix::new(data2).unwrap();
+        let a = Matrix::new(data1);
+        let b = Matrix::new(data2);
         let c = a.clone() * b.clone();
         assert!(test_roughly_equal(&(c * b.invert().unwrap()), &a));
         //assert_eq!(c * b.invert().unwrap(), a);
+    }
+
+    #[test]
+    fn test_from_coord() {
+        let vec = Coord::point(5.0, -3.0, 2.0);
+        let mat = Matrix::from_coord(vec);
+        let data = vec![
+            vec![1.0, 0.0, 0.0, 5.0],
+            vec![0.0, 1.0, 0.0, -3.0],
+            vec![0.0, 0.0, 1.0, 2.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ];
+        let test = Matrix::new(data);
+        assert_eq!(mat, test);
+
+        let mat = Matrix::translation(5.0, -3.0, 2.0);
+        assert_eq!(mat, test);
+    }
+
+    #[test]
+    fn test_coord_multiplication() {
+        
     }
 }
 

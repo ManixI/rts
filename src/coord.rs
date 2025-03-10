@@ -34,6 +34,9 @@ impl Coord {
         self.z
     }
 
+    pub fn get_w(&self) -> f32 {
+        self.w
+    }
     //fn new(x: usize, y: usize, z: usize, w: usize) -> Self {
     //    Coord { x: x as f32, y: y as f32, z: z as f32, w: w as f32 }
     //}

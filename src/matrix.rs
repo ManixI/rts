@@ -57,12 +57,30 @@ impl Matrix {
         Self::scaling(vec.get_x(), vec.get_y(), vec.get_z())
     }
 
-    pub fn rotate_x(r: f32) -> Self {
+    pub fn rotate_x(radians: f32) -> Self {
         let mut new = Matrix::identity(4);
-        new.data[1][1] = r.cos();
-        new.data[1][2] = -(r.sin());
-        new.data[2][1] = r.sin();
-        new.data[2][2] = r.cos();
+        new.data[1][1] = radians.cos();
+        new.data[1][2] = -(radians.sin());
+        new.data[2][1] = radians.sin();
+        new.data[2][2] = radians.cos();
+        new
+    }
+
+    pub fn rotate_y(radians: f32) -> Self {
+        let mut new = Matrix::identity(4);
+        new.data[0][0] = radians.cos();
+        new.data[0][2] = radians.sin();
+        new.data[2][0] = -(radians.sin());
+        new.data[2][2] = radians.cos();
+        new
+    }
+
+    pub fn rotate_z(radians: f32) -> Self {
+        let mut new = Matrix::identity(4);
+        new.data[0][0] = radians.cos();
+        new.data[0][1] = -(radians.sin());
+        new.data[1][0] = radians.sin();
+        new.data[1][1] = radians.cos();
         new
     }
 
@@ -654,6 +672,24 @@ mod tests {
 
         let inv = half_quarter.inverse().expect("rotation inverse was none");
         assert!(test_roughly_equal_coords(inv * p, Coord::point(0.0, 2.0_f32.sqrt()/2.0, -(2.0_f32.sqrt())/2.0)));
+    }
+
+    #[test]
+    fn test_rotation_y() {
+        let p = Coord::point(0.0, 0.0, 1.0);
+        let half_quarter = Matrix::rotate_y(f32::consts::PI / 4.0);
+        let full_quarter = Matrix::rotate_y(f32::consts::PI / 2.0);
+        assert!(test_roughly_equal_coords(half_quarter * p, Coord::point(2.0_f32.sqrt()/2.0, 0.0, 2_f32.sqrt()/2.0)));
+        assert!(test_roughly_equal_coords(full_quarter * p, Coord::point(1.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn test_rotation_z() {
+        let p = Coord::point(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotate_z(f32::consts::PI / 4.0);
+        let full_quarter = Matrix::rotate_z(f32::consts::PI / 2.0);
+        assert!(test_roughly_equal_coords(half_quarter * p, Coord::point(-(2_f32.sqrt())/2.0, 2_f32.sqrt()/2.0, 0.0)));
+        assert!(test_roughly_equal_coords(full_quarter * p, Coord::point(-1.0, 0.0, 0.0)));
     }
 }
 

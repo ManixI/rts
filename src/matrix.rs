@@ -3,6 +3,18 @@ use super::Coord;
 
 // TODO: optimize this to use arrays, generic traits, etc.
 // TODO: replace options with results to better do error handling
+/**
+ * TODO: IMPORTANT, implement a fluent api to make combining matrixes easier
+ * ex:
+ * transform =  identity
+ *              .rotate_x(pi/2)
+ *              .scale(5, 5, 5)
+ *              .translate(10, 5, 5)
+ * where this will unwind in reverse order ie t * s * r order
+ * ideally don't do the implied * i at the end
+ * this should make combining matrixes more intuitive
+ */
+// TODO: replace internal Vec with Array to allow implementation of copy
 #[derive(Debug, Clone, PartialEq)]
 pub struct Matrix {
     data: Vec<Vec<f32>>,

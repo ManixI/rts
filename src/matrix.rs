@@ -44,6 +44,19 @@ impl Matrix {
         new
     }
 
+    pub fn scaling(x: f32, y: f32, z: f32) -> Self {
+        let mut new = Self::identity(4);
+        new.data[0][0] = x;
+        new.data[1][1] = y;
+        new.data[2][2] = z;
+        new
+    }
+
+    #[inline]
+    pub fn scaling_from_coord(vec: Coord) -> Self {
+        Self::scaling(vec.get_x(), vec.get_y(), vec.get_z())
+    }
+
     pub fn to_vec(&self) -> Coord {
         Coord::vec(self.data[0][3], self.data[1][3], self.data[2][3])
     }
@@ -570,7 +583,36 @@ mod tests {
 
     #[test]
     fn test_scaling() {
+        let mat = Matrix::scaling_from_coord(Coord::point(2.0, 3.0, 4.0));
+        let data = vec![
+            vec![2.0, 0.0, 0.0, 0.0],
+            vec![0.0, 3.0, 0.0, 0.0],
+            vec![0.0, 0.0, 4.0, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ];
+        let test = Matrix::new(data);
+        assert_eq!(mat, test);
 
+        // point scaling
+        let mat = Matrix::scaling_from_coord(Coord::vec(2.0, 3.0, 4.0));
+        let p = Coord::point(-4.0, 6.0, 8.0);
+        assert_eq!(mat * p, Coord::point(-8.0, 18.0, 32.0));
+
+        // vec scaling
+        let mat = Matrix::scaling(2.0, 3.0, 4.0);
+        let v = Coord::vec(-4.0, 6.0, 8.0);
+        assert_eq!(mat * v, Coord::vec(-8.0, 18.0, 32.0));
+
+        // test inverse
+        let mat = Matrix::scaling(2.0, 3.0, 4.0);
+        let inv = mat.inverse().expect("inverse was none");
+        let v = Coord::vec(-4.0, 6.0, 8.0);
+        assert_eq!(inv * v, Coord::vec(-2.0, 2.0, 2.0));
+
+        // test reflection
+        let mat = Matrix::scaling(-1.0, 1.0, 1.0);
+        let p = Coord::point(2.0, 3.0, 4.0);
+        assert_eq!(mat * p, Coord::point(-2.0, 3.0, 4.0));
     }
 }
 

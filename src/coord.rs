@@ -2,7 +2,9 @@ use std::ops;
 
 use crate::matrix::Matrix;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+const EPSILON: f32 = 0.000001;
+
+#[derive(Debug, Clone, Copy)]
 pub struct Coord{
     x: f32,
     y: f32,
@@ -155,6 +157,24 @@ impl ops::Mul<f32> for Coord {
             z: self.z * rhs,
             w: self.w * rhs
         }
+    }
+}
+
+impl PartialEq for Coord {
+    fn eq(&self, other: &Self) -> bool {
+        if (self.x - other.x).abs() > EPSILON {
+            return false;
+        }
+        if (self.y - other.y).abs() > EPSILON {
+            return false;
+        }
+        if (self.z - other.z).abs() > EPSILON {
+            return false;
+        }
+        if (self.w - other.w).abs() > EPSILON {
+            return false;
+        }
+        true
     }
 }
 
@@ -374,5 +394,17 @@ mod tests {
         let b = Coord::vec(2.0, 3.0, 4.0);
         assert_eq!(a.cross(b), Coord::vec(-1.0, 2.0, -1.0));
         assert_eq!(b.cross(a), Coord::vec(1.0, -2.0, 1.0));
+    }
+
+    #[test]
+    fn test_eq() {
+        // test PartialEq works even with floating point nonsense
+        let a = Coord::point(-0.1, 0.2, 0.3);
+        let c = a * 0.8;
+        let c = c * 0.8;
+        let c = c * 0.8;
+        let c = c * 0.8;
+        println!("{:?}", c);
+        assert_eq!(c, Coord::new(-0.04096, 0.08192, 0.12288, 0.4096));
     }
 }

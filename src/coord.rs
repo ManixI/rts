@@ -123,6 +123,10 @@ impl Coord {
             self.x * other.y - self.y * other.x
         )
     }
+
+    pub fn len(&self) -> f32 {
+        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    }
 }
 
 // overloaded ops just use func definitions from above

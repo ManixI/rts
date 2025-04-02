@@ -1,9 +1,16 @@
+use crate::sphere::Sphere;
+
 use super::Coord;
 
 #[derive(Debug,PartialEq, Clone, Copy)]
 pub struct Ray {
     origin: Coord,
     direction: Coord
+}
+
+pub trait Intersect {
+    // trait that implements intersection for any object and a ray
+    fn intersect(&self, ray: &Ray) -> Vec<f32>;
 }
 
 #[allow(dead_code)]
@@ -15,10 +22,25 @@ impl Ray {
     fn position(&self, time: f32) -> Coord {
         self.origin + self.direction * time
     }
+
+    fn intersect(&self, object: &impl Intersect) -> Vec<f32> {
+        object.intersect(&self)
+    }
+
+    pub fn get_origin(&self) -> Coord {
+        self.origin
+    }
+
+    pub fn get_direction(&self) -> Coord {
+        self.direction
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
+    use crate::sphere::Sphere;
+
     use super::*;
 
     #[test]
@@ -37,5 +59,74 @@ mod tests {
         assert_eq!(r.position(1.0), Coord::point(3.0, 3.0, 4.0));
         assert_eq!(r.position(-1.0), Coord::point(1.0, 3.0, 4.0));
         assert_eq!(r.position(2.5), Coord::point(4.5, 3.0, 4.0));
+    }
+
+    #[test]
+    fn test_sphere_intersection_no_position() {
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.len() > 0);
+    
+        let r = Ray::new(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.len() > 0);
+
+        let r = Ray::new(Coord::point(0.0, 2.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert_eq!(xs.len(), 0);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.len() > 0);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.len() > 0);
+
+        let r = Ray::new(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, -0.1, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.len() > 0); 
+    }
+
+    #[test]
+    fn test_sphere_intersection() {
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0], 4.0);
+        assert_eq!(xs[1], 6.0);
+    
+        let r = Ray::new(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert_eq!(xs.len(), 2);
+        assert_eq!(xs[0], 5.0);
+        assert_eq!(xs[1], 5.0);
+
+        let r = Ray::new(Coord::point(0.0, 2.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert_eq!(xs.len(), 0);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert_eq!(xs.len(), 0);
+        assert_eq!(xs[0], -1.0);
+        assert_eq!(xs[1], 1.0);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert_eq!(xs.len(), 0);
+        assert_eq!(xs[0], -6.0);
+        assert_eq!(xs[1], -4.0);
     }
 }

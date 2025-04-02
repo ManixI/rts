@@ -2,6 +2,7 @@ mod coord;
 mod canvas;
 mod matrix;
 mod ray;
+mod sphere;
 
 use std::f32;
 

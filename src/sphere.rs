@@ -1,4 +1,5 @@
 use core::f32;
+use std::vec;
 
 use crate::ray::{Intersect, Ray};
 
@@ -18,8 +19,23 @@ impl Sphere {
     }
 }
 
-const EPSILON: f32 = 0.02;
+//const EPSILON: f32 = 0.02;
 impl Intersect for Sphere {
+    fn intersect(&self, ray: &Ray) -> Option<Vec<f32>> {
+        // ref: https://discussions.unity.com/t/how-do-i-find-the-closest-point-on-a-line/588895/3
+        let dir = ray.get_direction().normalized();
+        let v = self.origin - ray.get_origin();
+        let d = v.dot(dir);
+        let nearest = ray.get_origin() + dir * d;
+        let dist = nearest.len();
+        //println!("dist: {:?}", dist);
+        if dist > self.radius {
+            return None;
+        }
+        Some(vec![0.0, 0.0])
+    }
+    /*
+    // floating point errors get too large with this method
     fn intersect(&self, ray: &Ray) -> Vec<f32> {
         let a = self.origin - ray.get_origin();
         println!("a: {:?}", a);
@@ -50,6 +66,6 @@ impl Intersect for Sphere {
         }
         println!();
         vec![0.0, 0.0]
-        //todo!()
     }
+    */
 }

@@ -113,7 +113,7 @@ impl Coord {
         //self.w * other.w
     }
 
-    pub fn cross(self, other: Self) -> Self {
+    pub fn cross(self, other: &Self) -> Self {
         if self.is_point() || other.is_point() {
             panic!("do not call cross product on points")
         }
@@ -126,6 +126,33 @@ impl Coord {
 
     pub fn len(&self) -> f32 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    }
+
+
+    /// given two vectors, returns the scalar s required to convert this vector to the other vector
+    /// or None if vectors aren't in the same direction or if one vec is a point
+    pub fn scalar_multiple(&self, other: &Self) -> Option<f32> {
+        println!("{:?} {:?}", self, other);
+        if self.is_point() || other.is_point() {
+            return None;
+        }
+        if self.cross(other).len() != 0.0 {
+            println!("{:?}", self.cross(other));
+            println!("{}", self.cross(other).len());
+            return None;
+        }
+        
+
+        if self.get_x() != 0.0 && other.get_x() != 0.0 {
+            return Some(other.get_x() / self.get_x());
+        }
+        else if self.get_y() != 0.0 && other.get_y() != 0.0 {
+            return Some(other.get_y() / self.get_y());
+        }
+        else if self.get_z() != 0.0 && other.get_z() != 0.0 {
+            return Some(other.get_z() / self.get_z());
+        }
+        return Some(0.0)
     }
 }
 
@@ -396,8 +423,8 @@ mod tests {
     fn test_cross() {
         let a = Coord::vec(1.0, 2.0, 3.0);
         let b = Coord::vec(2.0, 3.0, 4.0);
-        assert_eq!(a.cross(b), Coord::vec(-1.0, 2.0, -1.0));
-        assert_eq!(b.cross(a), Coord::vec(1.0, -2.0, 1.0));
+        assert_eq!(a.cross(&b), Coord::vec(-1.0, 2.0, -1.0));
+        assert_eq!(b.cross(&a), Coord::vec(1.0, -2.0, 1.0));
     }
 
     #[test]
@@ -410,5 +437,31 @@ mod tests {
         let c = c * 0.8;
         println!("{:?}", c);
         assert_eq!(c, Coord::new(-0.04096, 0.08192, 0.12288, 0.4096));
+    }
+
+    #[test]
+    fn test_scalar() {
+        let a = Coord::point(0.0, 0.0, 0.0);
+        assert!(a.scalar_multiple(&Coord::vec(0.0, 0.0, 0.0)).is_none());
+
+        let a = Coord::vec(0.0, 0.0, 0.0);
+        let b = Coord::vec(1.0, 0.0, 0.0);
+        assert!(a.scalar_multiple(&a).is_some());
+        assert_eq!(a.scalar_multiple(&a).unwrap(), 0.0);
+        assert!(a.scalar_multiple(&b).is_some());
+        assert_eq!(a.scalar_multiple(&b).unwrap(), 0.0);
+
+        let a = Coord::vec(1.0, 0.0, 0.0);
+        let b = Coord::vec(2.0, 0.0, 0.0);
+        assert!(a.scalar_multiple(&b).is_some());
+        assert_eq!(a.scalar_multiple(&b).unwrap(), 2.0);
+
+        let b = Coord::vec(0.0, 2.0, 0.0);
+        assert!(a.scalar_multiple(&b).is_none());
+
+        let a = Coord::vec(0.0, 0.0, 2.0);
+        let b = Coord::vec(0.0, 0.0, 6.0);
+        assert!(a.scalar_multiple(&b).is_some());
+        assert_eq!(a.scalar_multiple(&b).unwrap(), 3.0);
     }
 }

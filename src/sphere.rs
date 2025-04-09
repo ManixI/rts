@@ -1,5 +1,4 @@
 use core::f32;
-use std::vec;
 
 use crate::ray::{Intersect, Ray};
 
@@ -23,13 +22,14 @@ impl Sphere {
 impl Intersect for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         // ref: https://discussions.unity.com/t/how-do-i-find-the-closest-point-on-a-line/588895/3
-        let dir = ray.get_direction().normalized();
+        let dir = ray.get_direction();//.normalized();
         let v = self.origin - ray.get_origin();
         let d = v.dot(dir);
         let nearest = ray.get_origin() + dir * d;
         let dist = nearest.len();
         //println!("dist: {:?}", dist);
         if dist > self.radius {
+            //println!{"None"}
             return None;
         }
         // assume nearest point is exactly radius far away

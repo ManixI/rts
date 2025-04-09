@@ -1,5 +1,3 @@
-use crate::sphere::Sphere;
-
 use super::Coord;
 
 #[derive(Debug,PartialEq, Clone, Copy)]
@@ -16,7 +14,7 @@ pub trait Intersect {
 #[allow(dead_code)]
 impl Ray {
     pub fn new(origin: Coord, direction: Coord) -> Self {
-        Ray { origin, direction }
+        Ray { origin, direction: direction.normalized() }
     }
 
     fn position(&self, time: f32) -> Coord {

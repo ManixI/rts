@@ -43,14 +43,11 @@ impl Intersect for Sphere {
         }
         
         let mut out: [f32; 2] = [0.0; 2];
-        println!("{:?} {:?} {}", nearest, dir, c);
         
         let vec = nearest - (dir*c) - ray.get_origin();
-        println!("vec: {:?}", vec);
         out[0] = dir.scalar_multiple(&vec).unwrap();
 
         let vec = nearest + (dir*c)- ray.get_origin();
-        println!("vec: {:?}", vec);
         out[1] = dir.scalar_multiple(&vec).unwrap();
 
         //println!("t: {:?}\n", out);
@@ -59,7 +56,6 @@ impl Intersect for Sphere {
 }
 
 mod tests {
-    use crate::ray::Ray;
     use super::*;
 
     #[test]

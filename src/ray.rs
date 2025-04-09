@@ -39,8 +39,6 @@ impl Ray {
 
 #[cfg(test)]
 mod tests {
-    use crate::sphere::Sphere;
-
     use super::*;
 
     #[test]

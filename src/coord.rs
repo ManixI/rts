@@ -134,13 +134,13 @@ impl Coord {
     // TODO: Move EPSILON to single const file rather then adding it wherever it is used
     const EPSILON: f32 = 0.000001;
     pub fn scalar_multiple(&self, other: &Self) -> Option<f32> {
-        println!("{:?} {:?}", self, other);
+        //println!("{:?} {:?}", self, other);
         if self.is_point() || other.is_point() {
             return None;
         }
         if self.cross(other).len() > EPSILON {
-            println!("{:?}", self.cross(other));
-            println!("{}", self.cross(other).len());
+            //println!("{:?}", self.cross(other));
+            //println!("{}", self.cross(other).len());
             return None;
         }
         

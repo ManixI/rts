@@ -10,7 +10,7 @@ pub struct Ray {
 
 pub trait Intersect {
     // trait that implements intersection for any object and a ray
-    fn intersect(&self, ray: &Ray) -> Option<Vec<f32>>;
+    fn intersect(&self, ray: &Ray) -> Option<[f32; 2]>;
 }
 
 #[allow(dead_code)]
@@ -23,7 +23,7 @@ impl Ray {
         self.origin + self.direction * time
     }
 
-    fn intersect(&self, object: &impl Intersect) -> Option<Vec<f32>> {
+    fn intersect(&self, object: &impl Intersect) -> Option<[f32; 2]> {
         object.intersect(&self)
     }
 
@@ -62,37 +62,36 @@ mod tests {
     }
 
     #[test]
-
     fn test_sphere_intersection_no_position() {
         let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let xs = r.intersect(&s);
-        assert!(xs.unwrap().len() > 0);
+        assert!(xs.is_some());
     
         let r = Ray::new(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let xs = r.intersect(&s);
-        assert!(xs.unwrap().len() > 0);
+        assert!(xs.is_some());
 
         let r = Ray::new(Coord::point(0.0, 2.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let xs = r.intersect(&s);
-        assert_eq!(xs, None);
+        assert!(xs.is_none());
 
         let r = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let xs = r.intersect(&s);
-        assert!(xs.unwrap().len() > 0);
+        assert!(xs.is_some());
 
         let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let xs = r.intersect(&s);
-        assert!(xs.unwrap().len() > 0);
+        assert!(xs.is_some());
 
         let r = Ray::new(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, -0.1, 1.0));
         let s = Sphere::default();
         let xs = r.intersect(&s);
-        assert!(xs.unwrap().len() > 0); 
+        assert!(xs.is_some());
     }
 
     #[test]

@@ -21,7 +21,7 @@ impl Sphere {
 
 //const EPSILON: f32 = 0.02;
 impl Intersect for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<f32>> {
+    fn intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         // ref: https://discussions.unity.com/t/how-do-i-find-the-closest-point-on-a-line/588895/3
         let dir = ray.get_direction().normalized();
         let v = self.origin - ray.get_origin();
@@ -32,40 +32,26 @@ impl Intersect for Sphere {
         if dist > self.radius {
             return None;
         }
-        Some(vec![0.0, 0.0])
-    }
-    /*
-    // floating point errors get too large with this method
-    fn intersect(&self, ray: &Ray) -> Vec<f32> {
-        let a = self.origin - ray.get_origin();
-        println!("a: {:?}", a);
-        println!("|a|: {:?}", a.len());
-        if a.len() == 0.0 {
-            println!();
-            return vec![0.0, 0.0];
+        // assume nearest point is exactly radius far away
+        let mut c = 0.0;
+        // if not, calculate actual distance
+        if dist != self.radius {
+            let a = self.radius;
+            let b = dist;
+            c = (a.powi(2) + b.powi(2)).sqrt();
+            //println!("{} {}", a, b);
         }
+        
+        let mut out: [f32; 2] = [0.0; 2];
+        //println!("{:?} {:?} {}", nearest, dir, c);
+        
+        let vec = nearest - (dir*c) - ray.get_origin();
+        out[0] = dir.scalar_multiple(&vec).unwrap();
 
-        let b = ((a.cross(ray.get_direction()).len())/(a.len() * ray.get_direction().len()));
-        let b_degrees = b.asin() * (180.0/f32::consts::PI);
-        println!("B: {:?}", b_degrees);
-        if b_degrees == f32::NAN {
-            println!();
-            return Vec::<f32>::with_capacity(0);
-        }
-        // ray goes though center of origin
-        if b == 0.0 {
-            println!();
-            // TODO: calc area of sphere
-            return vec![a.len(), a.len()];
-        }
-        let b = b * (a.len() / (f32::consts::PI/2.0-b.asin()).sin());
-        println!("b: {:?}", b);
-        if b - self.radius > EPSILON {
-            println!();
-            return Vec::<f32>::with_capacity(0);
-        }
-        println!();
-        vec![0.0, 0.0]
+        let vec = nearest + (dir*c)- ray.get_origin();
+        out[1] = dir.scalar_multiple(&vec).unwrap();
+
+        //println!("t: {:?}\n", out);
+        Some(out)
     }
-    */
 }

@@ -131,12 +131,14 @@ impl Coord {
 
     /// given two vectors, returns the scalar s required to convert this vector to the other vector
     /// or None if vectors aren't in the same direction or if one vec is a point
+    // TODO: Move EPSILON to single const file rather then adding it wherever it is used
+    const EPSILON: f32 = 0.000001;
     pub fn scalar_multiple(&self, other: &Self) -> Option<f32> {
         println!("{:?} {:?}", self, other);
         if self.is_point() || other.is_point() {
             return None;
         }
-        if self.cross(other).len() != 0.0 {
+        if self.cross(other).len() > EPSILON {
             println!("{:?}", self.cross(other));
             println!("{}", self.cross(other).len());
             return None;

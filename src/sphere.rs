@@ -43,15 +43,95 @@ impl Intersect for Sphere {
         }
         
         let mut out: [f32; 2] = [0.0; 2];
-        //println!("{:?} {:?} {}", nearest, dir, c);
+        println!("{:?} {:?} {}", nearest, dir, c);
         
         let vec = nearest - (dir*c) - ray.get_origin();
+        println!("vec: {:?}", vec);
         out[0] = dir.scalar_multiple(&vec).unwrap();
 
         let vec = nearest + (dir*c)- ray.get_origin();
+        println!("vec: {:?}", vec);
         out[1] = dir.scalar_multiple(&vec).unwrap();
 
         //println!("t: {:?}\n", out);
         Some(out)
+    }
+}
+
+mod tests {
+    use crate::ray::Ray;
+    use super::*;
+
+    #[test]
+    fn test_sphere_intersection_no_position() {
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+    
+        let r = Ray::new(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+
+        let r = Ray::new(Coord::point(0.0, 2.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_none());
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+
+        let r = Ray::new(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, -0.1, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+    }
+
+    #[test]
+    fn test_sphere_intersection() {
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+        let xs = xs.unwrap();
+        assert_eq!(xs[0], 4.0);
+        assert_eq!(xs[1], 6.0);
+    
+        let r = Ray::new(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+        let xs = xs.unwrap();
+        assert_eq!(xs[0], 5.0);
+        assert_eq!(xs[1], 5.0);
+
+        let r = Ray::new(Coord::point(0.0, 2.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_none());
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+        let xs = xs.unwrap();
+        assert_eq!(xs[0], -1.0);
+        assert_eq!(xs[1], 1.0);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+        let xs = xs.unwrap();
+        assert_eq!(xs[0], -6.0);
+        assert_eq!(xs[1], -4.0);
     }
 }

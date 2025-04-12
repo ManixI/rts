@@ -20,22 +20,29 @@ impl Sphere {
 
 //const EPSILON: f32 = 0.02;
 impl Intersect for Sphere {
+    // this is the geometric solution
     fn intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         // ref: https://discussions.unity.com/t/how-do-i-find-the-closest-point-on-a-line/588895/3
         let dir = ray.get_direction();//.normalized();
         let v = self.origin - ray.get_origin();
         let d = v.dot(dir);
+        //if d < 0 {
+        //    return None;
+        //}
+        println!("{} {}", d, self.radius);
         let nearest = ray.get_origin() + dir * d;
-        let dist = nearest.len();
+        //let dist = nearest.len();
+        // better to square radius for comparison then sqrt the dist as dist isn't actually needed
+        let dist = nearest.get_x().powi(2) + nearest.get_y().powi(2) + nearest.get_z().powi(2);
         //println!("dist: {:?}", dist);
-        if dist > self.radius {
+        if dist > self.radius.powi(2) {
             //println!{"None"}
             return None;
         }
         // assume nearest point is exactly radius far away
         let mut c = 0.0;
         // if not, calculate actual distance
-        if dist != self.radius {
+        if dist != self.radius.powi(2) {
             let a = self.radius;
             let b = dist;
             c = (a.powi(2) + b.powi(2)).sqrt();

@@ -1,7 +1,5 @@
 use core::f32;
-
 use crate::ray::{Intersect, Ray};
-
 use super::Coord;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -16,12 +14,8 @@ impl Sphere {
     pub fn default() -> Self {
         Self { origin: Coord::point(0.0, 0.0, 0.0), radius: 1.0 }
     }
-}
 
-//const EPSILON: f32 = 0.02;
-impl Intersect for Sphere {
-    // this is the geometric solution
-    fn intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
+    pub fn geometric_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         // ref: https://discussions.unity.com/t/how-do-i-find-the-closest-point-on-a-line/588895/3
         let dir = ray.get_direction();//.normalized();
         let v = self.origin - ray.get_origin();
@@ -48,9 +42,9 @@ impl Intersect for Sphere {
             c = (a.powi(2) + b.powi(2)).sqrt();
             //println!("{} {}", a, b);
         }
-        
+
         let mut out: [f32; 2] = [0.0; 2];
-        
+
         let vec = nearest - (dir*c) - ray.get_origin();
         out[0] = dir.scalar_multiple(&vec).unwrap();
 
@@ -59,6 +53,44 @@ impl Intersect for Sphere {
 
         //println!("t: {:?}\n", out);
         Some(out)
+    }
+
+    pub fn analytical_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
+        let L = ray.get_origin() - self.origin;
+        let a = ray.get_direction().dot(ray.get_direction());
+        let b = 2.0 * ray.get_direction().dot(L);
+        let c = L.dot(L) - self.radius.powi(2);
+        quadratic_formula_helper(a, b, c) 
+    }
+}
+
+fn quadratic_formula_helper(a: f32, b: f32, c: f32) -> Option<[f32; 2]> {
+    let disc = b.powi(2) - 4.0 * a * c;
+    if disc < 0.0 {
+        return None;
+    } else if disc == 0.0 {
+        let out = -0.5 * b / a;
+        return Some([out, out]);
+    }
+    let q = if b > 0.0 {-0.5 * (b + disc.sqrt())} else {-0.5 * (b - disc.sqrt())};
+    let mut out = [
+        q/a,
+        c/q
+    ];
+    if out[0] > out[1] {
+        let tmp = out[0];
+        out[0] = out[1];
+        out[1] = tmp;
+    }
+    Some(out)
+}
+
+//const EPSILON: f32 = 0.02;
+impl Intersect for Sphere {
+    // this is the geometric solution
+    fn intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
+       //self.geometric_intersect(ray) 
+       self.analytical_intersect(ray)
     }
 }
 

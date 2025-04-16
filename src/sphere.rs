@@ -51,30 +51,36 @@ impl Sphere {
         let vec = nearest + (dir*c)- ray.get_origin();
         out[1] = dir.scalar_multiple(&vec).unwrap();
 
+        if out[0] > out[1] {
+            let tmp = out[0];
+            out[0] = out[1];
+            out[1] = tmp;
+        }
         //println!("t: {:?}\n", out);
         Some(out)
     }
 
     pub fn analytical_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         let L = ray.get_origin() - self.origin;
-        let a = ray.get_direction().dot(ray.get_direction());
+        //let a = ray.get_direction().dot(ray.get_direction());
         let b = 2.0 * ray.get_direction().dot(L);
         let c = L.dot(L) - self.radius.powi(2);
-        quadratic_formula_helper(a, b, c) 
+        quadratic_formula_helper(b, c) 
     }
 }
 
-fn quadratic_formula_helper(a: f32, b: f32, c: f32) -> Option<[f32; 2]> {
-    let disc = b.powi(2) - 4.0 * a * c;
+/// assumes `a` value is 1 (ie ray direction is normalized)
+fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
+    let disc = b.powi(2) - 4.0 * c;
     if disc < 0.0 {
         return None;
     } else if disc == 0.0 {
-        let out = -0.5 * b / a;
+        let out = -0.5 * b;
         return Some([out, out]);
     }
     let q = if b > 0.0 {-0.5 * (b + disc.sqrt())} else {-0.5 * (b - disc.sqrt())};
     let mut out = [
-        q/a,
+        q,
         c/q
     ];
     if out[0] > out[1] {

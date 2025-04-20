@@ -78,10 +78,10 @@ fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
         let out = -0.5 * b;
         return Some([out, out]);
     }
-    let q = if b > 0.0 {-0.5 * (b + disc.sqrt())} else {-0.5 * (b - disc.sqrt())};
+    let quot = if b > 0.0 {-0.5 * (b + disc.sqrt())} else {-0.5 * (b - disc.sqrt())};
     let mut out = [
-        q,
-        c/q
+        quot,
+        c/quot
     ];
     if out[0] > out[1] {
         let tmp = out[0];

@@ -28,5 +28,26 @@ impl<T: Intersect<T>> Intersection <T> {
 
 #[cfg(test)]
 mod tests {
-    
+    use std::rc::Rc;
+    use crate::{coord::Coord, ray::{Intersect, Ray}, sphere::Sphere};
+    use super::Intersection;
+
+    #[test]
+    fn test_creation() {
+        let s = Rc::new(Sphere::default());
+        let intersection = Intersection::new(3.5, s.clone());
+        assert_eq!(intersection.t, 3.5);
+        assert_eq!(intersection.object, s);
+    }
+
+    #[test]
+    fn test_create_2() {
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let xs = s.intersect(&r);
+        assert!(xs.is_some());
+        let xs = xs.unwrap();
+        assert_eq!(xs[0].get_object(), &s);
+        assert_eq!(xs[1].get_object(), &s);
+    }
 }

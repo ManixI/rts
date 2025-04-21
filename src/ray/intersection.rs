@@ -48,6 +48,8 @@ mod tests {
         assert!(xs.is_some());
         let xs = xs.unwrap();
         assert_eq!(xs[0].get_object(), &s);
+        assert_eq!(xs[0].get_time(), 4.0);
         assert_eq!(xs[1].get_object(), &s);
+        assert_eq!(xs[1].get_time(), 6.0);
     }
 }

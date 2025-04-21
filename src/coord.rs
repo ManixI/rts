@@ -45,6 +45,15 @@ impl Coord {
     //    Coord { x: x as f32, y: y as f32, z: z as f32, w: w as f32 }
     //}
 
+    pub fn get_as_list(&self) -> [f32; 4] {
+        let mut out = [0.0; 4];
+        out[0] = self.get_x();
+        out[1] = self.get_y();
+        out[2] = self.get_z();
+        out[3] = self.get_w();
+        out
+    }
+
     pub fn point(x: f32, y: f32, z: f32) -> Self {
         Coord {x, y, z, w: 1.0}
     }
@@ -465,5 +474,13 @@ mod tests {
         let b = Coord::vec(0.0, 0.0, 6.0);
         assert!(a.scalar_multiple(&b).is_some());
         assert_eq!(a.scalar_multiple(&b).unwrap(), 3.0);
+    }
+
+    #[test]
+    fn test_get_as_list() {
+        let p = Coord::point(2.0, 3.0, 4.0);
+        let l = p.get_as_list();
+        assert_eq!(l.len(), 4);
+        assert_eq!(l, [2.0, 3.0, 4.0, 1.0]);
     }
 }

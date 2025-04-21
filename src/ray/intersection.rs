@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use super::Intersect;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Intersection<T> {
     t: f32,
     object: Rc<T>
@@ -39,12 +39,26 @@ impl<T: Intersect<T>> Intersection <T> {
         }
         out
     }
+
+    pub fn find_hit(data: &Vec<Self>) -> Option<&Self> {
+        let mut out = None;
+        for val in data {
+            if val.get_time() >= 0.0 {
+                if out.is_none() {
+                    out = Some(val);
+                } else if out.unwrap().get_time() > val.get_time() {
+                    out = Some(val);
+                }
+            }
+        }
+        out
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
-    use crate::{coord::Coord, ray::{self, Intersect, Ray}, sphere::Sphere};
+    use crate::{coord::Coord, ray::{Intersect, Ray}, sphere::Sphere};
     use super::Intersection;
 
     #[test]
@@ -85,5 +99,31 @@ mod tests {
         let test = Intersection::new(6.0, Rc::new(s));
         assert_eq!(data[1], test);
         assert_eq!(data[3], test);
+    }
+
+    #[test]
+    fn test_detect_hit() {
+        let s = Rc::new(Sphere::default());
+        let i1 = Intersection::new(1.0, s.clone());
+        let i2 = Intersection::new(2.0, s.clone());
+        let data = vec![i1.clone(), i2];
+        assert_eq!(Intersection::find_hit(&data).unwrap(), &i1);
+
+        let i1 = Intersection::new(-1.0, s.clone());
+        let i2 = Intersection::new(1.0, s.clone());
+        let data = vec![i1, i2.clone()];
+        assert_eq!(Intersection::find_hit(&data).unwrap(), &i2);
+
+        let i1 = Intersection::new(-1.0, s.clone());
+        let i2 = Intersection::new(-2.0, s.clone());
+        let data = vec![i1, i2];
+        assert!(Intersection::find_hit(&data).is_none());
+    
+        let i1 = Intersection::new(5.0, s.clone());
+        let i2 = Intersection::new(7.0, s.clone());
+        let i3 = Intersection::new(-3.0, s.clone());
+        let i4 = Intersection::new(2.0, s.clone());
+        let data = vec![i1, i2, i3, i4.clone()];
+        assert_eq!(Intersection::find_hit(&data).unwrap(), &i4);
     }
 }

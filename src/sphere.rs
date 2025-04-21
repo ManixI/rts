@@ -71,7 +71,7 @@ impl Sphere {
     pub fn analytical_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         let L = ray.get_origin() - self.origin;
         //let a = ray.get_direction().dot(ray.get_direction());
-        let b = 2.0 * ray.get_direction().dot(L);
+        let b = 2.0 * ray.get_norm_direction().dot(L);
         let c = L.dot(L) - self.radius.powi(2);
         quadratic_formula_helper(b, c) 
     }

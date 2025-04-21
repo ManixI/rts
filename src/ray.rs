@@ -1,3 +1,5 @@
+use crate::matrix::Matrix;
+
 use super::Coord;
 use intersection::*;
 
@@ -6,7 +8,8 @@ pub mod intersection;
 #[derive(Debug,PartialEq, Clone, Copy)]
 pub struct Ray {
     origin: Coord,
-    direction: Coord
+    direction: Coord,
+    norm_dir: Coord
 }
 
 pub trait Intersect<T> {
@@ -17,7 +20,11 @@ pub trait Intersect<T> {
 #[allow(dead_code)]
 impl Ray {
     pub fn new(origin: Coord, direction: Coord) -> Self {
-        Ray { origin, direction: direction.normalized() }
+        Ray { origin, direction: direction, norm_dir: direction.normalized() }
+    }
+
+    pub fn get_norm_direction(&self) -> Coord {
+       self.norm_dir
     }
 
     fn position(&self, time: f32) -> Coord {
@@ -35,7 +42,13 @@ impl Ray {
     pub fn get_direction(&self) -> Coord {
         self.direction
     }
+
+    pub fn transform(&self, mat: Matrix) -> Self {
+        todo!()
+    }
 }
+
+// TODO NOW: figure out normalization
 
 
 #[cfg(test)]
@@ -47,8 +60,9 @@ mod tests {
         let o = Coord::point(1.0, 2.0, 3.0);
         let d = Coord::vec(4.0, 5.0, 6.0);
         let r = Ray::new(o, d);
-        assert_eq!(r.direction, d.normalized());
+        assert_eq!(r.direction, d);
         assert_eq!(r.origin, o);
+        assert_eq!(r.norm_dir, d.normalized());
     }
 
     #[test]

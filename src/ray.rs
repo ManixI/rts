@@ -1,3 +1,5 @@
+use std::{ops::Mul, vec};
+
 use crate::matrix::Matrix;
 
 use super::Coord;
@@ -20,6 +22,7 @@ pub trait Intersect<T> {
 #[allow(dead_code)]
 impl Ray {
     pub fn new(origin: Coord, direction: Coord) -> Self {
+        // TODO: is there a better way then calcing the norm for every new ray?
         Ray { origin, direction: direction, norm_dir: direction.normalized() }
     }
 
@@ -44,11 +47,25 @@ impl Ray {
     }
 
     pub fn transform(&self, mat: Matrix) -> Self {
-        todo!()
+        //let mat = mat.inverse();
+
+        let point_mat = Matrix::from_point(&self.origin);
+        let vec_mat = Matrix::from_vec(&self.direction);
+
+        // TODO: remove need for clone here
+        let point_mat = point_mat.mul(mat.clone());
+        let vec_mat = vec_mat.mul(mat);
+
+
+        println!("{:?}", point_mat);
+        println!("{:?}", vec_mat);
+        Self::new(
+            point_mat.to_point(),
+            vec_mat.to_vec()
+        )
     }
 }
 
-// TODO NOW: figure out normalization
 
 
 #[cfg(test)]
@@ -74,4 +91,19 @@ mod tests {
         assert_eq!(r.position(2.5), Coord::point(4.5, 3.0, 4.0));
     }
 
+    #[test]
+    fn test_transform() {
+        let r = Ray::new(Coord::point(1.0, 2.0, 3.0), Coord::vec(0.0, 1.0, 0.0));
+        let m = Matrix::translation(3.0, 4.0, 5.0);
+        let new = r.transform(m);
+        println!("{:?}\n", new);
+        assert_eq!(new.get_origin(), Coord::point(4.0, 6.0, 8.0));
+        assert_eq!(new.get_direction(), Coord::vec(0.0, 1.0, 0.0));
+
+        let m = Matrix::scaling(2.0, 3.0, 4.0);
+        let new = r.transform(m);
+        println!("{:?}\n", new);
+        assert_eq!(new.get_origin(), Coord::point(2.0, 6.0, 12.0));
+        assert_eq!(new.get_direction(), Coord::vec(0.0, 3.0, 0.0));
+    }
 }

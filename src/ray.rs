@@ -47,7 +47,7 @@ mod tests {
         let o = Coord::point(1.0, 2.0, 3.0);
         let d = Coord::vec(4.0, 5.0, 6.0);
         let r = Ray::new(o, d);
-        assert_eq!(r.direction, d);
+        assert_eq!(r.direction, d.normalized());
         assert_eq!(r.origin, o);
     }
 

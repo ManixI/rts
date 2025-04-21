@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use super::Intersect;
 
+#[derive(Debug, PartialEq)]
 pub struct Intersection<T> {
     t: f32,
     object: Rc<T>
@@ -24,12 +25,26 @@ impl<T: Intersect<T>> Intersection <T> {
     pub fn get_object_pointer(&self) -> Rc<T> {
         self.object.clone()
     }
+
+    pub fn aggregate_intersections(data: Vec<Option<[Self; 2]>>) -> Vec<Self> {
+        let mut out = Vec::<Self>::with_capacity(data.len() * 2);
+        for val in data {
+            if val.is_none() {
+                continue;
+            }
+            let val = val.unwrap();
+            for inter in val {
+                out.push(inter);
+            }
+        }
+        out
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
-    use crate::{coord::Coord, ray::{Intersect, Ray}, sphere::Sphere};
+    use crate::{coord::Coord, ray::{self, Intersect, Ray}, sphere::Sphere};
     use super::Intersection;
 
     #[test]
@@ -51,5 +66,24 @@ mod tests {
         assert_eq!(xs[0].get_time(), 4.0);
         assert_eq!(xs[1].get_object(), &s);
         assert_eq!(xs[1].get_time(), 6.0);
+    }
+
+    #[test]
+    fn test_intersection_aggregation() {
+        let s = Sphere::default();
+        let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let mut intersections = Vec::new();
+        intersections.push(s.intersect(&ray));
+        intersections.push(s.intersect(&ray));
+        let ray = Ray::new(Coord::point(5.0, 5.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        intersections.push(s.intersect(&ray));
+        let data = Intersection::aggregate_intersections(intersections);
+        assert_eq!(data.len(), 4);
+        let test = Intersection::new(4.0, Rc::new(s));
+        assert_eq!(data[0], test);
+        assert_eq!(data[2], test);
+        let test = Intersection::new(6.0, Rc::new(s));
+        assert_eq!(data[1], test);
+        assert_eq!(data[3], test);
     }
 }

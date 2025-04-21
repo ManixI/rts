@@ -31,6 +31,25 @@ impl Matrix {
         Self{data}
     }
 
+    pub fn get_data(&self) -> Vec<Vec<f32>> {
+        self.data.clone()
+    }
+
+    pub fn from_vec(vec: &Coord) -> Self {
+        let mut out = Self::identity(4);
+        let vec = vec.get_as_list();
+        // not sure if this is correct, should data[3][3] be 0 or 1 here?
+        for i in 0..3 {
+            out.data[i][i] = vec[i];
+        }
+        out
+    }
+
+    // wrapper for translation_from_coord to better signify intent of usage
+    pub fn from_point(coord: &Coord) -> Self {
+        Self::translation_from_coord(coord)
+    }
+
     pub fn identity(size: usize) -> Self {
         assert!(size >= 2 && size <= 4);
         let mut data = vec![vec![0.0; size]; size];
@@ -40,7 +59,7 @@ impl Matrix {
         Matrix { data }
     }
 
-    pub fn translation_from_coord(vec: Coord) -> Self {
+    pub fn translation_from_coord(vec: &Coord) -> Self {
         let mut new = Self::identity(4);
         new.data[0][3] = vec.get_x();
         new.data[1][3] = vec.get_y();
@@ -97,7 +116,15 @@ impl Matrix {
     }
 
     pub fn to_vec(&self) -> Coord {
-        Coord::vec(self.data[0][3], self.data[1][3], self.data[2][3])
+        Coord::vec(self.data[0][0], self.data[1][1], self.data[2][2])
+    }
+
+    pub fn to_point(&self) -> Coord {
+        Coord::point(
+            self.data[0][3] * self.data[0][0], 
+            self.data[1][3] * self.data[1][1], 
+            self.data[2][3] * self.data[2][2]
+        )
     }
 
     pub fn shearing(xy: f32, xz: f32, yx: f32, yz: f32, zx: f32, zy: f32) -> Self {
@@ -267,7 +294,7 @@ impl ops::Mul<Coord> for Matrix {
 
 #[cfg(test)]
 mod tests {
-    use std::{f32, vec};
+    use std::{f32, ops::Mul, vec};
     use super::*;
 
     /// Tests roughly equal, necessary if testing floating point operations
@@ -624,7 +651,7 @@ mod tests {
     #[test]
     fn test_translation() {
         let vec = Coord::point(5.0, -3.0, 2.0);
-        let mat = Matrix::translation_from_coord(vec);
+        let mat = Matrix::translation_from_coord(&vec);
         let data = vec![
             vec![1.0, 0.0, 0.0, 5.0],
             vec![0.0, 1.0, 0.0, -3.0],
@@ -638,7 +665,7 @@ mod tests {
         assert_eq!(mat, test);
         
         // test translation
-        let mat = Matrix::translation_from_coord(Coord::vec(5.0, -3.0, 2.0));
+        let mat = Matrix::translation_from_coord(&Coord::vec(5.0, -3.0, 2.0));
         let p = Coord::point(-3.0, 4.0, 5.0);
         assert_eq!(mat * p, Coord::point(2.0, 1.0, 7.0));
 
@@ -753,6 +780,43 @@ mod tests {
 
         let transform = c * b * a;
         assert!(test_roughly_equal_coords(transform * p, Coord::point(15.0, 0.0, 7.0)));
+    }
+
+    #[test]
+    fn test_from_vec() {
+        let vec = Coord::vec(4.0, 2.0, 3.0);
+        let mat = Matrix::from_vec(&vec);
+        let vec = vec.get_as_list();
+        for i in 0..3 {
+            assert_eq!(mat.data[i][i], vec[i]);
+        }
+    }
+
+    #[test]
+    fn test_to_vec() {
+        let vec = Coord::vec(1.0, 2.0, 3.0);
+        let mat = Matrix::from_vec(&vec);
+        assert_eq!(mat.to_vec(), vec);
+
+        let mat = mat.mul(Matrix::scaling(2.0, 3.0, 4.0));
+        assert_eq!(mat.to_vec(), Coord::vec(2.0, 6.0, 12.0));
+
+        let mat = Matrix::from_vec(&vec);
+        let mat = mat.mul(Matrix::translation(1.0, 2.0, 3.0));
+        assert_eq!(mat.to_vec(), vec);
+    }
+
+    #[test]
+    fn test_to_point() {
+        let point = Coord::point(1.0, 2.0, 3.0);
+        let mat = Matrix::from_point(&point);
+        assert_eq!(mat.to_point(), point);
+
+        let test = mat.clone().mul(Matrix::scaling(2.0, 3.0, 4.0));
+        assert_eq!(test.to_point(), Coord::point(2.0, 6.0, 12.0));
+
+        let test = mat.mul(Matrix::translation(1.0, 2.0, 3.0));
+        assert_eq!(test.to_point(), Coord::point(2.0, 4.0, 6.0));
     }
 }
 

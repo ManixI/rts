@@ -15,6 +15,11 @@ impl Sphere {
         Self { origin: Coord::point(0.0, 0.0, 0.0), radius: 1.0 }
     }
 
+    pub fn new(origin: Coord, radius: f32) -> Self {
+        assert!(origin.is_point());
+        Self {origin, radius}
+    }
+
     pub fn geometric_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         // ref: https://discussions.unity.com/t/how-do-i-find-the-closest-point-on-a-line/588895/3
         let dir = ray.get_direction();//.normalized();
@@ -93,7 +98,6 @@ fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
 
 //const EPSILON: f32 = 0.02;
 impl Intersect for Sphere {
-    // this is the geometric solution
     fn intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
        //self.geometric_intersect(ray) 
        self.analytical_intersect(ray)

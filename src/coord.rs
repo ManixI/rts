@@ -53,11 +53,11 @@ impl Coord {
         Coord {x, y, z, w: 0.0}
     }
 
-    fn is_vec(&self) -> bool {
+    pub fn is_vec(&self) -> bool {
         self.w == 0.0
     }
 
-    fn is_point(&self) -> bool {
+    pub fn is_point(&self) -> bool {
         self.w == 1.0
     }
 

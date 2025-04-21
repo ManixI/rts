@@ -1,4 +1,7 @@
 use super::Coord;
+use intersection::*;
+
+pub mod intersection;
 
 #[derive(Debug,PartialEq, Clone, Copy)]
 pub struct Ray {
@@ -6,9 +9,9 @@ pub struct Ray {
     direction: Coord
 }
 
-pub trait Intersect {
+pub trait Intersect<T> {
     // trait that implements intersection for any object and a ray
-    fn intersect(&self, ray: &Ray) -> Option<[f32; 2]>;
+    fn intersect(&self, ray: &Ray) -> Option<[Intersection<T>; 2]>;
 }
 
 #[allow(dead_code)]
@@ -21,7 +24,7 @@ impl Ray {
         self.origin + self.direction * time
     }
 
-    pub fn intersect(&self, object: &impl Intersect) -> Option<[f32; 2]> {
+    pub fn intersect<T: Intersect<T>>(&self, object: &impl Intersect<T>) -> Option<[Intersection<T>; 2]> {
         object.intersect(&self)
     }
 

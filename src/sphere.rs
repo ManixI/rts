@@ -1,6 +1,9 @@
 use core::f32;
+use std::rc::Rc;
 use crate::ray::{Intersect, Ray};
+use crate::ray::intersection::*;
 use super::Coord;
+
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Sphere {
@@ -97,10 +100,16 @@ fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
 }
 
 //const EPSILON: f32 = 0.02;
-impl Intersect for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
-       //self.geometric_intersect(ray) 
-       self.analytical_intersect(ray)
+impl Intersect<Self> for Sphere {
+    fn intersect(&self, ray: &Ray) -> Option<[Intersection<Self>; 2]> {
+        //self.geometric_intersect(ray) 
+        let data = self.analytical_intersect(ray);
+        if data.is_none() {
+            return None;
+        }
+        let data = data.unwrap();
+        let t = Rc::new(*self);
+        Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
     }
 }
 
@@ -147,6 +156,7 @@ mod tests {
         let xs = r.intersect(&s);
         assert!(xs.is_some());
         let xs = xs.unwrap();
+        let xs = [xs[0].get_time(), xs[1].get_time()];
         assert_eq!(xs[0], 4.0);
         assert_eq!(xs[1], 6.0);
     
@@ -155,6 +165,7 @@ mod tests {
         let xs = r.intersect(&s);
         assert!(xs.is_some());
         let xs = xs.unwrap();
+        let xs = [xs[0].get_time(), xs[1].get_time()];
         assert_eq!(xs[0], 5.0);
         assert_eq!(xs[1], 5.0);
 
@@ -168,6 +179,7 @@ mod tests {
         let xs = r.intersect(&s);
         assert!(xs.is_some());
         let xs = xs.unwrap();
+        let xs = [xs[0].get_time(), xs[1].get_time()];
         assert_eq!(xs[0], -1.0);
         assert_eq!(xs[1], 1.0);
 
@@ -176,6 +188,7 @@ mod tests {
         let xs = r.intersect(&s);
         assert!(xs.is_some());
         let xs = xs.unwrap();
+        let xs = [xs[0].get_time(), xs[1].get_time()];
         assert_eq!(xs[0], -6.0);
         assert_eq!(xs[1], -4.0);
     }

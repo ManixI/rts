@@ -4,12 +4,14 @@ mod matrix;
 mod ray;
 mod sphere;
 
-use std::f32;
+use std::{f32, ops::Mul};
 
 use canvas::Canvas;
 use coord::Coord;
 use canvas::color::Color;
 use matrix::Matrix;
+use ray::Ray;
+use sphere::Sphere;
 
 #[derive(Debug, Clone, Copy)]
 struct Shot {
@@ -81,6 +83,37 @@ impl Environment {
     }
 }
 
+fn draw_clock(filename: &str) {
+    let mut clockface = Canvas::new(100, 100);
+    let white = Color::new(1.0, 1.0, 1.0, 0.0);
+    let step = f32::consts::PI/6.0;
+    for spot in 0..12 {
+        let point = Matrix::translation(50.0, 50.0, 0.0) * Matrix::rotate_z(step * spot as f32) * Matrix::translation(25.0, 0.0, 0.0) * Coord::point(0.0, 0.0, 0.0);
+        clockface.set_pixel(point.get_x() as usize, point.get_y() as usize, white);
+        println!("{:?}", point);
+    }
+    let _ = clockface.to_file(filename);
+}
+
+fn outline_sphere(filename: &str) {
+    let mut canvas = Canvas::new(100, 100);
+    let camera_pos = Coord::point(0.0, 0.0, -100.0);
+    let mut orb = Sphere::default();
+    let red = Color::red();
+    orb.apply_transformation(Matrix::translation(0.5, 0.5, 15.0) * Matrix::scaling(10.0, 10.0, 1.0));
+    //orb.apply_transformation(Matrix::scaling(5.0, 5.0, 5.0));
+    println!("{:?}", orb.get_origin());
+    for x in 0..101 {
+        for y in 0..101 {
+            let ray = Ray::new(camera_pos, Coord::vec((x as f32) / 2.0, (y as f32) / 2.0, 100.0/2.0));
+            if ray.intersect(&orb).is_some() {
+                canvas.set_pixel(x, y, red);
+            }
+        }
+    }
+    let _ = canvas.to_file(filename);
+}
+
 fn main() {
     let mut env = Environment::new(-0.01, -0.1, 900, 550);
     env.add_shot(Shot::new(Coord::point(0.0, 1.0, 0.0), Coord::vec(5.0, 8.2, 0.0) * 11.25));
@@ -90,13 +123,6 @@ fn main() {
     }
     let _ = env.draw_canvas("out.ppm");
 
-    let mut clockface = Canvas::new(100, 100);
-    let white = Color::new(1.0, 1.0, 1.0, 0.0);
-    let step = f32::consts::PI/6.0;
-    for spot in 0..12 {
-        let point = Matrix::translation(50.0, 50.0, 0.0) * Matrix::rotate_z(step * spot as f32) * Matrix::translation(25.0, 0.0, 0.0) * Coord::point(0.0, 0.0, 0.0);
-        clockface.set_pixel(point.get_x() as usize, point.get_y() as usize, white);
-        println!("{:?}", point);
-    }
-    let _ = clockface.to_file("clock.ppm");
+    //draw_clock("clock.ppm");
+    outline_sphere("sphere.ppm");
 }

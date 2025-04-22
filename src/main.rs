@@ -4,7 +4,7 @@ mod matrix;
 mod ray;
 mod sphere;
 
-use std::{f32, ops::Mul};
+use std::f32;
 
 use canvas::Canvas;
 use coord::Coord;
@@ -83,6 +83,7 @@ impl Environment {
     }
 }
 
+#[allow(dead_code)]
 fn draw_clock(filename: &str) {
     let mut clockface = Canvas::new(100, 100);
     let white = Color::new(1.0, 1.0, 1.0, 0.0);
@@ -97,20 +98,28 @@ fn draw_clock(filename: &str) {
 
 fn outline_sphere(filename: &str) {
     let mut canvas = Canvas::new(100, 100);
-    let camera_pos = Coord::point(0.0, 0.0, -100.0);
-    let mut orb = Sphere::default();
-    let red = Color::red();
-    orb.apply_transformation(Matrix::translation(0.5, 0.5, 15.0) * Matrix::scaling(10.0, 10.0, 1.0));
-    //orb.apply_transformation(Matrix::scaling(5.0, 5.0, 5.0));
-    println!("{:?}", orb.get_origin());
-    for x in 0..101 {
-        for y in 0..101 {
-            let ray = Ray::new(camera_pos, Coord::vec((x as f32) / 2.0, (y as f32) / 2.0, 100.0/2.0));
-            if ray.intersect(&orb).is_some() {
-                canvas.set_pixel(x, y, red);
+
+    let orb = Sphere::default();
+
+    let camera_pos = Coord::point(0.0, 0.0, -5.0);
+    let wall_pos = Coord::point(0.0, 0.0, 10.0);
+    let wall_size = 7.0;
+
+    let pixel_size = wall_size / 100.0;
+
+    for y in 0..100 {
+        let world_y = wall_size/2.0 - pixel_size * y as f32;
+        for x in 0..100 {
+            let world_x = -(wall_size/2.0) + pixel_size * x as f32;
+            let pos = Coord::point(world_x, world_y, wall_pos.get_z());
+            let ray = Ray::new(camera_pos, (pos - camera_pos).normalized());
+            let xs = ray.intersect(&orb);
+            if xs.is_some() {
+                canvas.set_pixel(x, y, Color::red());
             }
         }
     }
+
     let _ = canvas.to_file(filename);
 }
 

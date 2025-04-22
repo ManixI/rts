@@ -131,6 +131,7 @@ impl Intersect<Self> for Sphere {
     }
 }
 
+#[allow(unused_imports)]
 mod tests {
     use super::*;
     //use crate::{coord::Coord, matrix::Matrix, ray::{Intersect, Ray}, sphere::Sphere};

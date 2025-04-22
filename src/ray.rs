@@ -57,8 +57,8 @@ impl Ray {
         let vec_mat = vec_mat.mul(mat);
 
 
-        println!("{:?}", point_mat);
-        println!("{:?}", vec_mat);
+        //println!("{:?}", point_mat);
+        //println!("{:?}", vec_mat);
         Self::new(
             point_mat.to_point(),
             vec_mat.to_vec()
@@ -96,13 +96,13 @@ mod tests {
         let r = Ray::new(Coord::point(1.0, 2.0, 3.0), Coord::vec(0.0, 1.0, 0.0));
         let m = Matrix::translation(3.0, 4.0, 5.0);
         let new = r.transform(m);
-        println!("{:?}\n", new);
+        //println!("{:?}\n", new);
         assert_eq!(new.get_origin(), Coord::point(4.0, 6.0, 8.0));
         assert_eq!(new.get_direction(), Coord::vec(0.0, 1.0, 0.0));
 
         let m = Matrix::scaling(2.0, 3.0, 4.0);
         let new = r.transform(m);
-        println!("{:?}\n", new);
+        //println!("{:?}\n", new);
         assert_eq!(new.get_origin(), Coord::point(2.0, 6.0, 12.0));
         assert_eq!(new.get_direction(), Coord::vec(0.0, 3.0, 0.0));
     }

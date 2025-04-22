@@ -119,8 +119,9 @@ fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
 //const EPSILON: f32 = 0.02;
 impl Intersect<Self> for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<[Intersection<Self>; 2]> {
+        let ray = ray.transform(self.get_transformation().inverse().unwrap());
         //self.geometric_intersect(ray) 
-        let data = self.analytical_intersect(ray);
+        let data = self.analytical_intersect(&ray);
         if data.is_none() {
             return None;
         }
@@ -151,6 +152,20 @@ mod tests {
         s.set_transformation(mat.clone());
         assert_eq!(s.get_transformation(), mat);
         assert_eq!(s.get_origin(), mat.to_point());
+    }
+
+    #[test]
+    fn test_transformation() {
+        let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let mut s = Sphere::default();
+        s.set_transformation(Matrix::translation(5.0, 0.0, 0.0));
+        let xs = s.intersect(&ray);
+        assert!(xs.is_none());
+
+        s.set_transformation(Matrix::identity(4));
+        s.apply_transformation(Matrix::translation(5.0, 0.0, 0.0));
+        let xs = s.intersect(&ray);
+        assert!(xs.is_none());
     }
 
     #[test]

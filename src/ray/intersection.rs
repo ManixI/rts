@@ -93,7 +93,7 @@ mod tests {
         intersections.push(s.intersect(&ray));
         let data = Intersection::aggregate_intersections(intersections);
         assert_eq!(data.len(), 4);
-        let test = Intersection::new(4.0, Rc::new(s));
+        let test = Intersection::new(4.0, Rc::new(s.clone()));
         assert_eq!(data[0], test);
         assert_eq!(data[2], test);
         let test = Intersection::new(6.0, Rc::new(s));

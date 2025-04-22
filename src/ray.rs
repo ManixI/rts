@@ -1,4 +1,4 @@
-use std::{ops::Mul, vec};
+use std::ops::Mul;
 
 use crate::matrix::Matrix;
 

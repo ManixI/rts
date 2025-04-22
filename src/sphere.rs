@@ -9,7 +9,7 @@ use super::Coord;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sphere {
     //origin: Coord,
-    radius: f32,
+    //radius: f32,
     transformation: Matrix,
 }
 
@@ -17,12 +17,12 @@ pub struct Sphere {
 impl Sphere {
     /// a sphere at position (0, 0, 0) with a radius of 1
     pub fn default() -> Self {
-        Self { radius: 1.0, transformation: Matrix::identity(4) }
+        Self { transformation: Matrix::identity(4) }
     }
 
-    pub fn new(origin: Coord, radius: f32) -> Self {
+    pub fn new(origin: Coord) -> Self {
         assert!(origin.is_point());
-        Self {radius, transformation: Matrix::from_point(&origin)}
+        Self { transformation: Matrix::from_point(&origin)}
     }
 
     pub fn set_transformation(&mut self, mat: Matrix) {
@@ -54,17 +54,17 @@ impl Sphere {
         // better to square radius for comparison then sqrt the dist as dist isn't actually needed
         let dist = nearest.get_x().powi(2) + nearest.get_y().powi(2) + nearest.get_z().powi(2);
         //println!("dist: {:?}", dist);
-        if dist > self.radius.powi(2) {
+        if dist > 1.0 {
             //println!{"None"}
             return None;
         }
         // assume nearest point is exactly radius far away
         let mut c = 0.0;
         // if not, calculate actual distance
-        if dist != self.radius.powi(2) {
-            let a = self.radius;
+        if dist != 1.0 {
+            //let a = 1.0;
             let b = dist;
-            c = (a.powi(2) + b.powi(2)).sqrt();
+            c = (1.0 + b.powi(2)).sqrt();
             //println!("{} {}", a, b);
         }
 
@@ -89,7 +89,7 @@ impl Sphere {
         let l = ray.get_origin() - self.get_origin();
         //let a = ray.get_direction().dot(ray.get_direction());
         let b = 2.0 * ray.get_norm_direction().dot(l);
-        let c = l.dot(l) - self.radius.powi(2);
+        let c = l.dot(l) - 1.0;
         quadratic_formula_helper(b, c) 
     }
 }
@@ -133,15 +133,16 @@ impl Intersect<Self> for Sphere {
 
 mod tests {
     use super::*;
+    //use crate::{coord::Coord, matrix::Matrix, ray::{Intersect, Ray}, sphere::Sphere};
 
     #[test]
     fn test_sphere_creation() {
         let s = Sphere::default();
-        assert_eq!(s.radius, 1.0);
+        //assert_eq!(s.radius, 1.0);
         assert_eq!(s.transformation, Matrix::identity(4));
 
-        let s = Sphere::new(Coord::point(0.0, 0.0, 0.0), 2.0);
-        assert_eq!(s.radius, 2.0);
+        let s = Sphere::new(Coord::point(0.0, 0.0, 0.0));
+        //assert_eq!(s.radius, 2.0);
         assert_eq!(s.transformation, Matrix::identity(4));
     }
 

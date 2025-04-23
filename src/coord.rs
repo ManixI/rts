@@ -45,6 +45,22 @@ impl Coord {
     //    Coord { x: x as f32, y: y as f32, z: z as f32, w: w as f32 }
     //}
 
+    pub fn set_x(&mut self, x: f32) {
+        self.x = x;
+    }
+
+    pub fn set_y(&mut self, y: f32) {
+        self.y = y;
+    }
+    
+    pub fn set_z(&mut self, z: f32) {
+        self.z = z;
+    }
+    
+    pub fn set_w(&mut self, w: f32) {
+        self.w = w;
+    }
+    
     pub fn get_as_list(&self) -> [f32; 4] {
         let mut out = [0.0; 4];
         out[0] = self.get_x();
@@ -52,6 +68,15 @@ impl Coord {
         out[2] = self.get_z();
         out[3] = self.get_w();
         out
+    }
+
+    pub fn from_list(vec: &[f32; 4]) -> Self {
+        Self {
+            x: vec[0],
+            y: vec[1],
+            z: vec[2],
+            w: vec[3]
+        }
     }
 
     pub fn point(x: f32, y: f32, z: f32) -> Self {
@@ -482,5 +507,12 @@ mod tests {
         let l = p.get_as_list();
         assert_eq!(l.len(), 4);
         assert_eq!(l, [2.0, 3.0, 4.0, 1.0]);
+    }
+
+    #[test]
+    fn test_from_list() {
+        let l: [f32; 4] = [1.0, 2.0, 3.0, 0.0];
+        let v = Coord::from_list(&l);
+        assert_eq!(v, Coord::vec(1.0, 2.0, 3.0))
     }
 }

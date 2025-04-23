@@ -92,6 +92,18 @@ impl Sphere {
         let c = l.dot(l) - 1.0;
         quadratic_formula_helper(b, c) 
     }
+
+    /// func assumes pos is on the sphere, if it is not results are undefined
+    pub fn normal_at(&self, pos: Coord) -> Coord {
+        let object_pos = self.transformation.inverse().unwrap() * pos;
+        let obj_normal = object_pos - Coord::point(0.0, 0.0, 0.0);
+        let mut world_norm = self.transformation.inverse()
+            .unwrap()
+            .transpose()
+            * obj_normal;
+        world_norm.set_w(0.0);
+        world_norm.normalized()
+    }
 }
 
 /// assumes `a` value is 1 (ie ray direction is normalized)
@@ -133,8 +145,25 @@ impl Intersect<Self> for Sphere {
 
 #[allow(unused_imports)]
 mod tests {
+    use core::f32;
+    use std::thread::spawn;
+
+    use crate::sphere;
+
     use super::*;
     //use crate::{coord::Coord, matrix::Matrix, ray::{Intersect, Ray}, sphere::Sphere};
+
+    const EPSILON: f32 = 0.0000001;
+
+    fn test_near_0(vec: &Coord) -> Coord {
+        let mut vec = vec.get_as_list();
+        for (i, val) in vec.clone().iter().enumerate() {
+            if val.abs() < EPSILON {
+                vec[i] = 0.0;
+            }
+        }
+        Coord::from_list(&vec)
+    }
 
     #[test]
     fn test_sphere_creation() {
@@ -245,5 +274,33 @@ mod tests {
         let xs = [xs[0].get_time(), xs[1].get_time()];
         assert_eq!(xs[0], -6.0);
         assert_eq!(xs[1], -4.0);
+    }
+
+    #[test]
+    fn test_normal_at() {
+        let s = Sphere::default();
+        let n = s.normal_at(Coord::point(1.0, 0.0, 0.0));
+        assert_eq!(n, Coord::vec(1.0, 0.0, 0.0));
+        
+        let n = s.normal_at(Coord::point(0.0, 1.0, 0.0));
+        assert_eq!(n, Coord::vec(0.0, 1.0, 0.0));
+        
+        let n = s.normal_at(Coord::point(0.0, 0.0, 1.0));
+        assert_eq!(n, Coord::vec(0.0, 0.0, 1.0));
+        
+        let n = s.normal_at(Coord::point(3.0_f32.sqrt()/3.0, 3.0_f32.sqrt()/3.0, 3.0_f32.sqrt()/3.0));
+        assert_eq!(n, Coord::vec(3.0_f32.sqrt()/3.0, 3.0_f32.sqrt()/3.0, 3.0_f32.sqrt()/3.0));
+        assert_eq!(n, n.normalized());
+
+        let mut s = Sphere::default();
+        s.set_transformation(Matrix::translation(0.0, 1.0, 0.0));
+        let n = s.normal_at(Coord::point(0.0, 1.70711, -0.70711));
+        assert_eq!(n, Coord::vec(0.0, 0.7071068, -0.70710677));
+
+        let mut s = Sphere::default();
+        s.set_transformation(Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotate_z(f32::consts::PI/5.0));
+        let n = s.normal_at(Coord::point(0.0, (2.0_f32.sqrt())/2.0, -(2.0_f32.sqrt())/2.0));
+        let n = test_near_0(&n);
+        assert_eq!(n, Coord::vec(0.0, 0.97014254, -0.24253564));
     }
 }

@@ -163,6 +163,10 @@ impl Coord {
     }
 
 
+    //TODO: optimize this
+    pub fn reflect(&self, norm: &Self) -> Self {
+        self.clone() - norm.clone() * 2.0 * self.dot(norm.clone())
+    }
     /// given two vectors, returns the scalar s required to convert this vector to the other vector
     /// or None if vectors aren't in the same direction or if one vec is a point
     // TODO: Move EPSILON to single const file rather then adding it wherever it is used
@@ -514,5 +518,16 @@ mod tests {
         let l: [f32; 4] = [1.0, 2.0, 3.0, 0.0];
         let v = Coord::from_list(&l);
         assert_eq!(v, Coord::vec(1.0, 2.0, 3.0))
+    }
+
+    #[test]
+    fn test_reflection() {
+        let vec = Coord::vec(1.0, -1.0, 0.0);
+        let norm = Coord::vec(0.0, 1.0, 0.0);
+        assert_eq!(vec.reflect(&norm), Coord::vec(1.0, 1.0, 0.0));
+
+        let vec = Coord::vec(0.0, -1.0, 0.0);
+        let norm = Coord::vec(2.0_f32.sqrt()/2.0, 2.0_f32.sqrt()/2.0, 0.0);
+        assert_eq!(vec.reflect(&norm), Coord::vec(1.0, 0.0, 0.0));
     }
 }

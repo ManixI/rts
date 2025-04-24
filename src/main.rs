@@ -4,6 +4,7 @@ mod matrix;
 mod ray;
 mod sphere;
 mod light;
+mod material;
 
 use std::f32;
 

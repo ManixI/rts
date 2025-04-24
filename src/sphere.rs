@@ -1,5 +1,6 @@
 use core::f32;
 use std::rc::Rc;
+use crate::material::Material;
 use crate::matrix::Matrix;
 use crate::ray::{Intersect, Ray};
 use crate::ray::intersection::*;
@@ -11,18 +12,37 @@ pub struct Sphere {
     //origin: Coord,
     //radius: f32,
     transformation: Matrix,
+    material: Material,
 }
 
 #[allow(dead_code)]
 impl Sphere {
     /// a sphere at position (0, 0, 0) with a radius of 1
     pub fn default() -> Self {
-        Self { transformation: Matrix::identity(4) }
+        Self { 
+            transformation: Matrix::identity(4), 
+            material: Material::default()
+        }
     }
 
+    /**
+     * TODO: spheres should use constructor with default characteristics rather then
+     * current form.
+     * ex creating a sphere should look like this:
+     * let s = Sphere::new()
+     *      .set_transformation(matrix)
+     *      .set_material(material)ee;
+     */
     pub fn new(origin: Coord) -> Self {
         assert!(origin.is_point());
-        Self { transformation: Matrix::from_point(&origin)}
+        Self { 
+            transformation: Matrix::from_point(&origin),
+            material: Material::default()
+        }
+    }
+
+    pub fn set_material(&mut self, mat: Material) {
+        self.material = mat;
     }
 
     pub fn set_transformation(&mut self, mat: Matrix) {
@@ -170,10 +190,12 @@ mod tests {
         let s = Sphere::default();
         //assert_eq!(s.radius, 1.0);
         assert_eq!(s.transformation, Matrix::identity(4));
+        assert_eq!(s.material, Material::default());
 
         let s = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         //assert_eq!(s.radius, 2.0);
         assert_eq!(s.transformation, Matrix::identity(4));
+        assert_eq!(s.material, Material::default());
     }
 
     #[test]

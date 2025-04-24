@@ -1,6 +1,6 @@
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Material {
     ambient: f32,
     diffuse: f32,
@@ -14,6 +14,10 @@ impl Material {
     /// shininess should be 10 <= x <= 200
     pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32) -> Self {
         Self {ambient, diffuse, specular, shininess}
+    }
+
+    pub fn default() -> Self {
+        Self { ambient: 1.0, diffuse: 1.0, specular: 1.0, shininess: 200.0 }
     }
 }
 

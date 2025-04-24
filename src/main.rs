@@ -3,6 +3,7 @@ mod canvas;
 mod matrix;
 mod ray;
 mod sphere;
+mod light;
 
 use std::f32;
 

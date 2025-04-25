@@ -17,7 +17,7 @@ impl Material {
     }
 
     pub fn default() -> Self {
-        Self { ambient: 1.0, diffuse: 1.0, specular: 1.0, shininess: 200.0 }
+        Self { ambient: 0.1, diffuse: 0.9, specular: 0.9, shininess: 200.0 }
     }
 }
 

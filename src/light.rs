@@ -4,28 +4,53 @@ use crate::{canvas::color::Color, coord::Coord, material::Material};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Light {
-    color: Color,
     pos: Coord,
-    intensity: f32
+    intensity: Color
 }
 
 #[allow(dead_code)]
 impl Light {
-    pub fn new(color: Color, pos: Coord, intensity: f32) -> Self {
-        Self { color, pos, intensity }
+    pub fn new(pos: Coord, intensity: Color) -> Self {
+        Self { pos, intensity }
     }
     
     pub fn default() -> Self {
-        Self { color: Color::white(), pos: Coord::point(0.0, 0.0, 0.0), intensity: 1.0 }
+        Self { pos: Coord::point(0.0, 0.0, 0.0), intensity: Color::white() }
+    }
+
+    // TODO: Dose negative intensity make sense or should this be bounded to >= 0?
+    pub fn get_intensity(&self) -> Color {
+        self.intensity
+    }
+
+    pub fn get_pos(&self) -> Coord {
+        self.pos
     }
 }
 
 // TODO: attach this to something, camera maybe?
 fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord) -> Color {
-    todo!();
+    let effective_color = material.get_color() * light.get_intensity();
+    let light_v = (light.get_pos() - pos).normalized();
+    let ambient = effective_color * material.get_ambient();
+    let light_dot_normal = light_v.dot(normal);
+    let mut diffuse = Color::black();
+    let mut specular = Color::black();
+    if light_dot_normal >= 0.0 {
+        diffuse = effective_color * material.get_diffuse() * light_dot_normal;
+        let reflect_v = (-light_v).reflect(&normal);
+        let reflect_dot_cam = reflect_v.dot(camv);
+        if reflect_dot_cam > 0.0 {
+            let factor = reflect_dot_cam.powf(material.get_shininess());
+            specular = light.get_intensity() * material.get_specular() * factor;
+        }
+    }
+    ambient + diffuse + specular
 }
 #[cfg(test)]
 mod tests {
+    use std::num::NonZero;
+
     use crate::material::Material;
 
     use super::*;
@@ -33,14 +58,30 @@ mod tests {
     #[test]
     fn test_new() {
         let l = Light::default();
-        assert_eq!(l.color, Color::white());
         assert_eq!(l.pos, Coord::point(0.0, 0.0, 0.0));
-        assert_eq!(l.intensity, 1.0);
+        assert_eq!(l.intensity, Color::white());
 
-        let l = Light::new(Color::red(), Coord::point(1.0, 2.0, 3.0), 5.7);
-        assert_eq!(l.color, Color::red());
+        let l = Light::new(Coord::point(1.0, 2.0, 3.0), Color::red());
         assert_eq!(l.pos, Coord::point(1.0, 2.0, 3.0));
-        assert_eq!(l.intensity, 5.7);
+        assert_eq!(l.intensity, Color::red());
+    }
+
+    #[test]
+    fn test_get_pos() {
+        let l = Light::default();
+        assert_eq!(l.get_pos(), Coord::point(0.0, 0.0, 0.0));
+
+        let l = Light::new(Coord::point(1.0, 2.0, 3.0), Color::white());
+        assert_eq!(l.get_pos(), Coord::point(1.0, 2.0, 3.0));
+    }
+
+    #[test]
+    fn test_get_intensity() {
+        let l = Light::default();
+        assert_eq!(l.get_intensity(), Color::white());
+
+        let l = Light::new(Coord::point(0.0, 0.0, 0.0), Color::green());
+        assert_eq!(l.get_intensity(), Color::green());
     }
 
     #[test]
@@ -48,25 +89,36 @@ mod tests {
         let material = Material::default();
         let pos = Coord::point(0.0, 0.0, 0.0);
 
-        let camv = Coord::point(0.0, 0.0, -1.0);
+        // 1
+        let camv = Coord::vec(0.0, 0.0, -1.0);
         let normal = Coord::vec(0.0, 0.0, -1.0);
-        let light = Light::new(Color::white(), Coord::point(0.0, 0.0, -10.0), 1.0);
+        let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
         let r = lighting(material, light, pos, camv, normal);
         assert_eq!(r, Color::new(1.9, 1.9, 1.9, 0.0));
 
-        let camv = Coord::point(0.0, 2.0_f32.sqrt()/2.0, -(2.0_f32.sqrt()/2.0));
+        // 2
+        let camv = Coord::vec(0.0, 2.0_f32.sqrt()/2.0, -(2.0_f32.sqrt()/2.0));
+        let normal = Coord::vec(0.0, 0.0, -1.0);
+        let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
         let r = lighting(material, light, pos, camv, normal);
         assert_eq!(r, Color::new(1.0, 1.0, 1.0, 0.0));
 
-        let light = Light::new(Color::white(), Coord::point(0.0, 10.0, -10.0), 1.0);
+        // either this or the next test is wrong
+        // 3
+        let camv = Coord::vec(0.0, 0.0, -1.0);
+        let normal = Coord::vec(0.0, 0.0, -1.0);
+        let light = Light::new(Coord::point(0.0, 10.0, -10.0), Color::white());
         let r = lighting(material, light, pos, camv, normal);
-        assert_eq!(r, Color::new(1.6364, 1.6364, 1.6364, 0.0));
+        assert_eq!(r, Color::new(0.7363961, 0.7363961, 0.7363961, 0.0));
 
-        let camv = Coord::point(0.0, 0.0, -1.0);
+        // 4
+        let camv = Coord::vec(0.0, -(2.0_f32.sqrt())/2.0, -(2.0_f32.sqrt()/2.0));
+        let normal = Coord::vec(0.0, 0.0, -1.0);
+        let light = Light::new(Coord::point(0.0, 10.0, -10.0), Color::white());
         let r = lighting(material, light, pos, camv, normal);
-        assert_eq!(r, Color::new(0.7364, 0.7364, 0.7364, 0.0));
+        assert_eq!(r, Color::new(1.6363853, 1.6363853, 1.6363853, 0.0));
 
-        let light = Light::new(Color::white(), Coord::point(0.0, 0.0, 10.0), 1.0);
+        let light = Light::new(Coord::point(0.0, 0.0, 10.0), Color::white());
         let r = lighting(material, light, pos, camv, normal);
         assert_eq!(r, Color::new(0.1, 0.1, 0.1, 0.0));
     }

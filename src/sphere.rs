@@ -127,6 +127,7 @@ impl Sphere {
 }
 
 /// assumes `a` value is 1 (ie ray direction is normalized)
+/// TODO: look into optimization: 2022/a-better-quadratic-formula-algorithm/
 fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
     let disc = b.powi(2) - 4.0 * c;
     if disc < 0.0 {

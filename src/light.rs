@@ -29,7 +29,7 @@ impl Light {
 }
 
 // TODO: attach this to something, camera maybe?
-fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord) -> Color {
+pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord) -> Color {
     let effective_color = material.get_color() * light.get_intensity();
     let light_v = (light.get_pos() - pos).normalized();
     let ambient = effective_color * material.get_ambient();

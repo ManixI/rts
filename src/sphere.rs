@@ -2,7 +2,7 @@ use core::f32;
 use std::rc::Rc;
 use crate::material::Material;
 use crate::matrix::Matrix;
-use crate::ray::{Intersect, Ray};
+use crate::ray::Ray;
 use crate::ray::intersection::*;
 use super::Coord;
 
@@ -161,6 +161,10 @@ impl Intersect<Self> for Sphere {
         let data = data.unwrap();
         let t = Rc::new(self.clone());
         Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
+    }
+
+    fn get_material(&self) -> Material {
+        self.material
     }
 }
 

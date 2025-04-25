@@ -1,6 +1,17 @@
 use std::rc::Rc;
 
-use super::Intersect;
+use super::Ray;
+use crate::material::Material;
+
+
+#[allow(dead_code)]
+pub trait Intersect<T> {
+    // trait that implements intersection for any object and a ray
+    fn intersect(&self, ray: &Ray) -> Option<[Intersection<T>; 2]>;
+
+    fn get_material(&self) -> Material;
+}
+
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Intersection<T> {

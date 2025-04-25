@@ -11,8 +11,10 @@ use std::f32;
 use canvas::Canvas;
 use coord::Coord;
 use canvas::color::Color;
+use light::{lighting, Light};
+use material::Material;
 use matrix::Matrix;
-use ray::Ray;
+use ray::{intersection::Intersect, Ray};
 use sphere::Sphere;
 
 #[derive(Debug, Clone, Copy)]
@@ -101,11 +103,19 @@ fn draw_clock(filename: &str) {
 fn outline_sphere(filename: &str) {
     let mut canvas = Canvas::new(100, 100);
 
-    let orb = Sphere::default();
+    let mut orb = Sphere::default();
+    let mut mat = Material::default();
+    mat.set_color(Color::red());
+    orb.set_material(mat);
 
     let camera_pos = Coord::point(0.0, 0.0, -5.0);
     let wall_pos = Coord::point(0.0, 0.0, 10.0);
     let wall_size = 7.0;
+
+    let light = Light::new(
+        Coord::point(10.0, 10.0, -10.0), 
+    Color::white()
+    );
 
     let pixel_size = wall_size / 100.0;
 
@@ -117,7 +127,15 @@ fn outline_sphere(filename: &str) {
             let ray = Ray::new(camera_pos, (pos - camera_pos).normalized());
             let xs = ray.intersect(&orb);
             if xs.is_some() {
-                canvas.set_pixel(x, y, Color::red());
+                let xs = xs.unwrap();
+                let point = ray.position(xs[0].get_time());
+                let normal = orb.normal_at(point);
+                let cam_v = -ray.get_direction();
+                canvas.set_pixel(
+                    x, 
+                    y, 
+                    lighting(xs[0].get_object().get_material(), light, point, cam_v, normal)
+                );
             }
         }
     }

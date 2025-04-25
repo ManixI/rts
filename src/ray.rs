@@ -14,11 +14,6 @@ pub struct Ray {
     norm_dir: Coord
 }
 
-pub trait Intersect<T> {
-    // trait that implements intersection for any object and a ray
-    fn intersect(&self, ray: &Ray) -> Option<[Intersection<T>; 2]>;
-}
-
 #[allow(dead_code)]
 impl Ray {
     pub fn new(origin: Coord, direction: Coord) -> Self {
@@ -30,7 +25,7 @@ impl Ray {
        self.norm_dir
     }
 
-    fn position(&self, time: f32) -> Coord {
+    pub fn position(&self, time: f32) -> Coord {
         self.origin + self.direction * time
     }
 

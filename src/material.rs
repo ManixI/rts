@@ -42,6 +42,10 @@ impl Material {
     pub fn get_shininess(&self) -> f32 {
         self.shininess
     }
+
+    pub fn set_color(&mut self, color: Color) {
+        self.color = color;
+    }
 }
 
 #[cfg(test)]

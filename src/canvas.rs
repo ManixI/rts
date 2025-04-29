@@ -28,6 +28,10 @@ impl Canvas {
         self.pixels[y][x] = c;
     }
 
+    pub fn get_pixel(&self, x: usize, y: usize) -> Color {
+        self.pixels[y][x]
+    }
+
     fn get_header(&self) -> String {
         format!("P3\n{} {}\n255\n", self.width, self.height)
     }

@@ -100,13 +100,40 @@ fn draw_clock(filename: &str) {
     let _ = clockface.to_file(filename);
 }
 
-fn outline_sphere(filename: &str) {
-    let mut canvas = Canvas::new(100, 100);
+fn draw_multiple_spheres(filename: &str, spheres: &[Sphere], per_row: usize, resolution: usize) {
+    let mut canvas = Canvas::new(resolution * per_row, (spheres.len() / per_row) * resolution);
+    
+    for (idx, orb) in spheres.iter().enumerate() {
+        let row = idx / per_row;
+        let col = idx % per_row;
+        println!("drawing sphere {} at ({}, {})", idx, row, col);
+        let drawn = outline_sphere(filename, resolution, orb.clone());
+        for x in 0..resolution {
+            for y in 0..resolution {
+                canvas.set_pixel(
+                    x + col * resolution, 
+                    y + row * resolution, 
+                    drawn.get_pixel(x, y));
+            }
+        }
+    }
+    let _ = canvas.to_file(filename);
+}
 
-    let mut orb = Sphere::default();
-    let mut mat = Material::default();
-    mat.set_color(Color::red());
-    orb.set_material(mat);
+
+fn outline_sphere(filename: &str, resolution: usize, orb: Sphere) -> Canvas {
+    let size = resolution;
+    let mut canvas = Canvas::new(size, size);
+
+    //let mut orb = Sphere::default();
+    //let mut mat = Material::default();
+
+    //mat.set_shininess(100.0);
+    //mat.set_specular(-0.9);
+
+    //mat.set_color(Color::red());
+    //orb.set_material(mat);
+    //orb.apply_transformation(Matrix::scaling(1.0, 0.5, 1.0));
 
     let camera_pos = Coord::point(0.0, 0.0, -5.0);
     let wall_pos = Coord::point(0.0, 0.0, 10.0);
@@ -117,11 +144,11 @@ fn outline_sphere(filename: &str) {
     Color::white()
     );
 
-    let pixel_size = wall_size / 100.0;
+    let pixel_size = wall_size / size as f32;
 
-    for y in 0..100 {
+    for y in 0..size {
         let world_y = wall_size/2.0 - pixel_size * y as f32;
-        for x in 0..100 {
+        for x in 0..size {
             let world_x = -(wall_size/2.0) + pixel_size * x as f32;
             let pos = Coord::point(world_x, world_y, wall_pos.get_z());
             let ray = Ray::new(camera_pos, (pos - camera_pos).normalized());
@@ -141,6 +168,7 @@ fn outline_sphere(filename: &str) {
     }
 
     let _ = canvas.to_file(filename);
+    canvas
 }
 
 fn main() {
@@ -153,5 +181,15 @@ fn main() {
     let _ = env.draw_canvas("out.ppm");
 
     //draw_clock("clock.ppm");
-    outline_sphere("sphere.ppm");
+    //let _ = outline_sphere("sphere.ppm", 400, Sphere::default());
+
+    let mut orbs = vec![Sphere::default(); 8];
+    let mat_values = vec![100000.0, 0.0, -0.1, -1.0, -10.0, -100.0];
+    for i in 0..mat_values.len() {
+        let mut mat = Material::default();
+        mat.set_color(Color::red());
+        mat.set_shininess(mat_values[i]);
+        orbs[i].set_material(mat);
+    }
+    draw_multiple_spheres("composite.ppm", &orbs[0..6], 2, 400);
 }

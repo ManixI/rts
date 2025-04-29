@@ -62,7 +62,7 @@ impl Sphere {
         self.transformation.clone()
     }
 
-    pub fn geometric_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
+    fn geometric_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         // ref: https://discussions.unity.com/t/how-do-i-find-the-closest-point-on-a-line/588895/3
         let dir = ray.get_direction();//.normalized();
         let v = self.get_origin() - ray.get_origin();
@@ -105,7 +105,7 @@ impl Sphere {
         Some(out)
     }
 
-    pub fn analytical_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
+    fn analytical_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         let l = ray.get_origin() - self.get_origin();
         //let a = ray.get_direction().dot(ray.get_direction());
         let b = 2.0 * ray.get_norm_direction().dot(l);

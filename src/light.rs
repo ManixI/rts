@@ -34,17 +34,19 @@ pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, norma
     let light_v = (light.get_pos() - pos).normalized();
     let ambient = effective_color * material.get_ambient();
     let light_dot_normal = light_v.dot(normal);
-    let mut diffuse = Color::black();
-    let mut specular = Color::black();
-    if light_dot_normal >= 0.0 {
-        diffuse = effective_color * material.get_diffuse() * light_dot_normal;
-        let reflect_v = (-light_v).reflect(&normal);
-        let reflect_dot_cam = reflect_v.dot(camv);
-        if reflect_dot_cam > 0.0 {
-            let factor = reflect_dot_cam.powf(material.get_shininess());
-            specular = light.get_intensity() * material.get_specular() * factor;
-        }
+    //let mut diffuse = Color::black();
+    //let mut specular = Color::black();
+    if light_dot_normal < 0.0 {
+        return ambient;
     }
+    let diffuse = effective_color * material.get_diffuse() * light_dot_normal;
+    let reflect_v = (-light_v).reflect(&normal);
+    let reflect_dot_cam = reflect_v.dot(camv);
+    if reflect_dot_cam < 0.0 {
+        return ambient + diffuse;
+    }
+    let factor = reflect_dot_cam.powf(material.get_shininess());
+    let specular = light.get_intensity() * material.get_specular() * factor;
     ambient + diffuse + specular
 }
 #[cfg(test)]

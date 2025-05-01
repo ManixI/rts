@@ -107,7 +107,12 @@ fn draw_multiple_spheres(filename: &str, spheres: &[Sphere], per_row: usize, res
         let row = idx / per_row;
         let col = idx % per_row;
         println!("drawing sphere {} at ({}, {})", idx, row, col);
-        let drawn = outline_sphere(filename, resolution, orb.clone());
+        let drawn = outline_sphere(
+            filename, 
+            resolution, 
+            orb.clone(),
+            Light::new(Coord::point(10.0, 10.0, -10.0), Color::white())    
+        );
         for x in 0..resolution {
             for y in 0..resolution {
                 canvas.set_pixel(
@@ -121,7 +126,7 @@ fn draw_multiple_spheres(filename: &str, spheres: &[Sphere], per_row: usize, res
 }
 
 
-fn outline_sphere(filename: &str, resolution: usize, orb: Sphere) -> Canvas {
+fn outline_sphere(filename: &str, resolution: usize, orb: Sphere, light: Light) -> Canvas {
     let size = resolution;
     let mut canvas = Canvas::new(size, size);
 
@@ -139,11 +144,10 @@ fn outline_sphere(filename: &str, resolution: usize, orb: Sphere) -> Canvas {
     let wall_pos = Coord::point(0.0, 0.0, 10.0);
     let wall_size = 7.0;
 
-    let light = Light::new(
-        Coord::point(10.0, 10.0, -10.0), 
-    Color::white()
-    );
+    let light = light;
 
+    //let background_color = orb.get_material().get_color().inverse();
+    let background_color = Color::black();
     let pixel_size = wall_size / size as f32;
 
     for y in 0..size {
@@ -164,11 +168,99 @@ fn outline_sphere(filename: &str, resolution: usize, orb: Sphere) -> Canvas {
                     lighting(xs[0].get_object().get_material(), light, point, cam_v, normal)
                 );
             }
+            else {
+                canvas.set_pixel(x, y, background_color);
+            }
         }
     }
 
     let _ = canvas.to_file(filename);
     canvas
+}
+
+// TODO: make this a test case for lighting func
+fn draw_test_spheres() {
+    let orbs = vec![Sphere::default(); 6];
+    let small_vals = vec![0.0, 0.1, 0.25, 0.5, 0.75, 1.0];
+    let shiny_vals = vec![0.0, 5.0, 10.0, 50.0, 100.0, 500.0];
+
+    // shininess
+    let mut t_orbs = orbs.clone();
+    for i in 0..6 {
+        let mut mat = Material::default();
+        mat.set_shininess(shiny_vals[i]);
+        mat.set_specular(small_vals[i]);
+        mat.set_color(Color::red());
+        t_orbs[i].set_material(mat);
+    }
+    draw_multiple_spheres("spec-pos.ppm", &t_orbs[0..6], 2, 400);
+
+
+    let mut t_orbs = orbs.clone();
+    for i in 0..6 {
+        let mut mat = Material::default();
+        mat.set_shininess(50.0);
+        mat.set_specular(-small_vals[i]);
+        mat.set_color(Color::red());
+        t_orbs[i].set_material(mat);
+    }
+    draw_multiple_spheres("spec-neg.ppm", &t_orbs[0..6], 2, 400);
+
+
+    let mut t_orbs = orbs.clone();
+    for i in 0..6 {
+        let mut mat = Material::default();
+        mat.set_diffuse(small_vals[i]);
+        mat.set_color(Color::red());
+        t_orbs[i].set_material(mat);
+    }
+    draw_multiple_spheres("diff-pos.ppm", &t_orbs[0..6], 2, 400);
+
+
+    let mut t_orbs = orbs.clone();
+    for i in 0..6 {
+        let mut mat = Material::default();
+        mat.set_diffuse(-small_vals[i]);
+        mat.set_color(Color::red());
+        t_orbs[i].set_material(mat);
+    }
+    draw_multiple_spheres("diff-neg.ppm", &t_orbs[0..6], 2, 400);
+
+
+    let mut t_orbs = orbs.clone();
+    for i in 0..6 {
+        let mut mat = Material::default();
+        mat.set_ambient(small_vals[i]);
+        mat.set_color(Color::red());
+        t_orbs[i].set_material(mat);
+    }
+    draw_multiple_spheres("amb-pos.ppm", &t_orbs[0..6], 2, 400);
+    
+    let mut t_orbs = orbs.clone();
+    for i in 0..6 {
+        let mut mat = Material::default();
+        mat.set_ambient(-small_vals[i]);
+        mat.set_color(Color::red());
+        t_orbs[i].set_material(mat);
+    }
+    draw_multiple_spheres("amb-neg.ppm", &t_orbs[0..6], 2, 400);
+
+
+    let mut orb = Sphere::default();
+    let mut mat = Material::default();
+    mat.set_color(Color::red());
+    orb.set_material(mat);
+    let light = Light::new(Coord::point(10.0, 10.0, -10.0), Color::blue());
+    outline_sphere("color-add.ppm", 400, orb.clone(), light);
+
+    mat.set_color(Color::purple());
+    mat.set_diffuse(-0.5);
+    outline_sphere("color-sub.ppm", 400, orb.clone(), light);
+
+    mat.set_color(Color::red());
+    mat.set_diffuse(0.5);
+    mat.set_ambient(10.0);
+    outline_sphere("color-add-amb.ppm", 400, orb, light);
 }
 
 fn main() {
@@ -184,12 +276,25 @@ fn main() {
     //let _ = outline_sphere("sphere.ppm", 400, Sphere::default());
 
     let mut orbs = vec![Sphere::default(); 8];
-    let mat_values = vec![100000.0, 0.0, -0.1, -1.0, -10.0, -100.0];
+    //let mat_values = vec![0.0, 5.0, 10.0, 50.0, 100.0, 500.0];
+    let mat_values = vec![0.0, 0.1, 0.25, 0.5, 0.75, 1.0];
+    /*let mat_values = vec![
+        Color::red(),
+        Color::blue(),
+        Color::green(),
+        Color::yellow(),
+        Color::purple(),
+        Color::turquoise(),
+    ];*/
     for i in 0..mat_values.len() {
         let mut mat = Material::default();
         mat.set_color(Color::red());
-        mat.set_shininess(mat_values[i]);
+        //mat.set_ambient(0.5);s
+        //mat.set_diffuse(mat_values[i]);
+        //mat.set_shininess(50.0);
+        //mat.set_specular(shiny_values[i]);
         orbs[i].set_material(mat);
     }
-    draw_multiple_spheres("composite.ppm", &orbs[0..6], 2, 400);
+    //draw_multiple_spheres("composite.ppm", &orbs[5..6], 1, 400);
+    draw_test_spheres();
 }

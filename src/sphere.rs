@@ -168,7 +168,7 @@ impl Intersect<Self> for Sphere {
     }
 }
 
-#[allow(unused_imports)]
+#[allow(unused_imports, dead_code)]
 mod tests {
     use core::f32;
     use std::thread::spawn;

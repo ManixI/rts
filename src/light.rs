@@ -26,6 +26,15 @@ impl Light {
     pub fn get_pos(&self) -> Coord {
         self.pos
     }
+
+    pub fn set_intensity(&mut self, color: Color) {
+        self.intensity = color
+    }
+
+    pub fn set_pos(&mut self, pos: Coord) {
+        assert!(pos.is_point());
+        self.pos = pos;
+    }
 }
 
 // TODO: attach this to something, camera maybe?

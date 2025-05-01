@@ -69,6 +69,21 @@ impl Color {
     pub fn turquoise() -> Self {
         Self::blue() + Self::green()
     }
+
+    pub fn inverse(&self) -> Self {
+        let mut out = self.clone();
+        
+        //out.b %= 1.0;
+        out.b = (out.b - 1.0).abs();
+
+        //out.g %= 1.0;
+        out.g = (out.g - 1.0).abs();
+
+        //out.r %= 1.0;
+        out.r = (out.r - 1.0).abs();
+
+        out
+    }
 }
 
 impl ops::Add for Color {

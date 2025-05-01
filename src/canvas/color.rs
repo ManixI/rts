@@ -70,6 +70,36 @@ impl Color {
         Self::blue() + Self::green()
     }
 
+    #[inline]
+    pub fn gray() -> Self {
+        Self::new(0.5, 0.5, 0.5, 0.0)
+    }
+
+    pub fn clamped(&self) -> Self {
+        let mut r = self.r;
+        if r > 1.0 {
+            r = 1.0;
+        } else if r < 0.0 {
+            r = 0.0;
+        }
+        
+        let mut g = self.g;
+        if g > 1.0 {
+            g = 1.0;
+        } else if g < 0.0 {
+            g = 0.0;
+        }
+        
+        let mut b = self.b;
+        if b > 1.0 {
+            b = 1.0;
+        } else if b < 0.0 {
+            b = 0.0;
+        }
+
+        Self { r, g, b, a: self.a }
+    }
+
     pub fn inverse(&self) -> Self {
         let mut out = self.clone();
         
@@ -89,12 +119,14 @@ impl Color {
 impl ops::Add for Color {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
-        Color {
+        let out = Color {
             r: self.r + rhs.r,
             g: self.g + rhs.g,
             b: self.b + rhs.b,
             a: self.a + rhs.a
-        }
+        };
+        out
+        //out.clamped()
     }
 }
 
@@ -201,5 +233,12 @@ mod tests {
         let c2 = Color::new(0.9, 1.0, 0.1, 0.0);
         let n = c1 * c2;
         assert!(test_eq_colors(n, Color::new(0.9, 0.2, 0.04, 0.0)))
+    }
+
+    #[test]
+    fn test_inverse() {
+        assert_eq!(Color::red().inverse(), Color::turquoise());
+        assert_eq!(Color::white().inverse(), Color::black());
+        assert_eq!(Color::gray().inverse(), Color::gray());
     }
 }

@@ -1,4 +1,4 @@
-use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::{intersection::Intersection, Ray}, renderable::Renderable, sphere::Sphere};
+use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
@@ -47,7 +47,7 @@ impl World {
 
 #[cfg(test)]
 mod tests {
-    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, renderable::{compare_renderables, Renderable}, sphere::Sphere};
+    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, renderable::compare_renderables, sphere::Sphere};
 
     use super::World;
 

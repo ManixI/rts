@@ -1,11 +1,8 @@
 use std::ops::Mul;
 
-use crate::matrix::Matrix;
+use crate::{matrix::Matrix, renderable::{Intersection, Renderable}};
 
 use super::Coord;
-use intersection::*;
-
-pub mod intersection;
 
 #[derive(Debug,PartialEq, Clone, Copy)]
 pub struct Ray {
@@ -29,7 +26,7 @@ impl Ray {
         self.origin + self.direction * time
     }
 
-    pub fn intersect<T: Intersect<T>>(&self, object: &impl Intersect<T>) -> Option<[Intersection; 2]> {
+    pub fn intersect(&self, object: &dyn Renderable) -> Option<[Intersection; 2]> {
         object.intersect(&self)
     }
 

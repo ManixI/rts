@@ -3,8 +3,7 @@ use std::rc::Rc;
 use crate::material::Material;
 use crate::matrix::Matrix;
 use crate::ray::Ray;
-use crate::ray::intersection::*;
-use crate::renderable::{Renderable, RenderableType};
+use crate::renderable::{Intersection, Renderable, RenderableType};
 use super::Coord;
 
 
@@ -151,19 +150,6 @@ fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
 }
 
 //const EPSILON: f32 = 0.02;
-impl Intersect<Self> for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]> {
-        let ray = ray.transform(self.get_transformation().inverse().unwrap());
-        //self.geometric_intersect(ray) 
-        let data = self.analytical_intersect(&ray);
-        if data.is_none() {
-            return None;
-        }
-        let data = data.unwrap();
-        let t = Rc::new(self.clone());
-        Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
-    }
-}
 
 impl Renderable for Sphere {
     fn get_material(&self) -> Material {
@@ -184,6 +170,18 @@ impl Renderable for Sphere {
 
     fn clone_dyn(&self) -> Box<dyn Renderable> {
         Box::new(self.clone())
+    }
+    
+    fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]> {
+        let ray = ray.transform(self.get_transformation().inverse().unwrap());
+        //self.geometric_intersect(ray) 
+        let data = self.analytical_intersect(&ray);
+        if data.is_none() {
+            return None;
+        }
+        let data = data.unwrap();
+        let t = Rc::new(self.clone());
+        Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
     }
 }
 

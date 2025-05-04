@@ -5,6 +5,8 @@ mod ray;
 mod sphere;
 mod light;
 mod material;
+mod world;
+mod renderable;
 
 use std::f32;
 
@@ -15,6 +17,7 @@ use light::{lighting, Light};
 use material::Material;
 use matrix::Matrix;
 use ray::{intersection::Intersect, Ray};
+use renderable::Renderable;
 use sphere::Sphere;
 
 #[derive(Debug, Clone, Copy)]
@@ -275,26 +278,5 @@ fn main() {
     //draw_clock("clock.ppm");
     //let _ = outline_sphere("sphere.ppm", 400, Sphere::default());
 
-    let mut orbs = vec![Sphere::default(); 8];
-    //let mat_values = vec![0.0, 5.0, 10.0, 50.0, 100.0, 500.0];
-    let mat_values = vec![0.0, 0.1, 0.25, 0.5, 0.75, 1.0];
-    /*let mat_values = vec![
-        Color::red(),
-        Color::blue(),
-        Color::green(),
-        Color::yellow(),
-        Color::purple(),
-        Color::turquoise(),
-    ];*/
-    for i in 0..mat_values.len() {
-        let mut mat = Material::default();
-        mat.set_color(Color::red());
-        //mat.set_ambient(0.5);s
-        //mat.set_diffuse(mat_values[i]);
-        //mat.set_shininess(50.0);
-        //mat.set_specular(shiny_values[i]);
-        orbs[i].set_material(mat);
-    }
-    //draw_multiple_spheres("composite.ppm", &orbs[5..6], 1, 400);
     draw_test_spheres();
 }

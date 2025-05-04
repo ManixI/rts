@@ -8,8 +8,6 @@ use crate::material::Material;
 pub trait Intersect<T> {
     // trait that implements intersection for any object and a ray
     fn intersect(&self, ray: &Ray) -> Option<[Intersection<T>; 2]>;
-
-    fn get_material(&self) -> Material;
 }
 
 

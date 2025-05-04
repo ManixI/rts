@@ -4,6 +4,7 @@ use crate::material::Material;
 use crate::matrix::Matrix;
 use crate::ray::Ray;
 use crate::ray::intersection::*;
+use crate::renderable::Renderable;
 use super::Coord;
 
 
@@ -162,7 +163,9 @@ impl Intersect<Self> for Sphere {
         let t = Rc::new(self.clone());
         Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
     }
+}
 
+impl Renderable for Sphere {
     fn get_material(&self) -> Material {
         self.material
     }

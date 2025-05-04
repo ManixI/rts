@@ -16,7 +16,7 @@ use canvas::color::Color;
 use light::{lighting, Light};
 use material::Material;
 use matrix::Matrix;
-use ray::{intersection::Intersect, Ray};
+use ray::Ray;
 use renderable::Renderable;
 use sphere::Sphere;
 

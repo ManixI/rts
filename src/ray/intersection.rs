@@ -1,8 +1,6 @@
 use std::rc::Rc;
 
 use super::Ray;
-use crate::material::Material;
-
 
 #[allow(dead_code)]
 pub trait Intersect<T> {

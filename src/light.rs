@@ -2,7 +2,7 @@ use crate::{canvas::color::Color, coord::Coord, material::Material};
 
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Light {
     pos: Coord,
     intensity: Color

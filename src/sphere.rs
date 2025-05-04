@@ -4,7 +4,7 @@ use crate::material::Material;
 use crate::matrix::Matrix;
 use crate::ray::Ray;
 use crate::ray::intersection::*;
-use crate::renderable::Renderable;
+use crate::renderable::{Renderable, RenderableType};
 use super::Coord;
 
 
@@ -176,6 +176,14 @@ impl Renderable for Sphere {
 
     fn get_transformation(&self) -> Matrix {
         self.transformation.clone()
+    }
+
+    fn get_type(&self) -> RenderableType {
+        RenderableType::Sphere
+    }
+
+    fn clone_dyn(&self) -> Box<dyn Renderable> {
+        Box::new(self.clone())
     }
 }
 

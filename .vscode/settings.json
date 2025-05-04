@@ -5,6 +5,7 @@
         "cofactor",
         "Hadamard",
         "invertable",
+        "Renderable",
         "submatrix",
         "vecs"
     ]

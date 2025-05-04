@@ -152,7 +152,7 @@ fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
 
 //const EPSILON: f32 = 0.02;
 impl Intersect<Self> for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<[Intersection<Self>; 2]> {
+    fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]> {
         let ray = ray.transform(self.get_transformation().inverse().unwrap());
         //self.geometric_intersect(ray) 
         let data = self.analytical_intersect(&ray);
@@ -168,6 +168,14 @@ impl Intersect<Self> for Sphere {
 impl Renderable for Sphere {
     fn get_material(&self) -> Material {
         self.material
+    }
+
+    fn get_pos(&self) -> Coord {
+        self.get_origin()
+    }
+
+    fn get_transformation(&self) -> Matrix {
+        self.transformation.clone()
     }
 }
 

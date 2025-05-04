@@ -29,7 +29,7 @@ impl Ray {
         self.origin + self.direction * time
     }
 
-    pub fn intersect<T: Intersect<T>>(&self, object: &impl Intersect<T>) -> Option<[Intersection<T>; 2]> {
+    pub fn intersect<T: Intersect<T>>(&self, object: &impl Intersect<T>) -> Option<[Intersection; 2]> {
         object.intersect(&self)
     }
 

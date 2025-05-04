@@ -60,8 +60,6 @@ pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, norma
 }
 #[cfg(test)]
 mod tests {
-    use std::num::NonZero;
-
     use crate::material::Material;
 
     use super::*;

@@ -1,6 +1,7 @@
-use crate::{canvas::color::Color, coord::Coord, light::Light, matrix::Matrix, ray::{intersection::{Intersect, Intersection}, Ray}, renderable::Renderable, sphere::Sphere};
+use crate::{canvas::color::Color, coord::Coord, light::Light, matrix::Matrix, ray::{intersection::Intersection, Ray}, renderable::Renderable, sphere::Sphere};
 
-
+// I'm going to need to re-work this to add all objects, not just renderable ones aren't I
+// probably just make a node type or something
 
 pub struct World {
     light: Option<Light>,

@@ -1,16 +1,16 @@
-use crate::{canvas::color::Color, coord::Coord, light::Light, matrix::Matrix, ray::intersection::{Intersect, Intersection}, sphere::Sphere};
+use crate::{canvas::color::Color, coord::Coord, light::Light, matrix::Matrix, ray::{intersection::{Intersect, Intersection}, Ray}, renderable::Renderable, sphere::Sphere};
 
 
 
-pub struct world {
+pub struct World {
     light: Option<Light>,
-    objects: Vec<Sphere>
+    objects: Vec<Box<dyn Renderable>>
 }
 
 #[allow(dead_code)]
-impl world {
+impl World {
     pub fn new() -> Self {
-        world { light: None, objects: Vec::<Sphere>::new() }
+        Self { light: None, objects: Vec::<Box<dyn Renderable>>::new() }
     }
 
     pub fn default() -> Self {
@@ -18,17 +18,25 @@ impl world {
         let s1 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         let mut s2 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
-        let objs = vec![s1, s2];
+        let s1 = Box::new(s1);
+        let objs = vec![s1 as Box<dyn Renderable>];
         Self { light: Some(l), objects: objs }
+    }
+
+    fn get_light(&self) -> Option<Light> {
+        self.light
+    }
+
+    fn get_object(&self) -> Vec<Box<dyn Renderable>> {
+        //self.objects.clone()
+        todo!()
+    }
+
+    fn get_intersections(&self, ray: Ray) -> Vec<Intersection> {
+        todo!()
     }    
 }
 
-impl Intersect<Self> for world {
-
-    fn intersect(&self, ray: &crate::ray::Ray) -> Option<[Intersection<Self>; 2]> {
-        todo!()
-    }
-}
 
 
 #[cfg(test)]

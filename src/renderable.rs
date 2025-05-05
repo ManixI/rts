@@ -69,6 +69,7 @@ impl Intersection {
                 out.push(inter);
             }
         }
+        out.sort_by(|a, b| a.get_time().total_cmp(&b.get_time()));
         out
     }
 
@@ -156,11 +157,11 @@ mod tests {
         assert_eq!(data.len(), 4);
         let test = Intersection::new(4.0, Rc::new(s.clone()));
         compare_intersection(&data[0], &test);
-        compare_intersection(&data[2], &test);
+        compare_intersection(&data[1], &test);
         //assert_eq!(data[0], test);
         //assert_eq!(data[2], test);
         let test = Intersection::new(6.0, Rc::new(s));
-        compare_intersection(&data[1], &test);
+        compare_intersection(&data[2], &test);
         compare_intersection(&data[3], &test);
         //assert_eq!(data[1], test);
         //assert_eq!(data[3], test);

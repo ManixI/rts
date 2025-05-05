@@ -82,6 +82,10 @@ impl Coord {
     pub fn point(x: f32, y: f32, z: f32) -> Self {
         Coord {x, y, z, w: 1.0}
     }
+    
+    pub fn to_vec(&self) -> Self {
+        Self {x: self.get_x(), y: self.get_y(), z: self.get_z(), w: 0.0}
+    }
 
     pub fn vec(x: f32, y: f32, z: f32) -> Self {
         Coord {x, y, z, w: 0.0}

@@ -41,6 +41,7 @@ impl Ray {
     pub fn transform(&self, mat: Matrix) -> Self {
         //let mat = mat.inverse();
 
+        // bug in this func
         let point_mat = Matrix::from_point(&self.origin);
         let vec_mat = Matrix::from_vec(&self.direction);
 
@@ -48,7 +49,7 @@ impl Ray {
         let point_mat = point_mat.mul(mat.clone());
         let vec_mat = vec_mat.mul(mat);
 
-
+        //println!("{:?}\n", self);
         //println!("{:?}", point_mat);
         //println!("{:?}", vec_mat);
         Self::new(

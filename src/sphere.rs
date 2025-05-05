@@ -106,11 +106,11 @@ impl Sphere {
     }
 
     fn analytical_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
-        let l = ray.get_origin() - self.get_origin();
-        //let a = ray.get_direction().dot(ray.get_direction());
-        let b = 2.0 * ray.get_norm_direction().dot(l);
+        let l = ray.get_origin().to_vec();// - self.get_origin(); origin should always be 0
+        let a = ray.get_direction().dot(ray.get_direction());
+        let b = 2.0 * ray.get_direction().dot(l);
         let c = l.dot(l) - 1.0;
-        quadratic_formula_helper(b, c) 
+        quadratic_formula_helper(a, b, c) 
     }
 
     /// func assumes pos is on the sphere, if it is not results are undefined
@@ -128,19 +128,23 @@ impl Sphere {
 
 /// assumes `a` value is 1 (ie ray direction is normalized)
 /// TODO: look into optimization: 2022/a-better-quadratic-formula-algorithm/
-fn quadratic_formula_helper(b: f32, c: f32) -> Option<[f32; 2]> {
-    let disc = b.powi(2) - 4.0 * c;
+fn quadratic_formula_helper(a: f32,b: f32, c: f32) -> Option<[f32; 2]> {
+    let disc = b.powi(2) - 4.0 * c * a;
     if disc < 0.0 {
         return None;
     } else if disc == 0.0 {
         let out = -0.5 * b;
         return Some([out, out]);
     }
-    let quot = if b > 0.0 {-0.5 * (b + disc.sqrt())} else {-0.5 * (b - disc.sqrt())};
+    //let quot = if b > 0.0 {(-b + disc.sqrt()) / (2.0 * a)} else {(-b - disc.sqrt()) / (2.0 * a)};
     let mut out = [
-        quot,
-        c/quot
+        (-b + disc.sqrt()) / (2.0 * a),
+        (-b - disc.sqrt()) / (2.0 * a)
     ];
+    //let mut out = [
+    //    quot,
+    //    c/quot
+    //];
     if out[0] > out[1] {
         let tmp = out[0];
         out[0] = out[1];
@@ -174,8 +178,8 @@ impl Renderable for Sphere {
     
     fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]> {
         let ray = ray.transform(self.get_transformation().inverse().unwrap());
-        //self.geometric_intersect(ray) 
         let data = self.analytical_intersect(&ray);
+        //let data = self.geometric_intersect(&ray);
         if data.is_none() {
             return None;
         }
@@ -218,6 +222,14 @@ mod tests {
         //assert_eq!(s.radius, 2.0);
         assert_eq!(s.transformation, Matrix::identity(4));
         assert_eq!(s.material, Material::default());
+    }
+
+    #[test]
+    fn test_get_origin() {
+        let mut s = Sphere::default();
+        assert_eq!(s.get_origin(), Coord::point(0.0, 0.0, 0.0));
+        s.apply_transformation(Matrix::scaling(0.5, 0.5, 0.5));
+        assert_eq!(s.get_origin(), Coord::point(0.0, 0.0, 0.0));
     }
 
     #[test]
@@ -318,6 +330,25 @@ mod tests {
         let xs = [xs[0].get_time(), xs[1].get_time()];
         assert_eq!(xs[0], -6.0);
         assert_eq!(xs[1], -4.0);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let mut s = Sphere::default();
+        s.apply_transformation(Matrix::scaling(0.5, 0.5, 0.5));
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+        let xs = xs.unwrap();
+        let xs = [xs[0].get_time(), xs[1].get_time()];
+        assert_eq!(xs[0], 4.5);
+        assert_eq!(xs[1], 5.5);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, -10.0), Coord::vec(0.0, 0.0, 2.0));
+        let s = Sphere::default();
+        let xs = r.intersect(&s);
+        assert!(xs.is_some());
+        let xs = xs.unwrap();
+        let xs = [xs[0].get_time(), xs[1].get_time()];
+        assert_eq!(xs[0], 4.5);
+        assert_eq!(xs[1], 5.5);
     }
 
     #[test]

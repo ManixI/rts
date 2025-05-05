@@ -68,12 +68,10 @@ impl Sphere {
         let v = self.get_origin() - ray.get_origin();
         let d = v.dot(dir);
         
-        //println!("{} {}", d, self.radius);
         let nearest = ray.get_origin() + dir * d;
         
         // better to square radius for comparison then sqrt the dist as dist isn't actually needed
         let dist = nearest.get_x().powi(2) + nearest.get_y().powi(2) + nearest.get_z().powi(2);
-        //println!("dist: {:?}", dist);
         if dist > 1.0 {
             //println!{"None"}
             return None;
@@ -82,10 +80,9 @@ impl Sphere {
         let mut c = 0.0;
         // if not, calculate actual distance
         if dist != 1.0 {
-            //let a = 1.0;
+            let a = ray.get_direction().dot(ray.get_direction());
             let b = dist;
-            c = (1.0 + b.powi(2)).sqrt();
-            //println!("{} {}", a, b);
+            c = (a + b.powi(2)).sqrt();
         }
 
         let mut out: [f32; 2] = [0.0; 2];
@@ -137,14 +134,12 @@ fn quadratic_formula_helper(a: f32,b: f32, c: f32) -> Option<[f32; 2]> {
         return Some([out, out]);
     }
     //let quot = if b > 0.0 {(-b + disc.sqrt()) / (2.0 * a)} else {(-b - disc.sqrt()) / (2.0 * a)};
+    let val = (-b + disc.sqrt()) / (2.0 * a);
     let mut out = [
-        (-b + disc.sqrt()) / (2.0 * a),
-        (-b - disc.sqrt()) / (2.0 * a)
+        val,
+        -val - (b/a)
     ];
-    //let mut out = [
-    //    quot,
-    //    c/quot
-    //];
+    println!("{:?}", out);
     if out[0] > out[1] {
         let tmp = out[0];
         out[0] = out[1];

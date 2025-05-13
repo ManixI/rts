@@ -35,7 +35,6 @@ impl World {
 
     fn get_object(&self) -> Vec<Box<dyn Renderable>> {
         self.objects.clone()
-        //todo!()
     }
 
     fn get_intersections(&self, ray: Ray) -> Vec<Intersection> {

@@ -62,27 +62,44 @@ impl Sphere {
         self.transformation.clone()
     }
 
+    // breaks when you transform the sphere
     fn geometric_intersect(&self, ray: &Ray) -> Option<[f32; 2]> {
         // ref: https://discussions.unity.com/t/how-do-i-find-the-closest-point-on-a-line/588895/3
-        let dir = ray.get_direction();//.normalized();
+        /*let dir = ray.get_direction();//.normalized();
         let v = self.get_origin() - ray.get_origin();
         let d = v.dot(dir);
         
         let nearest = ray.get_origin() + dir * d;
-        
+        let dist = v.dot(v) - d * d; 
+
         // better to square radius for comparison then sqrt the dist as dist isn't actually needed
-        let dist = nearest.get_x().powi(2) + nearest.get_y().powi(2) + nearest.get_z().powi(2);
+        //let dist = nearest.get_x().powi(2) + nearest.get_y().powi(2) + nearest.get_z().powi(2);
+        //if dist > 1.0 { // radius is always 1
         if dist > 1.0 {
-            //println!{"None"}
+            return None;
+        }*/
+        let l = self.get_origin() - ray.get_origin();
+        let tca = l.dot(ray.get_direction());
+        let d2 = l.dot(l) - tca.powi(2);
+        if d2 > 1.0 {
             return None;
         }
+        let thc = (1.0-d2).sqrt();
+        let out = [
+            tca - thc,
+            tca + thc
+        ];
+        println!("{:?}", out);
+
+
+        /*
         // assume nearest point is exactly radius far away
         let mut c = 0.0;
         // if not, calculate actual distance
         if dist != 1.0 {
-            let a = ray.get_direction().dot(ray.get_direction());
+            //let a = ray.get_direction().dot(ray.get_direction());
             let b = dist;
-            c = (a + b.powi(2)).sqrt();
+            c = (1.0 + b.powi(2)).sqrt();
         }
 
         let mut out: [f32; 2] = [0.0; 2];
@@ -97,8 +114,7 @@ impl Sphere {
             let tmp = out[0];
             out[0] = out[1];
             out[1] = tmp;
-        }
-        //println!("t: {:?}\n", out);
+        }*/
         Some(out)
     }
 
@@ -124,8 +140,9 @@ impl Sphere {
 }
 
 /// assumes `a` value is 1 (ie ray direction is normalized)
-/// TODO: look into optimization: 2022/a-better-quadratic-formula-algorithm/
+/// TODO: look into optimization: https://lomont.org/posts/2022/a-better-quadratic-formula-algorithm/
 fn quadratic_formula_helper(a: f32,b: f32, c: f32) -> Option<[f32; 2]> {
+    println!("{}", a);
     let disc = b.powi(2) - 4.0 * c * a;
     if disc < 0.0 {
         return None;
@@ -133,7 +150,6 @@ fn quadratic_formula_helper(a: f32,b: f32, c: f32) -> Option<[f32; 2]> {
         let out = -0.5 * b;
         return Some([out, out]);
     }
-    //let quot = if b > 0.0 {(-b + disc.sqrt()) / (2.0 * a)} else {(-b - disc.sqrt()) / (2.0 * a)};
     let val = (-b + disc.sqrt()) / (2.0 * a);
     let mut out = [
         val,

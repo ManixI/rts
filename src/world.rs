@@ -1,7 +1,48 @@
+use std::rc::Rc;
+
 use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
+
+struct Comps {
+    object: Rc<dyn Renderable>,
+    point: Coord,
+    eyev: Coord,
+    normalv: Coord,
+    time: f32
+}
+
+#[allow(dead_code)]
+impl Comps {
+    fn new(object: Rc<dyn Renderable>, point: Coord, eyev: Coord, normalv: Coord, time: f32) -> Self {
+        Self { object, point, eyev, normalv, time }
+    }
+
+    fn get_object(&self) -> Rc<dyn Renderable> {
+        self.object.clone()
+    }
+
+    fn get_point(&self) -> Coord {
+        self.point
+    }
+
+    fn get_eyev(&self) -> Coord {
+        self.eyev
+    }
+
+    fn get_normalv(&self) -> Coord {
+        self.normalv
+    }
+    
+    fn get_time(&self) -> f32 {
+        self.time
+    }
+
+    fn prepare_computations(intersection: Intersection, ray: Ray) -> Self {
+        todo!()
+    }
+}
 
 pub struct World {
     light: Option<Light>,
@@ -50,9 +91,11 @@ impl World {
 
 #[cfg(test)]
 mod tests {
-    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::compare_renderables, sphere::Sphere};
+    use std::rc::Rc;
 
-    use super::World;
+    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection}, sphere::Sphere};
+
+    use super::{Comps, World};
 
 
     #[test]
@@ -105,4 +148,17 @@ mod tests {
         assert_eq!(xs[3].get_time(), 6.0);
     }
 
+
+    #[test]
+    fn test_prepare_computations() {
+        let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let shape = Rc::new(Sphere::default());
+        let i = Intersection::new(4.0, shape.clone());
+        let comp = Comps::prepare_computations(i.clone(), ray);
+        assert_eq!(comp.get_time(), i.get_time());
+        assert_eq!(comp.get_object(), shape);
+        assert_eq!(comp.get_point(), Coord::point(0.0, 0.0, -1.0));
+        assert_eq!(comp.get_eyev(), Coord::vec(0.0, 0.0, -1.0));
+        assert_eq!(comp.get_normalv(), Coord::vec(0.0, 0.0, -1.0));
+    }
 }

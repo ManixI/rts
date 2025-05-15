@@ -17,6 +17,7 @@ use light::{lighting, Light};
 use material::Material;
 use matrix::Matrix;
 use ray::Ray;
+use renderable::Renderable;
 use sphere::Sphere;
 
 #[derive(Debug, Clone, Copy)]

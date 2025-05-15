@@ -16,15 +16,19 @@ pub trait Renderable {
 
     fn get_type(&self) -> RenderableType;
 
+    fn clone_rc(&self) -> Rc<dyn Renderable>;
+
     fn clone_dyn(&self) -> Box<dyn Renderable>;
 
     fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]>;
+
+    fn normal_at(&self, pos: Coord) -> Coord;
 }
 
 impl Clone for Box<dyn Renderable> {
-    fn clone(&self) -> Self {
-        self.clone_dyn()
-    }
+  fn clone(&self) -> Self {
+      self.clone_dyn()
+  }
 }
 
 pub fn compare_renderables(a: &dyn Renderable, b: &dyn Renderable) -> bool {
@@ -50,8 +54,8 @@ impl Intersection {
         self.t
     }
 
-    pub fn get_object(&self) -> &dyn Renderable {
-        self.object.as_ref()
+    pub fn get_object(&self) -> Rc<dyn Renderable> {
+        self.object.clone()
     }
 
     pub fn get_object_pointer(&self) -> Rc<dyn Renderable> {
@@ -106,7 +110,7 @@ mod tests {
     use crate::{coord::Coord, ray::Ray, renderable::Renderable, sphere::Sphere};
     use super::Intersection;
 
-    fn compare(a: &dyn Renderable, b: &dyn Renderable) {
+    fn compare(a: Rc<dyn Renderable>, b: Rc<dyn Renderable>) {
         assert_eq!(a.get_material(), b.get_material());
         assert_eq!(a.get_pos(), b.get_pos());
         assert_eq!(a.get_transformation(), b.get_transformation());
@@ -132,14 +136,14 @@ mod tests {
     #[test]
     fn test_create_2() {
         let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        let s = Sphere::default();
+        let s = Rc::new(Sphere::default());
         let xs = s.intersect(&r);
         assert!(xs.is_some());
         let xs = xs.unwrap();
-        compare(xs[0].get_object(), &s);
+        compare(xs[0].get_object(), s.clone());
         //assert_eq!(xs[0].get_object(), &s);
         assert_eq!(xs[0].get_time(), 4.0);
-        compare(xs[1].get_object(), &s);
+        compare(xs[1].get_object(), s);
         //assert_eq!(xs[1].get_object(), &s);
         assert_eq!(xs[1].get_time(), 6.0);
     }

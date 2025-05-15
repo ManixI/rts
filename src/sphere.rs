@@ -126,17 +126,7 @@ impl Sphere {
         quadratic_formula_helper(a, b, c) 
     }
 
-    /// func assumes pos is on the sphere, if it is not results are undefined
-    pub fn normal_at(&self, pos: Coord) -> Coord {
-        let object_pos = self.transformation.inverse().unwrap() * pos;
-        let obj_normal = object_pos - Coord::point(0.0, 0.0, 0.0);
-        let mut world_norm = self.transformation.inverse()
-            .unwrap()
-            .transpose()
-            * obj_normal;
-        world_norm.set_w(0.0);
-        world_norm.normalized()
-    }
+    
 }
 
 /// assumes `a` value is 1 (ie ray direction is normalized)
@@ -183,6 +173,10 @@ impl Renderable for Sphere {
         RenderableType::Sphere
     }
 
+    fn clone_rc(&self) -> Rc<dyn Renderable> {
+        Rc::new(self.clone())
+    }
+
     fn clone_dyn(&self) -> Box<dyn Renderable> {
         Box::new(self.clone())
     }
@@ -197,6 +191,18 @@ impl Renderable for Sphere {
         let data = data.unwrap();
         let t = Rc::new(self.clone());
         Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
+    }
+
+    /// func assumes pos is on the sphere, if it is not results are undefined
+    fn normal_at(&self, pos: Coord) -> Coord {
+        let object_pos = self.transformation.inverse().unwrap() * pos;
+        let obj_normal = object_pos - Coord::point(0.0, 0.0, 0.0);
+        let mut world_norm = self.transformation.inverse()
+            .unwrap()
+            .transpose()
+            * obj_normal;
+        world_norm.set_w(0.0);
+        world_norm.normalized()
     }
 }
 

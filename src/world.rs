@@ -40,7 +40,12 @@ impl Comps {
     }
 
     fn prepare_computations(intersection: Intersection, ray: Ray) -> Self {
-        todo!()
+        Self::new(
+            intersection.get_object(), 
+            ray.position(intersection.get_time()), 
+            -ray.get_direction(), 
+            intersection.get_object().normal_at(ray.position(intersection.get_time())), 
+            intersection.get_time())
     }
 }
 
@@ -93,7 +98,7 @@ impl World {
 mod tests {
     use std::rc::Rc;
 
-    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection}, sphere::Sphere};
+    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere};
 
     use super::{Comps, World};
 
@@ -156,7 +161,10 @@ mod tests {
         let i = Intersection::new(4.0, shape.clone());
         let comp = Comps::prepare_computations(i.clone(), ray);
         assert_eq!(comp.get_time(), i.get_time());
-        assert_eq!(comp.get_object(), shape);
+        assert_eq!(comp.get_object().get_transformation(), shape.get_transformation());
+        assert_eq!(comp.get_object().get_type(), shape.get_type());
+        assert_eq!(comp.get_object().get_pos(), shape.get_pos());
+        //assert_eq!(comp.get_object(), shape);
         assert_eq!(comp.get_point(), Coord::point(0.0, 0.0, -1.0));
         assert_eq!(comp.get_eyev(), Coord::vec(0.0, 0.0, -1.0));
         assert_eq!(comp.get_normalv(), Coord::vec(0.0, 0.0, -1.0));

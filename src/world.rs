@@ -10,13 +10,15 @@ struct Comps {
     point: Coord,
     eyev: Coord,
     normalv: Coord,
-    time: f32
+    time: f32,
+    inside: bool
 }
 
+// precomputed data about an intersection of ray and renderable
 #[allow(dead_code)]
 impl Comps {
-    fn new(object: Rc<dyn Renderable>, point: Coord, eyev: Coord, normalv: Coord, time: f32) -> Self {
-        Self { object, point, eyev, normalv, time }
+    fn new(object: Rc<dyn Renderable>, point: Coord, eyev: Coord, normalv: Coord, time: f32, inside: bool) -> Self {
+        Self { object, point, eyev, normalv, time, inside }
     }
 
     fn get_object(&self) -> Rc<dyn Renderable> {
@@ -39,13 +41,28 @@ impl Comps {
         self.time
     }
 
+    fn get_inside(&self) -> bool {
+        self.inside
+    }
+
     fn prepare_computations(intersection: Intersection, ray: Ray) -> Self {
+        let mut inside = false;
+        let mut normalv = intersection.get_object().normal_at(ray.position(intersection.get_time()));
+        if normalv.dot(-ray.get_direction()) < 0.0 {
+            inside = true
+        }
+        if inside {
+            normalv = -normalv;
+        }
+
         Self::new(
             intersection.get_object(), 
             ray.position(intersection.get_time()), 
             -ray.get_direction(), 
-            intersection.get_object().normal_at(ray.position(intersection.get_time())), 
-            intersection.get_time())
+            normalv, 
+            intersection.get_time(),
+            inside
+        )
     }
 }
 
@@ -98,7 +115,7 @@ impl World {
 mod tests {
     use std::rc::Rc;
 
-    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere};
+    use crate::{canvas::color::Color, coord::{self, Coord}, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere};
 
     use super::{Comps, World};
 
@@ -168,5 +185,19 @@ mod tests {
         assert_eq!(comp.get_point(), Coord::point(0.0, 0.0, -1.0));
         assert_eq!(comp.get_eyev(), Coord::vec(0.0, 0.0, -1.0));
         assert_eq!(comp.get_normalv(), Coord::vec(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn test_prepare_computations_inside() {
+        let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
+        let shape = Rc::new(Sphere::default());
+        let i = Intersection::new(1.0, shape.clone());
+        let comp = Comps::prepare_computations(i.clone(), ray);
+
+        assert_eq!(comp.get_point(), Coord::point(0.0, 0.0, 1.0));
+        assert_eq!(comp.get_eyev(), Coord::vec(0.0, 0.0, -1.0));
+        assert_eq!(comp.get_inside(), true);
+        assert_eq!(comp.get_normalv(), Coord::vec(0.0, 0.0, -1.0))
+
     }
 }

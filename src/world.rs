@@ -128,7 +128,11 @@ impl World {
             );
         }
         color
-    }    
+    }
+
+    fn color_at(&self, ray: Ray) -> Color {
+        todo!()
+    }
 }
 
 
@@ -137,7 +141,7 @@ impl World {
 mod tests {
     use std::rc::Rc;
 
-    use crate::{canvas::color::Color, coord::{self, Coord}, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere};
+    use crate::{canvas::color::Color, coord::{self, Coord}, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere, world};
 
     use super::{Comps, World};
 
@@ -240,5 +244,26 @@ mod tests {
         let comps = Comps::prepare_computations(i, ray);
         let c = w.shade_hit(comps);
         assert_eq!(c, Color::new(0.9049845, 0.9049845, 0.9049845, 0.0));
+    }
+
+    #[test]
+    fn test_color_at() {
+        let w = World::default();
+        let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 1.0, 0.0));
+        let c = w.color_at(ray);
+        assert_eq!(c, Color::black());
+
+        let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 1.0, 0.0));
+        let c = w.color_at(ray);
+        assert_eq!(c, Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
+    
+        // not sure if this actually works as I think it should, get material is suspect
+        // I think I need to change getters to return reference, not clone (unless rc)
+        // probably need to use RefCells not Rcs https://stackoverflow.com/questions/52994205/what-is-the-standard-way-to-call-a-mutable-method-in-a-rc-wrapped-object
+        w.get_object()[0].get_material().set_ambient(1.0);
+        w.get_object()[1].get_material().set_ambient(1.0);
+        let ray = Ray::new(Coord::point(0.0, 0.0, 0.75), Coord::vec(0.0, 0.0, -1.0));
+        let c = w.color_at(ray);
+        assert_eq!(c, w.get_object()[0].get_material().get_color());
     }
 }

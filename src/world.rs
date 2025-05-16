@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
+use crate::{canvas::color::Color, coord::Coord, light::{lighting, Light}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
@@ -68,13 +68,13 @@ impl Comps {
 
 pub struct World {
     light: Option<Light>,
-    objects: Vec<Box<dyn Renderable>>
+    objects: Vec<Rc<dyn Renderable>>
 }
 
 #[allow(dead_code)]
 impl World {
     pub fn new() -> Self {
-        Self { light: None, objects: Vec::<Box<dyn Renderable>>::new() }
+        Self { light: None, objects: Vec::<Rc<dyn Renderable>>::new() }
     }
 
     pub fn default() -> Self {
@@ -86,8 +86,8 @@ impl World {
         s2.set_material(mat);        
 
 
-        let s1 = Box::new(s1) as Box<dyn Renderable>;
-        let s2 = Box::new(s2) as Box<dyn Renderable>;
+        let s1 = Rc::new(s1) as Rc<dyn Renderable>;
+        let s2 = Rc::new(s2) as Rc<dyn Renderable>;
         let objs = vec![s1, s2];
         Self { light: Some(l), objects: objs }
     }
@@ -96,7 +96,11 @@ impl World {
         self.light
     }
 
-    fn get_object(&self) -> Vec<Box<dyn Renderable>> {
+    fn set_light(&mut self, light: Light) {
+        self.light = Some(light);
+    }
+
+    fn get_object(&self) -> Vec<Rc<dyn Renderable>> {
         self.objects.clone()
     }
 
@@ -106,6 +110,16 @@ impl World {
             data.push(obj.intersect(&ray));
         }
         Intersection::aggregate_intersections(data)
+    }
+
+    fn shade_hit(&self, comps: Comps) -> Color {
+        lighting(
+            comps.get_object().get_material(), 
+            self.get_light().unwrap(), 
+            comps.get_point(), 
+            comps.get_eyev(), 
+            comps.get_normalv()
+        )
     }    
 }
 
@@ -198,6 +212,25 @@ mod tests {
         assert_eq!(comp.get_eyev(), Coord::vec(0.0, 0.0, -1.0));
         assert_eq!(comp.get_inside(), true);
         assert_eq!(comp.get_normalv(), Coord::vec(0.0, 0.0, -1.0))
+    }
 
+    #[test]
+    fn test_shade_hit() {
+        let w = World::default();
+        let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let shape = w.get_object()[1].clone();
+        let i = Intersection::new(4.0, shape);
+        let comps = Comps::prepare_computations(i, ray);
+        let c = w.shade_hit(comps);
+        assert_eq!(c, Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
+
+        let mut w = World::default();
+        w.set_light(Light::new(Coord::point(0.0, 0.25, 0.0), Color::white()));
+        let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
+        let shape = w.get_object()[0].clone();
+        let i = Intersection::new(0.5, shape);
+        let comps = Comps::prepare_computations(i, ray);
+        let c = w.shade_hit(comps);
+        assert_eq!(c, Color::new(0.9049845, 0.9049845, 0.9049845, 0.0));
     }
 }

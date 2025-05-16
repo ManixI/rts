@@ -67,14 +67,14 @@ impl Comps {
 }
 
 pub struct World {
-    light: Option<Light>,
+    light: Vec<Light>,
     objects: Vec<Rc<dyn Renderable>>
 }
 
 #[allow(dead_code)]
 impl World {
     pub fn new() -> Self {
-        Self { light: None, objects: Vec::<Rc<dyn Renderable>>::new() }
+        Self { light: Vec::new(), objects: Vec::<Rc<dyn Renderable>>::new() }
     }
 
     pub fn default() -> Self {
@@ -89,15 +89,19 @@ impl World {
         let s1 = Rc::new(s1) as Rc<dyn Renderable>;
         let s2 = Rc::new(s2) as Rc<dyn Renderable>;
         let objs = vec![s1, s2];
-        Self { light: Some(l), objects: objs }
+        Self { light: vec![l], objects: objs }
     }
 
-    fn get_light(&self) -> Option<Light> {
-        self.light
+    fn get_light(&self) -> &Vec<Light> {
+        &self.light
     }
 
     fn set_light(&mut self, light: Light) {
-        self.light = Some(light);
+        self.light = vec![light]
+    }
+
+    fn add_light(&mut self, light: Light) {
+        self.light.push(light);
     }
 
     fn get_object(&self) -> Vec<Rc<dyn Renderable>> {
@@ -113,13 +117,17 @@ impl World {
     }
 
     fn shade_hit(&self, comps: Comps) -> Color {
-        lighting(
+        let mut color = Color::black();
+        for light in self.get_light() {
+            color = color + lighting(
             comps.get_object().get_material(), 
-            self.get_light().unwrap(), 
+            *light, 
             comps.get_point(), 
             comps.get_eyev(), 
             comps.get_normalv()
-        )
+            );
+        }
+        color
     }    
 }
 
@@ -137,14 +145,14 @@ mod tests {
     #[test]
     fn test_new() {
         let w = World::new();
-        assert!(w.light.is_none());
+        assert_eq!(w.light.len(), 0);
         assert_eq!(w.objects.len(), 0);
     }
 
     #[test]
     fn test_getters() {
         let w = World::new();
-        assert!(w.get_light().is_none());
+        assert_eq!(w.light.len(), 0);
         assert_eq!(w.get_object().len(), 0);
     }
 
@@ -152,8 +160,8 @@ mod tests {
     fn test_default() {
         let w = World::default();
         
-        assert!(w.get_light().is_some());
-        assert_eq!(w.get_light().unwrap(), Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white()));
+        assert_eq!(w.get_light().len(), 1);
+        assert_eq!(w.get_light()[0], Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white()));
         
         let s1 = Sphere::default();
         let objs = w.get_object();

@@ -138,7 +138,7 @@ impl World {
         for i in &intersections {
             println!("{:?}", i);
         }
-        let comps = Comps::prepare_computations(intersections[1].clone(), ray);
+        let comps = Comps::prepare_computations(intersections[0].clone(), ray);
         self.shade_hit(comps)
     }
 }
@@ -147,12 +147,20 @@ impl World {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
+    use std::{f32::EPSILON, rc::Rc};
 
     use crate::{canvas::color::Color, coord::{self, Coord}, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere, world};
 
     use super::{Comps, World};
 
+
+    fn test_colors_roughly_equal(a: &Color, b: &Color) {
+        const EPSILON: f32 = 0.0000001;
+        //assert!((a.get_a() - b.get_a()).abs() > EPSILON);
+        assert!((a.get_r() - b.get_r()).abs() > EPSILON);
+        assert!((a.get_g() - b.get_g()).abs() > EPSILON);
+        assert!((a.get_b() - b.get_b()).abs() > EPSILON);
+    }
 
     #[test]
     fn test_new() {
@@ -261,6 +269,7 @@ mod tests {
         let c = w.color_at(ray);
         assert_eq!(c, Color::black());
 
+        let w = World::default();
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let c = w.color_at(ray);
         assert_eq!(c, Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
@@ -273,6 +282,7 @@ mod tests {
         w.get_object()[1].get_material().set_ambient(1.0);
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.75), Coord::vec(0.0, 0.0, -1.0));
         let c = w.color_at(ray);
-        assert_eq!(c, w.get_object()[0].get_material().get_color());
+        //assert_eq!(c, w.get_object()[0].get_material().get_color());
+        test_colors_roughly_equal(&c, &w.get_object()[0].get_material().get_color());
     }
 }

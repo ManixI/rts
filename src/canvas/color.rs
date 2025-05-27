@@ -30,6 +30,22 @@ impl Color {
         .fold(String::new(), |s1, s2| format!("{}{} ", s1, s2))
     }
 
+    pub fn get_r(&self) -> f32 {
+        self.r
+    }
+
+    pub fn get_g(&self) -> f32 {
+        self.g
+    }
+
+    pub fn get_b(&self) -> f32 {
+        self.b
+    }
+
+    pub fn get_a(&self) -> f32 {
+        self.a
+    }
+
     #[inline]
     pub fn white() -> Self {
         Self::new(1.0, 1.0, 1.0, 0.0)

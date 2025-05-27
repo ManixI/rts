@@ -31,11 +31,11 @@ impl Clone for Box<dyn Renderable> {
   }
 }
 
-pub fn compare_renderables(a: &dyn Renderable, b: &dyn Renderable) -> bool {
-    a.get_material() == b.get_material()
-    && a.get_pos() == b.get_pos()
-    && a.get_transformation() == b.get_transformation()
-    && a.get_type() == b.get_type()
+pub fn compare_renderables(a: &dyn Renderable, b: &dyn Renderable) {
+    assert_eq!(a.get_material(), b.get_material());
+    assert_eq!(a.get_pos(), b.get_pos());
+    assert_eq!(a.get_transformation(), b.get_transformation());
+    assert_eq!(a.get_type(), b.get_type());
 }
 
 #[derive(Clone)]

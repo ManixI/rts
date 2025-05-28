@@ -141,8 +141,8 @@ impl World {
         let comps = Comps::prepare_computations(intersections[0].clone(), ray);
         self.shade_hit(comps)
     }
-}
 
+}
 
 
 #[cfg(test)]

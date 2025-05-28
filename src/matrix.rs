@@ -226,6 +226,27 @@ impl Matrix {
         }
         Some(out)
     }
+
+    /// view_transformation(pos: Coord, towards: Coord, up: Coord) -> Matrix
+    /// will panic if pos or towards is a vec, and if up is a point
+    pub fn view_transformation(pos: Coord, towards: Coord, up: Coord) -> Self {
+        assert!(pos.is_point());
+        assert!(towards.is_point());
+        assert!(up.is_vec());
+
+        let forward = (towards - pos).normalized();
+        let up = up.normalized();
+        let left = forward.cross(&up);
+        let true_up = left.cross(&forward);
+        let orientation = Matrix::new(vec![
+            vec![left.get_x(), left.get_y(), left.get_z(), 0.0],
+            vec![true_up.get_x(), true_up.get_y(), true_up.get_z(), 0.0],
+            vec![-forward.get_x(), -forward.get_y(), -forward.get_z(), 0.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ]);
+
+        orientation * Self::translation(-pos.get_x(), -pos.get_y(), -pos.get_z())
+    }
 }
 
 // TODO: optimize this
@@ -293,7 +314,7 @@ impl ops::Mul<Coord> for Matrix {
 
 #[cfg(test)]
 mod tests {
-    use std::{f32, ops::Mul, vec};
+    use std::{f32, ops::{ControlFlow, Mul}, vec};
     use super::*;
 
     /// Tests roughly equal, necessary if testing floating point operations
@@ -816,6 +837,39 @@ mod tests {
 
         let test = mat.mul(Matrix::translation(1.0, 2.0, 3.0));
         assert_eq!(test.to_point(), Coord::point(2.0, 4.0, 6.0));
+    }
+
+    #[test]
+    fn test_view_transformation() {
+        let from = Coord::point(0.0, 0.0, 0.0);
+        let to = Coord::point(0.0, 0.0, -1.0);
+        let up = Coord::vec(0.0, 1.0, 0.0);
+        let t = Matrix::view_transformation(from, to, up);
+        assert_eq!(t, Matrix::identity(4));
+
+        let from = Coord::point(0.0, 0.0, 0.0);
+        let to = Coord::point(0.0, 0.0, 1.0);
+        let up = Coord::vec(0.0, 1.0, 0.0);
+        let t = Matrix::view_transformation(from, to, up);
+        assert_eq!(t, Matrix::scaling(-1.0, 1.0, -1.0));
+
+        let from = Coord::point(0.0, 0.0, 8.0);
+        let to = Coord::point(0.0, 0.0, 0.0);
+        let up = Coord::vec(0.0, 1.0, 0.0);
+        let t = Matrix::view_transformation(from, to, up);
+        assert_eq!(t, Matrix::translation(0.0, 0.0, -8.0));
+
+        let from = Coord::point(1.0, 3.0, 2.0);
+        let to = Coord::point(4.0, -2.0, 8.0);
+        let up = Coord::vec(1.0, 1.0, 0.0);
+        let t = Matrix::view_transformation(from, to, up);
+        let test = Matrix::new(vec![
+            vec![-0.50709254, 0.50709254, 0.6761234, -2.366432],
+            vec![0.76771593, 0.6060915, 0.12121832, -2.828427],
+            vec![-0.35856858, 0.59761435, -0.71713716, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ]); 
+        assert!(test_roughly_equal(&t, &test)); 
     }
 }
 

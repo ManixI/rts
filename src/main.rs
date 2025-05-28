@@ -7,6 +7,7 @@ mod light;
 mod material;
 mod world;
 mod renderable;
+mod camera;
 
 use std::f32;
 

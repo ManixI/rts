@@ -314,7 +314,7 @@ impl ops::Mul<Coord> for Matrix {
 
 #[cfg(test)]
 mod tests {
-    use std::{f32, ops::{ControlFlow, Mul}, vec};
+    use std::{f32, ops::Mul, vec};
     use super::*;
 
     /// Tests roughly equal, necessary if testing floating point operations

@@ -3,10 +3,15 @@
         "calcing",
         "clockface",
         "cofactor",
+        "eyev",
         "Hadamard",
+        "hsize",
         "invertable",
+        "normalv",
         "Renderable",
+        "renderables",
         "submatrix",
-        "vecs"
+        "vecs",
+        "vsize"
     ]
 }

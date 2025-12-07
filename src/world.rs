@@ -147,9 +147,9 @@ impl World {
 
 #[cfg(test)]
 mod tests {
-    use std::{f32::EPSILON, rc::Rc};
+    use std::rc::Rc;
 
-    use crate::{canvas::color::Color, coord::{self, Coord}, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere, world};
+    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere};
 
     use super::{Comps, World};
 
@@ -277,7 +277,7 @@ mod tests {
         // not sure if this actually works as I think it should, get material is suspect
         // I think I need to change getters to return reference, not clone (unless rc)
         // probably need to use RefCells not Rcs https://stackoverflow.com/questions/52994205/what-is-the-standard-way-to-call-a-mutable-method-in-a-rc-wrapped-object
-        // alternativly, use Box and world class is the holder of all objects
+        // alternatively, use Box and world class is the holder of all objects
         w.get_object()[0].get_material().set_ambient(1.0);
         w.get_object()[1].get_material().set_ambient(1.0);
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.75), Coord::vec(0.0, 0.0, -1.0));

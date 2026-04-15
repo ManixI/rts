@@ -15,6 +15,7 @@ pub struct Ray {
 impl Ray {
     pub fn new(origin: Coord, direction: Coord) -> Self {
         // TODO: is there a better way then calcing the norm for every new ray?
+        let direction = direction.to_vec();
         Ray { origin, direction: direction, norm_dir: direction.normalized() }
     }
 
@@ -98,5 +99,11 @@ mod tests {
         //println!("{:?}\n", new);
         assert_eq!(new.get_origin(), Coord::point(2.0, 6.0, 12.0));
         assert_eq!(new.get_direction(), Coord::vec(0.0, 3.0, 0.0));
+    }
+
+    #[test]
+    fn test_is_vec() {
+        let r = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::point(0.0, 1.0, 1.0));
+        assert!(r.get_direction().is_vec());
     }
 }

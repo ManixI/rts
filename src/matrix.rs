@@ -35,6 +35,13 @@ impl Matrix {
         self.data.clone()
     }
 
+    pub fn get_size(&self) -> usize {
+        let height = self.data.len();
+        let width = self.data[0].len();
+        assert_eq!(height, width);
+        height
+    }
+
     pub fn from_vec(vec: &Coord) -> Self {
         let mut out = Self::identity(4);
         let vec = vec.get_as_list();

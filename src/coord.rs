@@ -198,6 +198,17 @@ impl Coord {
         }
         return Some(0.0)
     }
+
+    /// asserts two coords are equal to within an error value of epsilon
+    /// to compare coords when floating point errors may be an issue
+    pub fn assert_roughly_eq(left: &Self, right: &Self, epsilon: f32) {
+        if !((left.get_x() - right.get_x()).abs() < epsilon
+            && (left.get_y() - right.get_y()).abs() < epsilon
+            && (left.get_z() - right.get_z()).abs() < epsilon
+            && (left.get_w() - right.get_w()).abs() < epsilon) {
+                panic!("{:?} != {:?} within an error of {epsilon}", left, right);
+            }
+    }
 }
 
 // overloaded ops just use func definitions from above

@@ -235,6 +235,7 @@ impl Matrix {
     }
 
     /// view_transformation(pos: Coord, towards: Coord, up: Coord) -> Matrix
+    /// 
     /// will panic if pos or towards is a vec, and if up is a point
     pub fn view_transformation(pos: Coord, towards: Coord, up: Coord) -> Self {
         assert!(pos.is_point());

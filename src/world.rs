@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{canvas::color::Color, coord::Coord, light::{lighting, Light}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
+use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
@@ -142,6 +142,18 @@ impl World {
         self.shade_hit(comps)
     }
 
+    pub fn render_world(&self, cam: &Camera) -> Canvas {
+        let mut out = Canvas::new(cam.get_vsize(), cam.get_hsize());
+        for y in 0..(cam.get_vsize()-1) {
+            for x in 0..(cam.get_hsize()-1) {
+                let ray = cam.ray_for_pixel(x, y);
+                let color = self.color_at(ray);
+                out.set_pixel(x, y, color);
+            }
+        }
+
+        out
+    }
 }
 
 
@@ -149,7 +161,7 @@ impl World {
 mod tests {
     use std::rc::Rc;
 
-    use crate::{canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{compare_renderables, Intersection, Renderable}, sphere::Sphere};
+    use crate::{camera::Camera, canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, compare_renderables}, sphere::Sphere};
 
     use super::{Comps, World};
 
@@ -285,4 +297,18 @@ mod tests {
         //assert_eq!(c, w.get_object()[0].get_material().get_color());
         test_colors_roughly_equal(&c, &w.get_object()[0].get_material().get_color());
     }
+
+    #[test]
+    fn test_render_world() {
+        let w = World::default();
+        let mut c = Camera::new(11, 11, core::f32::consts::PI/2.0);
+        let from = Coord::point(0.0, 0.0, -5.0);
+        let to = Coord::point(0.0, 0.0, 0.0);
+        let up = Coord::vec(0.0, 1.0, 0.0);
+        c.transform(Matrix::view_transformation(from, to, up));
+
+        let image = w.render_world(&c);
+        assert_eq!(image.get_pixel(5, 5), Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
+    }
+
 }

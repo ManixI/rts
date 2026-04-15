@@ -1,4 +1,4 @@
-use crate::{matrix::Matrix, ray::Ray, coord::Coord};
+use crate::{canvas::{Canvas, color::Color}, coord::Coord, matrix::Matrix, ray::Ray, world::World};
 use std::ops;
 
 
@@ -63,7 +63,7 @@ impl Camera {
         self.hsize = hsize as f32;
     }
 
-    fn get_hsize(&self) -> usize {
+    pub fn get_hsize(&self) -> usize {
         self.hsize as usize
     }
 
@@ -71,7 +71,7 @@ impl Camera {
         self.vsize = vsize as f32;
     }
 
-    fn get_vsize(&self) -> usize {
+    pub fn get_vsize(&self) -> usize {
         self.vsize as usize
     }
 
@@ -87,7 +87,7 @@ impl Camera {
         self.half_height
     }
 
-    fn ray_for_pixel(&self, x: usize, y: usize) -> Ray {
+    pub fn ray_for_pixel(&self, x: usize, y: usize) -> Ray {
         // get center pf px
         let x_offset = (x as f32 + 0.5) * self.pixel_size;
         let y_offset = (y as f32 + 0.5) * self.pixel_size;

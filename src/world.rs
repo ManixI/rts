@@ -92,20 +92,24 @@ impl World {
         Self { light: vec![l], objects: objs }
     }
 
-    fn get_light(&self) -> &Vec<Light> {
+    pub fn get_light(&self) -> &Vec<Light> {
         &self.light
     }
 
-    fn set_light(&mut self, light: Light) {
+    pub fn set_light(&mut self, light: Light) {
         self.light = vec![light]
     }
 
-    fn add_light(&mut self, light: Light) {
+    pub fn add_light(&mut self, light: Light) {
         self.light.push(light);
     }
 
     fn get_object(&self) -> Vec<Rc<dyn Renderable>> {
         self.objects.clone()
+    }
+
+    pub fn add_obj(&mut self, obj: Rc<dyn Renderable>) {
+        self.objects.push(obj);
     }
 
     fn get_intersections(&self, ray: Ray) -> Vec<Intersection> {
@@ -132,18 +136,16 @@ impl World {
 
     fn color_at(&self, ray: Ray) -> Color {
         let intersections = self.get_intersections(ray);
-        if intersections.len() == 0 {
+        let hit = Intersection::find_hit(&intersections);
+        if hit.is_none() {
             return Color::black();
         }
-        for i in &intersections {
-            println!("{:?}", i);
-        }
-        let comps = Comps::prepare_computations(intersections[0].clone(), ray);
+        let comps = Comps::prepare_computations(hit.unwrap().clone(), ray);
         self.shade_hit(comps)
     }
 
     pub fn render_world(&self, cam: &Camera) -> Canvas {
-        let mut out = Canvas::new(cam.get_vsize(), cam.get_hsize());
+        let mut out = Canvas::new(cam.get_hsize(), cam.get_vsize());
         for y in 0..(cam.get_vsize()-1) {
             for x in 0..(cam.get_hsize()-1) {
                 let ray = cam.ray_for_pixel(x, y);

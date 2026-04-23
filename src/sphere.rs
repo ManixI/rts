@@ -31,7 +31,7 @@ impl Sphere {
      * ex creating a sphere should look like this:
      * let s = Sphere::new()
      *      .set_transformation(matrix)
-     *      .set_material(material)ee;
+     *      .set_material(material);
      */
     pub fn new(origin: Coord) -> Self {
         assert!(origin.is_point());
@@ -157,6 +157,7 @@ fn quadratic_formula_helper(a: f32,b: f32, c: f32) -> Option<[f32; 2]> {
 //const EPSILON: f32 = 0.02;
 
 impl Renderable for Sphere {
+    // TODO: should return reference not actual material 
     fn get_material(&self) -> Material {
         self.material
     }

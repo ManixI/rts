@@ -9,7 +9,7 @@ mod world;
 mod renderable;
 mod camera;
 
-use std::f32;
+use std::{f32, rc::Rc};
 
 use canvas::Canvas;
 use coord::Coord;
@@ -20,6 +20,9 @@ use matrix::Matrix;
 use ray::Ray;
 use renderable::Renderable;
 use sphere::Sphere;
+use core::f32::consts::PI;
+
+use crate::{camera::Camera, world::World};
 
 #[derive(Debug, Clone, Copy)]
 struct Shot {
@@ -267,6 +270,82 @@ fn draw_test_spheres() {
     outline_sphere("color-add-amb.ppm", 400, orb, light);
 }
 
+fn draw_scene() {
+    let mut floor = Sphere::default();
+    floor.apply_transformation(Matrix::scaling(10.0, 0.01, 10.0));
+    let mut mat = Material::default();
+    mat.set_color(Color::new(1.0, 0.9, 0.9, 0.0));
+    mat.set_specular(0.0);
+    floor.set_material(mat);
+
+    let mut left_wall = floor.clone();
+    left_wall.set_transformation(
+        Matrix::translation(0.0, 0.0, 5.0) *
+        Matrix::rotate_y(-PI/4.0) *
+        Matrix::rotate_x(PI/2.0) *
+        Matrix::scaling(10.0, 0.01, 10.0)
+    );
+
+    let mut right_wall = floor.clone();
+    right_wall.set_transformation(
+        Matrix::translation(0.0, 0.0, 5.0) *
+        Matrix::rotate_y(PI/4.0) *
+        Matrix::rotate_x(PI/2.0) *
+        Matrix::scaling(10.0, 0.01, 10.0)
+    );
+
+
+    let mut middle = Sphere::default();
+    middle.set_transformation(Matrix::translation(-0.5, 1.0, 0.5));
+    let mut mat = Material::default();
+    mat.set_color(Color::new(0.1, 1.0, 0.5, 0.0));
+    mat.set_diffuse(0.7);
+    mat.set_specular(0.3);
+    middle.set_material(mat);
+
+    let mut right = Sphere::default();
+    right.set_transformation(
+        Matrix::translation(1.5, 0.5, -0.5) *
+        Matrix::scaling(0.5, 0.5, 0.5)
+    );
+    let mut mat = Material::default();
+    mat.set_color(Color::new(0.5, 1.0, 0.1, 0.0));
+    mat.set_diffuse(0.7);
+    mat.set_specular(0.3);
+    right.set_material(mat);
+
+    let mut left = Sphere::default();
+    left.set_transformation(
+        Matrix::translation(-1.5, 0.33, -0.75) *
+        Matrix::scaling(0.33, 0.33, 0.33)
+    );
+    let mut mat = Material::default();
+    mat.set_color(Color::new(1.0, 0.8, 0.1, 0.0));
+    mat.set_diffuse(0.7);
+    mat.set_specular(0.3);
+    left.set_material(mat);
+
+    let mut world = World::new();
+    let light = Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white());
+    world.add_light(light);
+
+    world.add_obj(Rc::new(floor));  // also makes top lighter?
+    world.add_obj(Rc::new(left_wall));     // same issue as right
+    world.add_obj(Rc::new(right_wall)); // on wrong side, maybe cam is looking backwards?
+    world.add_obj(Rc::new(middle));
+    world.add_obj(Rc::new(left));
+    world.add_obj(Rc::new(right));
+
+    let mut cam = Camera::new(200, 200, PI/3.0);    // aspect ratio that's not 1:1 causes problems
+    cam.transform(Matrix::view_transformation(
+        Coord::point(0.0, 1.5, -5.0), 
+        Coord::point(0.0, 1.0, 0.0), 
+    Coord::vec(0.0, 1.0, 0.0)));
+    let canvas = world.render_world(&cam);
+    let _ = canvas.to_file("out.ppm");
+    
+}
+
 fn main() {
     let mut env = Environment::new(-0.01, -0.1, 900, 550);
     env.add_shot(Shot::new(Coord::point(0.0, 1.0, 0.0), Coord::vec(5.0, 8.2, 0.0) * 11.25));
@@ -279,5 +358,6 @@ fn main() {
     //draw_clock("clock.ppm");
     //let _ = outline_sphere("sphere.ppm", 400, Sphere::default());
 
-    draw_test_spheres();
+    //draw_test_spheres();
+    draw_scene();
 }

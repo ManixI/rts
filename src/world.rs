@@ -1,6 +1,6 @@
-use std::rc::Rc;
+use std::{fs::DirBuilder, rc::Rc};
 
-use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
+use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{self, Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
@@ -128,7 +128,8 @@ impl World {
             *light, 
             comps.get_point(), 
             comps.get_eyev(), 
-            comps.get_normalv()
+            comps.get_normalv(),
+            false
             );
         }
         color
@@ -155,6 +156,21 @@ impl World {
         }
 
         out
+    }
+
+    fn in_shadow(&self, p: Coord) -> bool {
+        // TODO: current impl only supports 1 light source
+        let l = self.get_light()[0];
+        let dir = l.get_pos() - p;
+        let dist = dir.magnitude();
+        let dir = dir.normalized();
+        let ray = Ray::new(p, dir);
+        let intersections = self.get_intersections(ray);    // T of all of these is < 0
+        let intersections = Intersection::find_hit(&intersections);
+        match intersections {
+            None => false,
+            Some(val) => val.get_time() <= dist
+        }
     }
 }
 
@@ -313,4 +329,31 @@ mod tests {
         assert_eq!(image.get_pixel(5, 5), Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
     }
 
+    #[test]
+    fn test_not_in_shadow() {
+        let w = World::default();
+        let p = Coord::point(0.0, 10.0, 0.0);
+        assert!(!w.in_shadow(p));
+    }
+
+    #[test]
+    fn test_in_shadow_behind() {
+        let w = World::default();
+        let p = Coord::point(10.0, -10.0, 10.0);
+        assert!(w.in_shadow(p));
+    }
+
+    #[test]
+    fn test_in_shadow_behind_light() {
+        let w = World::default();
+        let p = Coord::point(-20.0, 20.0, -20.0);
+        assert!(!w.in_shadow(p));
+    }
+
+    #[test]
+    fn test_in_shadow_in_front_object() {
+        let w = World::default();
+        let p = Coord::point(-2.0,2.0,-2.0);
+        assert!(!w.in_shadow(p));
+    }
 }

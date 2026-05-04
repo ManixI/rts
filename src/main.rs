@@ -172,7 +172,7 @@ fn outline_sphere(filename: &str, resolution: usize, orb: Sphere, light: Light) 
                 canvas.set_pixel(
                     x, 
                     y, 
-                    lighting(xs[0].get_object().get_material(), light, point, cam_v, normal)
+                    lighting(xs[0].get_object().get_material(), light, point, cam_v, normal, false)
                 );
             }
             else {
@@ -329,14 +329,14 @@ fn draw_scene() {
     let light = Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white());
     world.add_light(light);
 
-    world.add_obj(Rc::new(floor));  // also makes top lighter?
-    world.add_obj(Rc::new(left_wall));     // same issue as right
-    world.add_obj(Rc::new(right_wall)); // on wrong side, maybe cam is looking backwards?
+    world.add_obj(Rc::new(floor));
+    world.add_obj(Rc::new(left_wall));
+    world.add_obj(Rc::new(right_wall));
     world.add_obj(Rc::new(middle));
     world.add_obj(Rc::new(left));
     world.add_obj(Rc::new(right));
 
-    let mut cam = Camera::new(200, 200, PI/3.0);    // aspect ratio that's not 1:1 causes problems
+    let mut cam = Camera::new(200, 200, PI/3.0);
     cam.transform(Matrix::view_transformation(
         Coord::point(0.0, 1.5, -5.0), 
         Coord::point(0.0, 1.0, 0.0), 

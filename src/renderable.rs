@@ -62,6 +62,9 @@ impl Intersection {
         self.object.clone()
     }
 
+    /**
+     * returns a sorted list of intersections, the earliest returned first
+     */
     pub fn aggregate_intersections(data: Vec<Option<[Self; 2]>>) -> Vec<Self> {
         let mut out = Vec::<Self>::with_capacity(data.len() * 2);
         for val in data {

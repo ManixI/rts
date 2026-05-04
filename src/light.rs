@@ -38,14 +38,14 @@ impl Light {
 }
 
 // TODO: attach this to something, camera maybe?
-pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord) -> Color {
+pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord, in_shadow: bool) -> Color {
     let effective_color = material.get_color() * light.get_intensity();
     let light_v = (light.get_pos() - pos).normalized();
     let ambient = effective_color * material.get_ambient();
     let light_dot_normal = light_v.dot(normal);
     //let mut diffuse = Color::black();
     //let mut specular = Color::black();
-    if light_dot_normal < 0.0 {
+    if light_dot_normal < 0.0 || in_shadow {
         return ambient;
     }
     let diffuse = effective_color * material.get_diffuse() * light_dot_normal;
@@ -102,14 +102,14 @@ mod tests {
         let camv = Coord::vec(0.0, 0.0, -1.0);
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal);
+        let r = lighting(material, light, pos, camv, normal, false);
         assert_eq!(r, Color::new(1.9, 1.9, 1.9, 0.0));
 
         // 2
         let camv = Coord::vec(0.0, 2.0_f32.sqrt()/2.0, -(2.0_f32.sqrt()/2.0));
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal);
+        let r = lighting(material, light, pos, camv, normal, false);
         assert_eq!(r, Color::new(1.0, 1.0, 1.0, 0.0));
 
         // either this or the next test is wrong
@@ -117,18 +117,29 @@ mod tests {
         let camv = Coord::vec(0.0, 0.0, -1.0);
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 10.0, -10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal);
+        let r = lighting(material, light, pos, camv, normal, false);
         assert_eq!(r, Color::new(0.7363961, 0.7363961, 0.7363961, 0.0));
 
         // 4
         let camv = Coord::vec(0.0, -(2.0_f32.sqrt())/2.0, -(2.0_f32.sqrt()/2.0));
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 10.0, -10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal);
+        let r = lighting(material, light, pos, camv, normal, false);
         assert_eq!(r, Color::new(1.6363853, 1.6363853, 1.6363853, 0.0));
 
         let light = Light::new(Coord::point(0.0, 0.0, 10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal);
+        let r = lighting(material, light, pos, camv, normal,false);
+        assert_eq!(r, Color::new(0.1, 0.1, 0.1, 0.0));
+    }
+
+    #[test]
+    fn test_in_shadow() {
+        let material = Material::default();
+        let pos = Coord::point(0.0, 0.0, 0.0);
+        let camv = Coord::vec(0.0, 0.0, -1.0);
+        let normal = Coord::vec(0.0, 0.0, -1.0);
+        let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
+        let r = lighting(material, light, pos, camv, normal, true);
         assert_eq!(r, Color::new(0.1, 0.1, 0.1, 0.0));
     }
 }

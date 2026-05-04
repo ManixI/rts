@@ -117,7 +117,7 @@ impl World {
         for obj in self.get_object() {
             data.push(obj.intersect(&ray));
         }
-        Intersection::aggregate_intersections(data)
+        Intersection::aggregate_intersections(data) // TODO: should just return find_hit data
     }
 
     fn shade_hit(&self, comps: Comps) -> Color {
@@ -129,7 +129,7 @@ impl World {
             comps.get_point(), 
             comps.get_eyev(), 
             comps.get_normalv(),
-            false
+            self.in_shadow(comps.get_point())
             );
         }
         color
@@ -169,7 +169,7 @@ impl World {
         let intersections = Intersection::find_hit(&intersections);
         match intersections {
             None => false,
-            Some(val) => val.get_time() <= dist
+            Some(val) => val.get_time() <= dist // TODO: add EPSILON to cover for floating point errors
         }
     }
 }
@@ -179,7 +179,7 @@ impl World {
 mod tests {
     use std::rc::Rc;
 
-    use crate::{camera::Camera, canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, compare_renderables}, sphere::Sphere};
+    use crate::{camera::Camera, canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, compare_renderables}, sphere::Sphere, world};
 
     use super::{Comps, World};
 
@@ -356,4 +356,24 @@ mod tests {
         let p = Coord::point(-2.0,2.0,-2.0);
         assert!(!w.in_shadow(p));
     }
+
+    #[test]
+    fn test_shadow() {
+        let mut w = World::new();
+        let l = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
+        w.set_light(l);
+
+        let s1 = Sphere::default();
+        w.add_obj(Rc::new(s1));
+
+        let s2 = Sphere::new(Coord::point(0.0, 0.0, 10.0));
+        w.add_obj(Rc::new(s2.clone()));
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
+        let i = Intersection::new(4.0, Rc::new(s2));
+
+        let comps = Comps::prepare_computations(i, r);
+        let c = w.shade_hit(comps);
+        assert_eq!(c, Color::new(0.1, 0.1, 0.1, 0.0))
+    }  
 }

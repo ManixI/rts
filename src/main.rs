@@ -336,7 +336,7 @@ fn draw_scene() {
     world.add_obj(Rc::new(left));
     world.add_obj(Rc::new(right));
 
-    let mut cam = Camera::new(200, 200, PI/3.0);
+    let mut cam = Camera::new(2000, 2000, PI/3.0);
     cam.transform(Matrix::view_transformation(
         Coord::point(0.0, 1.5, -5.0), 
         Coord::point(0.0, 1.0, 0.0), 
@@ -347,13 +347,13 @@ fn draw_scene() {
 }
 
 fn main() {
-    let mut env = Environment::new(-0.01, -0.1, 900, 550);
-    env.add_shot(Shot::new(Coord::point(0.0, 1.0, 0.0), Coord::vec(5.0, 8.2, 0.0) * 11.25));
+    //let mut env = Environment::new(-0.01, -0.1, 900, 550);
+    //env.add_shot(Shot::new(Coord::point(0.0, 1.0, 0.0), Coord::vec(5.0, 8.2, 0.0) * 11.25));
     //println!("{:?}", env);
-    while env.run_tick() > 0 {
+    //while env.run_tick() > 0 {
         //println!("dist: {}", env.get_shots()[0].get_pos().get_x());
-    }
-    let _ = env.draw_canvas("out.ppm");
+    //}
+    //let _ = env.draw_canvas("out.ppm");
 
     //draw_clock("clock.ppm");
     //let _ = outline_sphere("sphere.ppm", 400, Sphere::default());

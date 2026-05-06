@@ -5,9 +5,10 @@ use crate::{coord::Coord, material::Material, matrix::Matrix, ray::Ray};
 #[derive(PartialEq, Debug)]
 pub enum RenderableType {
     Sphere,
+    Plane
 }
 
-pub trait Renderable {
+pub trait RenderableBase {
     fn get_material(&self) -> Material;
 
     fn get_pos(&self) -> Coord;
@@ -19,7 +20,32 @@ pub trait Renderable {
     fn clone_rc(&self) -> Rc<dyn Renderable>;
 
     fn clone_dyn(&self) -> Box<dyn Renderable>;
+}
 
+/**
+ * macro to auto-define getters and setters for a renderable
+ */
+#[macro_export]
+macro_rules! impl_renderable_base {
+    ($type:ty, $variant:expr) => {
+        impl crate::renderable::RenderableBase for $type {
+            // TODO: should return reference not actual material 
+            fn get_material(&self) -> Material { self.material }
+            fn get_pos(&self) -> Coord { self.transformation.to_point() }
+            fn get_transformation(&self) -> Matrix { self.transformation.clone() }
+            fn get_type(&self) -> RenderableType { $variant }
+            fn clone_rc(&self) -> Rc<dyn Renderable> { Rc::new(self.clone()) }
+            fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
+        }
+        
+    };
+}
+
+/**
+ * trait to define an object as renderable by the engine
+ * requires RenderableBase implementation (use impl_renderable_base(Type, RenderableBase:Type))
+ */
+pub trait Renderable: RenderableBase {
     fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]>;
 
     fn normal_at(&self, pos: Coord) -> Coord;
@@ -110,7 +136,7 @@ impl Debug for Intersection {
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
-    use crate::{coord::Coord, ray::Ray, renderable::Renderable, sphere::Sphere};
+    use crate::{coord::Coord, ray::Ray, renderable::{Renderable, RenderableBase}, sphere::Sphere};
     use super::Intersection;
 
     fn compare(a: Rc<dyn Renderable>, b: Rc<dyn Renderable>) {

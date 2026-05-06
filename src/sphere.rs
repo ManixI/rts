@@ -1,5 +1,6 @@
 use core::f32;
 use std::rc::Rc;
+use crate::impl_renderable_base;
 use crate::material::Material;
 use crate::matrix::Matrix;
 use crate::ray::Ray;
@@ -155,32 +156,9 @@ fn quadratic_formula_helper(a: f32,b: f32, c: f32) -> Option<[f32; 2]> {
 }
 
 //const EPSILON: f32 = 0.02;
+impl_renderable_base!(Sphere, RenderableType::Sphere);
 
-impl Renderable for Sphere {
-    // TODO: should return reference not actual material 
-    fn get_material(&self) -> Material {
-        self.material
-    }
-
-    fn get_pos(&self) -> Coord {
-        self.get_origin()
-    }
-
-    fn get_transformation(&self) -> Matrix {
-        self.transformation.clone()
-    }
-
-    fn get_type(&self) -> RenderableType {
-        RenderableType::Sphere
-    }
-
-    fn clone_rc(&self) -> Rc<dyn Renderable> {
-        Rc::new(self.clone())
-    }
-
-    fn clone_dyn(&self) -> Box<dyn Renderable> {
-        Box::new(self.clone())
-    }
+impl Renderable for Sphere { 
     
     fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]> {
         let ray = ray.transform(self.get_transformation().inverse().unwrap());

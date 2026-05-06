@@ -1,9 +1,11 @@
-use std::{fs::DirBuilder, rc::Rc};
+use std::rc::Rc;
 
-use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{self, Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
+use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
+
+static EPSILON: f32 = 0.005; // this needs to be surprisingly big
 
 struct Comps {
     object: Rc<dyn Renderable>,
@@ -43,6 +45,10 @@ impl Comps {
 
     fn get_inside(&self) -> bool {
         self.inside
+    }
+
+    fn get_over_point(&self) -> Coord {
+        self.get_point() + self.normalv * EPSILON
     }
 
     fn prepare_computations(intersection: Intersection, ray: Ray) -> Self {
@@ -129,7 +135,7 @@ impl World {
             comps.get_point(), 
             comps.get_eyev(), 
             comps.get_normalv(),
-            self.in_shadow(comps.get_point())
+            self.in_shadow(comps.get_over_point())
             );
         }
         color
@@ -179,7 +185,7 @@ impl World {
 mod tests {
     use std::rc::Rc;
 
-    use crate::{camera::Camera, canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, compare_renderables}, sphere::Sphere, world};
+    use crate::{camera::Camera, canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, sphere::Sphere, world::{self, EPSILON}};
 
     use super::{Comps, World};
 
@@ -366,14 +372,24 @@ mod tests {
         let s1 = Sphere::default();
         w.add_obj(Rc::new(s1));
 
-        let s2 = Sphere::new(Coord::point(0.0, 0.0, 10.0));
-        w.add_obj(Rc::new(s2.clone()));
+        let s2 = Rc::new(Sphere::new(Coord::point(0.0, 0.0, 10.0)));
+        w.add_obj(s2.clone());
 
         let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
-        let i = Intersection::new(4.0, Rc::new(s2));
+        let i = Intersection::new(4.0, s2);
 
         let comps = Comps::prepare_computations(i, r);
         let c = w.shade_hit(comps);
         assert_eq!(c, Color::new(0.1, 0.1, 0.1, 0.0))
-    }  
+    }
+
+    #[test]
+    fn test_shadow_over_point() {
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let s = Rc::new(Sphere::new(Coord::point(0.0, 0.0, 1.0)));
+        let i = Intersection::new(5.0, s);
+        let comps = Comps::prepare_computations(i, r);
+        assert!(comps.get_over_point().get_z() < -EPSILON/2.0);
+        assert!(comps.get_point().get_z() > comps.get_over_point().get_z());
+    }
 }

@@ -11,9 +11,13 @@ pub enum RenderableType {
 pub trait RenderableBase {
     fn get_material(&self) -> Material;
 
+    fn set_material(&mut self, mat: Material);
+
     fn get_pos(&self) -> Coord;
 
     fn get_transformation(&self) -> Matrix;
+
+    fn set_transform(&mut self, transform: Matrix);
 
     fn get_type(&self) -> RenderableType;
 
@@ -31,8 +35,10 @@ macro_rules! impl_renderable_base {
         impl crate::renderable::RenderableBase for $type {
             // TODO: should return reference not actual material 
             fn get_material(&self) -> Material { self.material }
+            fn set_material(&mut self, mat: Material) { self.material = mat; }
             fn get_pos(&self) -> Coord { self.transformation.to_point() }
             fn get_transformation(&self) -> Matrix { self.transformation.clone() }
+            fn set_transform(&mut self, transform: Matrix) { self.transformation = transform }
             fn get_type(&self) -> RenderableType { $variant }
             fn clone_rc(&self) -> Rc<dyn Renderable> { Rc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
@@ -46,6 +52,7 @@ macro_rules! impl_renderable_base {
  * requires RenderableBase implementation (use impl_renderable_base(Type, RenderableBase:Type))
  */
 pub trait Renderable: RenderableBase {
+    // TODO: refactor this to consume the ray
     fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]>;
 
     fn normal_at(&self, pos: Coord) -> Coord;
@@ -129,6 +136,62 @@ impl Debug for Intersection {
          .field("object material", &self.get_object().get_material())
          .field("object transformation", &self.get_object().get_transformation())
          .finish()
+    }
+}
+
+/**
+ * macro to auto-generate tests for classes implementing Renderable
+ */
+#[macro_export]
+macro_rules! impl_renderable_tests {
+    ($type:ty, $variant:expr) => {
+
+        #[cfg(test)]
+        mod macro_tests {
+            use crate::matrix::Matrix;
+            use crate::renderable::RenderableBase;
+            use crate::material::Material;
+            use crate::coord::Coord;
+            use crate::ray::Ray;
+            use crate::renderable::Renderable;
+
+            #[test]
+            fn test_has_transformation() {
+                let o = <$type>::default();
+                assert_eq!(o.get_transformation(), Matrix::identity(4));
+            }
+
+            #[test]
+            fn test_assign_transform() {
+                let mut o = <$type>::default();
+                o.set_transform(Matrix::translation(2.0, 3.0, 4.0));
+                assert_eq!(o.get_transformation(), Matrix::translation(2.0, 3.0, 4.0))
+            }
+
+            #[test]
+            fn test_default_shape_material() {
+                let o = <$type>::default();
+                assert_eq!(o.get_material(), Material::default());
+            }
+
+            #[test]
+            fn test_set_material() {
+                let mut m = Material::default();
+                m.set_ambient(1.0);
+                let mut o = <$type>::default();
+                o.set_material(m.clone());
+                assert_eq!(o.get_material(), m);
+            }
+
+            #[test]
+            fn test_intersect_scaled() {
+                let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+                let mut s = <$type>::default();
+                s.set_transform(Matrix::scaling(2.0, 2.0, 2.0));
+                let xs = s.intersect(&r);
+                todo!()
+            }
+        }
     }
 }
 

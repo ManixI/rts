@@ -8,6 +8,7 @@ mod material;
 mod world;
 mod renderable;
 mod camera;
+mod plane;
 
 use std::{f32, rc::Rc};
 

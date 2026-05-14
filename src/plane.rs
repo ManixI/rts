@@ -5,7 +5,8 @@ use std::rc::Rc;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Plane {
     transformation: Matrix,
-    material: Material
+    material: Material,
+    saved_ray: Option<Ray>,
 }
 
 #[allow(dead_code)]

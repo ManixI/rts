@@ -16,6 +16,8 @@ impl Ray {
     pub fn new(origin: Coord, direction: Coord) -> Self {
         // TODO: is there a better way then calcing the norm for every new ray?
         let direction = direction.to_vec();
+        assert!(origin.is_point());
+        assert!(direction.is_vec());
         Ray { origin, direction: direction, norm_dir: direction.normalized() }
     }
 

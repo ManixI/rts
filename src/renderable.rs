@@ -24,6 +24,8 @@ pub trait RenderableBase {
     fn clone_rc(&self) -> Rc<dyn Renderable>;
 
     fn clone_dyn(&self) -> Box<dyn Renderable>;
+
+    fn get_saved_ray(&self) -> Option<Ray>;
 }
 
 /**
@@ -42,6 +44,7 @@ macro_rules! impl_renderable_base {
             fn get_type(&self) -> RenderableType { $variant }
             fn clone_rc(&self) -> Rc<dyn Renderable> { Rc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
+            fn get_saved_ray(&self) -> Option<Ray> { self.saved_ray }
         }
         
     };
@@ -188,8 +191,22 @@ macro_rules! impl_renderable_tests {
                 let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
                 let mut s = <$type>::default();
                 s.set_transform(Matrix::scaling(2.0, 2.0, 2.0));
-                let xs = s.intersect(&r);
-                todo!()
+                let _xs = s.intersect(&r);
+                // TODO: I don't like that this is relying on a side effect of intersect
+                let sr = s.get_saved_ray().unwrap();
+                assert_eq!(sr.get_origin(), Coord::point(0.0, 0.0, -2.5));
+                assert_eq!(sr.get_direction(), Coord::vec(0.0, 0.0, 0.5));
+            }
+
+            #[test]
+            fn test_intersect_translated() {
+                let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+                let mut s = <$type>::default();
+                s.set_transform(Matrix::translation(5.0, 0.0, 0.0));
+                let _xs = s.intersect(&r);
+                let sr = s.get_saved_ray().unwrap();
+                assert_eq!(sr.get_origin(), Coord::point(-5.0, 0.0, -5.0));
+                assert_eq!(sr.get_direction(), Coord::vec(0.0, 0.0, 1.0));
             }
         }
     }

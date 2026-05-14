@@ -14,6 +14,7 @@ pub struct Sphere {
     //radius: f32,
     transformation: Matrix,
     material: Material,
+    saved_ray: Option<Ray>,
 }
 
 #[allow(dead_code)]
@@ -22,7 +23,8 @@ impl Sphere {
     pub fn default() -> Self {
         Self { 
             transformation: Matrix::identity(4), 
-            material: Material::default()
+            material: Material::default(),
+            saved_ray: None
         }
     }
 

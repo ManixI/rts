@@ -1,6 +1,6 @@
 use core::f32;
 use std::rc::Rc;
-use crate::impl_renderable_base;
+use crate::{impl_renderable_base, impl_renderable_tests};
 use crate::material::Material;
 use crate::matrix::Matrix;
 use crate::ray::Ray;
@@ -14,7 +14,6 @@ pub struct Sphere {
     //radius: f32,
     transformation: Matrix,
     material: Material,
-    saved_ray: Option<Ray>,
 }
 
 #[allow(dead_code)]
@@ -34,7 +33,6 @@ impl Sphere {
         Self { 
             transformation: Matrix::from_point(&origin),
             material: Material::default(),
-            saved_ray: None
         }
     }
 
@@ -154,18 +152,28 @@ fn quadratic_formula_helper(a: f32,b: f32, c: f32) -> Option<[f32; 2]> {
 //const EPSILON: f32 = 0.02;
 impl_renderable_base!(Sphere, RenderableType::Sphere);
 
+impl_renderable_tests!(crate::sphere::Sphere, RenderableType::Sphere);
+
 impl Renderable for Sphere { 
     
     fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]> {
+        let (_, out) = self.intersect_get_ray(ray);
+        out
+    }
+
+    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<[Intersection; 2]>) {
         let ray = ray.transform(self.get_transformation().inverse().unwrap());
         let data = self.analytical_intersect(&ray);
         //let data = self.geometric_intersect(&ray);
         if data.is_none() {
-            return None;
+            return (ray, None);
         }
         let data = data.unwrap();
         let t = Rc::new(self.clone());
-        Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
+        (
+            ray,
+            Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
+        )
     }
 
     /// func assumes pos is on the sphere, if it is not results are undefined
@@ -185,7 +193,6 @@ impl Renderable for Sphere {
         Self { 
             transformation: Matrix::identity(4), 
             material: Material::default(),
-            saved_ray: None
         }
     }
 }

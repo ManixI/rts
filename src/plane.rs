@@ -6,7 +6,6 @@ use std::rc::Rc;
 pub struct Plane {
     transformation: Matrix,
     material: Material,
-    saved_ray: Option<Ray>,
 }
 
 #[allow(dead_code)]
@@ -23,6 +22,11 @@ impl_renderable_base!(Plane, RenderableType::Plane);
 impl Renderable for Plane {
     
     fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]> {
+        let (_, out) = self.intersect_get_ray(ray);
+        out
+    }
+
+    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<[Intersection; 2]>) {
         todo!()
     }
 

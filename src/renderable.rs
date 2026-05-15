@@ -24,8 +24,6 @@ pub trait RenderableBase {
     fn clone_rc(&self) -> Rc<dyn Renderable>;
 
     fn clone_dyn(&self) -> Box<dyn Renderable>;
-
-    fn get_saved_ray(&self) -> Option<Ray>;
 }
 
 /**
@@ -44,7 +42,6 @@ macro_rules! impl_renderable_base {
             fn get_type(&self) -> RenderableType { $variant }
             fn clone_rc(&self) -> Rc<dyn Renderable> { Rc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
-            fn get_saved_ray(&self) -> Option<Ray> { self.saved_ray }
         }
         
     };
@@ -56,6 +53,8 @@ macro_rules! impl_renderable_base {
  */
 pub trait Renderable: RenderableBase {
     fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]>;
+
+    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<[Intersection; 2]>);
 
     fn normal_at(&self, pos: Coord) -> Coord;
 
@@ -192,9 +191,8 @@ macro_rules! impl_renderable_tests {
                 let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
                 let mut s = <$type>::default();
                 s.set_transform(Matrix::scaling(2.0, 2.0, 2.0));
-                let _xs = s.intersect(r);
+                let (sr, _xs) = s.intersect_get_ray(r);
                 // TODO: I don't like that this is relying on a side effect of intersect
-                let sr = s.get_saved_ray().unwrap();
                 assert_eq!(sr.get_origin(), Coord::point(0.0, 0.0, -2.5));
                 assert_eq!(sr.get_direction(), Coord::vec(0.0, 0.0, 0.5));
             }
@@ -204,8 +202,7 @@ macro_rules! impl_renderable_tests {
                 let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
                 let mut s = <$type>::default();
                 s.set_transform(Matrix::translation(5.0, 0.0, 0.0));
-                let _xs = s.intersect(r);
-                let sr = s.get_saved_ray().unwrap();
+                let (sr, _xs) = s.intersect_get_ray(r);
                 assert_eq!(sr.get_origin(), Coord::point(-5.0, 0.0, -5.0));
                 assert_eq!(sr.get_direction(), Coord::vec(0.0, 0.0, 1.0));
             }
@@ -215,7 +212,7 @@ macro_rules! impl_renderable_tests {
                 let mut s = <$type>::default();
                 s.set_transform(Matrix::translation(0.0, 1.0, 0.0));
                 let n = s.normal_at(Coord::point(0.0, 1.70711, -0.70711));
-                assert_eq!(n, Coord::vec(0.0, 0.70711, -0.70711));
+                assert_eq!(n, Coord::vec(0.0, 0.7071068, -0.70710677));
             }
 
             #[test]
@@ -223,7 +220,7 @@ macro_rules! impl_renderable_tests {
                 let mut s = <$type>::default();
                 s.set_transform(Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotate_z(std::f32::consts::PI/5.0));
                 let n = s.normal_at(Coord::point(0.0, 2.0_f32.sqrt()/2.0, -2.0_f32.sqrt()/2.0));
-                assert_eq!(n, Coord::vec(0.0, 0.97014, -0.24254));
+                assert_eq!(n, Coord::vec(0.0, 0.97014254, -0.24253564));
             }
         }
     }

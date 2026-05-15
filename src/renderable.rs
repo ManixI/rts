@@ -55,10 +55,11 @@ macro_rules! impl_renderable_base {
  * requires RenderableBase implementation (use impl_renderable_base(Type, RenderableBase:Type))
  */
 pub trait Renderable: RenderableBase {
-    // TODO: refactor this to consume the ray
-    fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]>;
+    fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]>;
 
     fn normal_at(&self, pos: Coord) -> Coord;
+
+    fn default() -> Self where Self: Sized;
 }
 
 impl Clone for Box<dyn Renderable> {
@@ -191,7 +192,7 @@ macro_rules! impl_renderable_tests {
                 let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
                 let mut s = <$type>::default();
                 s.set_transform(Matrix::scaling(2.0, 2.0, 2.0));
-                let _xs = s.intersect(&r);
+                let _xs = s.intersect(r);
                 // TODO: I don't like that this is relying on a side effect of intersect
                 let sr = s.get_saved_ray().unwrap();
                 assert_eq!(sr.get_origin(), Coord::point(0.0, 0.0, -2.5));
@@ -203,10 +204,26 @@ macro_rules! impl_renderable_tests {
                 let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
                 let mut s = <$type>::default();
                 s.set_transform(Matrix::translation(5.0, 0.0, 0.0));
-                let _xs = s.intersect(&r);
+                let _xs = s.intersect(r);
                 let sr = s.get_saved_ray().unwrap();
                 assert_eq!(sr.get_origin(), Coord::point(-5.0, 0.0, -5.0));
                 assert_eq!(sr.get_direction(), Coord::vec(0.0, 0.0, 1.0));
+            }
+
+            #[test]
+            fn test_normal_at_translate() {
+                let mut s = <$type>::default();
+                s.set_transform(Matrix::translation(0.0, 1.0, 0.0));
+                let n = s.normal_at(Coord::point(0.0, 1.70711, -0.70711));
+                assert_eq!(n, Coord::vec(0.0, 0.70711, -0.70711));
+            }
+
+            #[test]
+            fn test_normal_at_scale() {
+                let mut s = <$type>::default();
+                s.set_transform(Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotate_z(std::f32::consts::PI/5.0));
+                let n = s.normal_at(Coord::point(0.0, 2.0_f32.sqrt()/2.0, -2.0_f32.sqrt()/2.0));
+                assert_eq!(n, Coord::vec(0.0, 0.97014, -0.24254));
             }
         }
     }
@@ -246,7 +263,7 @@ mod tests {
     fn test_create_2() {
         let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let s = Rc::new(Sphere::default());
-        let xs = s.intersect(&r);
+        let xs = s.intersect(r);
         assert!(xs.is_some());
         let xs = xs.unwrap();
         compare(xs[0].get_object(), s.clone());
@@ -262,10 +279,10 @@ mod tests {
         let s = Sphere::default();
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let mut intersections = Vec::new();
-        intersections.push(s.intersect(&ray));
-        intersections.push(s.intersect(&ray));
+        intersections.push(s.intersect(ray));
+        intersections.push(s.intersect(ray));
         let ray = Ray::new(Coord::point(5.0, 5.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        intersections.push(s.intersect(&ray));
+        intersections.push(s.intersect(ray));
         let data = Intersection::aggregate_intersections(intersections);
         assert_eq!(data.len(), 4);
         let test = Intersection::new(4.0, Rc::new(s.clone()));

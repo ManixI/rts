@@ -30,7 +30,7 @@ impl Ray {
     }
 
     pub fn intersect(&self, object: &dyn Renderable) -> Option<[Intersection; 2]> {
-        object.intersect(&self)
+        object.intersect(*self)
     }
 
     pub fn get_origin(&self) -> Coord {

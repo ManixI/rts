@@ -11,9 +11,6 @@ pub struct Plane {
 
 #[allow(dead_code)]
 impl Plane {
-    pub fn default() -> Self {
-        todo!()
-    }
 
     pub fn new(origin: Coord) -> Self {
         todo!()
@@ -25,12 +22,16 @@ impl_renderable_base!(Plane, RenderableType::Plane);
 
 impl Renderable for Plane {
     
-    fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]> {
+    fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]> {
         todo!()
     }
 
     fn normal_at(&self, pos: Coord) -> Coord {
         todo!()
+    }
+
+    fn default() -> Self {
+        todo!();
     }
 }
 

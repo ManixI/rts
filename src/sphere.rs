@@ -19,14 +19,7 @@ pub struct Sphere {
 
 #[allow(dead_code)]
 impl Sphere {
-    /// a sphere at position (0, 0, 0) with a radius of 1
-    pub fn default() -> Self {
-        Self { 
-            transformation: Matrix::identity(4), 
-            material: Material::default(),
-            saved_ray: None
-        }
-    }
+
 
     /**
      * TODO: spheres should use constructor with default characteristics rather then
@@ -40,7 +33,8 @@ impl Sphere {
         assert!(origin.is_point());
         Self { 
             transformation: Matrix::from_point(&origin),
-            material: Material::default()
+            material: Material::default(),
+            saved_ray: None
         }
     }
 
@@ -162,7 +156,7 @@ impl_renderable_base!(Sphere, RenderableType::Sphere);
 
 impl Renderable for Sphere { 
     
-    fn intersect(&self, ray: &Ray) -> Option<[Intersection; 2]> {
+    fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]> {
         let ray = ray.transform(self.get_transformation().inverse().unwrap());
         let data = self.analytical_intersect(&ray);
         //let data = self.geometric_intersect(&ray);
@@ -184,6 +178,15 @@ impl Renderable for Sphere {
             * obj_normal;
         world_norm.set_w(0.0);
         world_norm.normalized()
+    }
+
+    /// a sphere at position (0, 0, 0) with a radius of 1
+    fn default() -> Self {
+        Self { 
+            transformation: Matrix::identity(4), 
+            material: Material::default(),
+            saved_ray: None
+        }
     }
 }
 
@@ -244,12 +247,12 @@ mod tests {
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let mut s = Sphere::default();
         s.set_transformation(Matrix::translation(5.0, 0.0, 0.0));
-        let xs = s.intersect(&ray);
+        let xs = s.intersect(ray);
         assert!(xs.is_none());
 
         s.set_transformation(Matrix::identity(4));
         s.apply_transformation(Matrix::translation(5.0, 0.0, 0.0));
-        let xs = s.intersect(&ray);
+        let xs = s.intersect(ray);
         assert!(xs.is_none());
     }
 

@@ -121,7 +121,7 @@ impl World {
     fn get_intersections(&self, ray: Ray) -> Vec<Intersection> {
         let mut data = Vec::new();
         for obj in self.get_object() {
-            data.push(obj.intersect(&ray));
+            data.push(obj.intersect(ray));
         }
         Intersection::aggregate_intersections(data) // TODO: should just return find_hit data
     }

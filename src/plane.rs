@@ -27,10 +27,13 @@ impl Renderable for Plane {
     }
 
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<[Intersection; 2]>) {
+        // plane only exists on xz plane in local space (before transformation is applied)
         if ray.get_direction().get_y().abs() - 0.0001 > 0.0 {
             return (ray, None);
         }
-        todo!()
+        let t = -ray.get_origin().get_y() / ray.get_direction().get_y();
+        // TODO: need to refactor return value as there will only ever be at most one intersection
+        (ray, )
     }
 
     fn normal_at(&self, pos: Coord) -> Coord {
@@ -68,6 +71,10 @@ mod tests {
         let xs = Intersection::aggregate_intersections(vec![xs]);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].get_time(), 1.0);
-        assert_eq!(xs[0].get_object(), p);
+        let o = xs[0].get_object();
+        assert_eq!(o.get_material(), p.get_material());
+        assert_eq!(o.get_pos(), p.get_pos());
+        assert_eq!(o.get_transformation(), p.get_transformation());
+        assert_eq!(o.get_type(), p.get_type());
     }
 }

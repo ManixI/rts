@@ -21,19 +21,20 @@ impl_renderable_base!(Plane, RenderableType::Plane);
 
 impl Renderable for Plane {
     
-    fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]> {
+    fn intersect(&self, ray: Ray) -> Option<Vec<Intersection>> {
         let (_, out) = self.intersect_get_ray(ray);
         out
     }
 
-    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<[Intersection; 2]>) {
+    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>) {
         // plane only exists on xz plane in local space (before transformation is applied)
         if ray.get_direction().get_y().abs() - 0.0001 > 0.0 {
             return (ray, None);
         }
         let t = -ray.get_origin().get_y() / ray.get_direction().get_y();
-        // TODO: need to refactor return value as there will only ever be at most one intersection
-        (ray, )
+        // TODO: would this work if I just returned a reference to self instead of a RC box of it?
+        // TODO: is there a better way to do the RC then to make a new one here?
+        (ray, Some(vec![Intersection::new(t, Rc::new(self.clone()))]))
     }
 
     fn normal_at(&self, pos: Coord) -> Coord {
@@ -67,8 +68,8 @@ mod tests {
     fn test_ray_intersect_above() {
         let p = Plane::default();
         let r = Ray::new(Coord::point(0.0, 1.0, 0.0), Coord::vec(0.0, -1.0, 0.0));
-        let xs = p.intersect(r);
-        let xs = Intersection::aggregate_intersections(vec![xs]);
+        let xs = p.intersect(r).unwrap();
+        let xs = Intersection::aggregate_intersections(xs);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].get_time(), 1.0);
         let o = xs[0].get_object();

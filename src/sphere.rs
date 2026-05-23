@@ -156,12 +156,12 @@ impl_renderable_tests!(crate::sphere::Sphere, RenderableType::Sphere);
 
 impl Renderable for Sphere { 
     
-    fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]> {
+    fn intersect(&self, ray: Ray) -> Option<Vec<Intersection>> {
         let (_, out) = self.intersect_get_ray(ray);
         out
     }
 
-    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<[Intersection; 2]>) {
+    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>) {
         let ray = ray.transform(self.get_transformation().inverse().unwrap());
         let data = self.analytical_intersect(&ray);
         //let data = self.geometric_intersect(&ray);
@@ -172,7 +172,7 @@ impl Renderable for Sphere {
         let t = Rc::new(self.clone());
         (
             ray,
-            Some([Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
+            Some(vec![Intersection::new(data[0], t.clone()), Intersection::new(data[1], t)])
         )
     }
 

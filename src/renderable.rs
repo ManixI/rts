@@ -52,9 +52,9 @@ macro_rules! impl_renderable_base {
  * requires RenderableBase implementation (use impl_renderable_base(Type, RenderableBase:Type))
  */
 pub trait Renderable: RenderableBase {
-    fn intersect(&self, ray: Ray) -> Option<[Intersection; 2]>;
+    fn intersect(&self, ray: Ray) -> Option<Vec<Intersection>>;
 
-    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<[Intersection; 2]>);
+    fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>);
 
     fn normal_at(&self, pos: Coord) -> Coord;
 
@@ -101,19 +101,9 @@ impl Intersection {
     /**
      * returns a sorted list of intersections, the earliest returned first
      */
-    pub fn aggregate_intersections(data: Vec<Option<[Self; 2]>>) -> Vec<Self> {
-        let mut out = Vec::<Self>::with_capacity(data.len() * 2);
-        for val in data {
-            if val.is_none() {
-                continue;
-            }
-            let val = val.unwrap();
-            for inter in val {
-                out.push(inter);
-            }
-        }
-        out.sort_by(|a, b| a.get_time().total_cmp(&b.get_time()));
-        out
+    pub fn aggregate_intersections(mut data: Vec<Intersection>) -> Vec<Self> {
+        data.sort_by(|a, b| a.get_time().total_cmp(&b.get_time()));
+        data
     }
 
     pub fn find_hit(data: &Vec<Self>) -> Option<&Self> {
@@ -276,10 +266,10 @@ mod tests {
         let s = Sphere::default();
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let mut intersections = Vec::new();
-        intersections.push(s.intersect(ray));
-        intersections.push(s.intersect(ray));
+        intersections.append(&mut s.intersect(ray).unwrap());
+        intersections.append(&mut s.intersect(ray).unwrap());
         let ray = Ray::new(Coord::point(5.0, 5.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        intersections.push(s.intersect(ray));
+        intersections.append(&mut s.intersect(ray).unwrap());
         let data = Intersection::aggregate_intersections(intersections);
         assert_eq!(data.len(), 4);
         let test = Intersection::new(4.0, Rc::new(s.clone()));

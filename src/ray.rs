@@ -29,7 +29,7 @@ impl Ray {
         self.origin + self.direction * time
     }
 
-    pub fn intersect(&self, object: &dyn Renderable) -> Option<[Intersection; 2]> {
+    pub fn intersect(&self, object: &dyn Renderable) -> Option<Vec<Intersection>> {
         object.intersect(*self)
     }
 

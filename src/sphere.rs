@@ -35,15 +35,7 @@ impl Sphere {
             material: Material::default(),
         }
     }
-
-    pub fn set_material(&mut self, mat: Material) {
-        self.material = mat;
-    }
-
-    pub fn set_transformation(&mut self, mat: Matrix) {
-        self.transformation = mat;
-    }
-
+    
     // TODO: remove clone here
     pub fn apply_transformation(&mut self, mat: Matrix) {
         self.transformation = self.transformation.clone() * mat;
@@ -164,7 +156,6 @@ impl Renderable for Sphere {
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>) {
         let ray = ray.transform(self.get_transformation().inverse().unwrap());
         let data = self.analytical_intersect(&ray);
-        //let data = self.geometric_intersect(&ray);
         if data.is_none() {
             return (ray, None);
         }
@@ -201,8 +192,9 @@ impl Renderable for Sphere {
 mod tests {
     use core::f32;
     use std::thread::spawn;
+    use super::*;
 
-    use crate::sphere;
+    use crate::{renderable::RenderableBase, sphere};
 
     use super::*;
     //use crate::{coord::Coord, matrix::Matrix, ray::{Intersect, Ray}, sphere::Sphere};

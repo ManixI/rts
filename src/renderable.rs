@@ -17,7 +17,7 @@ pub trait RenderableBase {
 
     fn get_transformation(&self) -> Matrix;
 
-    fn set_transform(&mut self, transform: Matrix);
+    fn set_transformation(&mut self, transform: Matrix);
 
     fn get_type(&self) -> RenderableType;
 
@@ -38,7 +38,7 @@ macro_rules! impl_renderable_base {
             fn set_material(&mut self, mat: Material) { self.material = mat; }
             fn get_pos(&self) -> Coord { self.transformation.to_point() }
             fn get_transformation(&self) -> Matrix { self.transformation.clone() }
-            fn set_transform(&mut self, transform: Matrix) { self.transformation = transform }
+            fn set_transformation(&mut self, transform: Matrix) { self.transformation = transform }
             fn get_type(&self) -> RenderableType { $variant }
             fn clone_rc(&self) -> Rc<dyn Renderable> { Rc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
@@ -157,7 +157,7 @@ macro_rules! impl_renderable_tests {
             #[test]
             fn test_assign_transform() {
                 let mut o = <$type>::default();
-                o.set_transform(Matrix::translation(2.0, 3.0, 4.0));
+                o.set_transformation(Matrix::translation(2.0, 3.0, 4.0));
                 assert_eq!(o.get_transformation(), Matrix::translation(2.0, 3.0, 4.0))
             }
 
@@ -180,9 +180,8 @@ macro_rules! impl_renderable_tests {
             fn test_intersect_scaled() {
                 let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
                 let mut s = <$type>::default();
-                s.set_transform(Matrix::scaling(2.0, 2.0, 2.0));
+                s.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
                 let (sr, _xs) = s.intersect_get_ray(r);
-                // TODO: I don't like that this is relying on a side effect of intersect
                 assert_eq!(sr.get_origin(), Coord::point(0.0, 0.0, -2.5));
                 assert_eq!(sr.get_direction(), Coord::vec(0.0, 0.0, 0.5));
             }
@@ -191,7 +190,7 @@ macro_rules! impl_renderable_tests {
             fn test_intersect_translated() {
                 let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
                 let mut s = <$type>::default();
-                s.set_transform(Matrix::translation(5.0, 0.0, 0.0));
+                s.set_transformation(Matrix::translation(5.0, 0.0, 0.0));
                 let (sr, _xs) = s.intersect_get_ray(r);
                 assert_eq!(sr.get_origin(), Coord::point(-5.0, 0.0, -5.0));
                 assert_eq!(sr.get_direction(), Coord::vec(0.0, 0.0, 1.0));
@@ -200,7 +199,7 @@ macro_rules! impl_renderable_tests {
             #[test]
             fn test_normal_at_translate() {
                 let mut s = <$type>::default();
-                s.set_transform(Matrix::translation(0.0, 1.0, 0.0));
+                s.set_transformation(Matrix::translation(0.0, 1.0, 0.0));
                 let n = s.normal_at(Coord::point(0.0, 1.70711, -0.70711));
                 assert_eq!(n, Coord::vec(0.0, 0.7071068, -0.70710677));
             }
@@ -208,7 +207,7 @@ macro_rules! impl_renderable_tests {
             #[test]
             fn test_normal_at_scale() {
                 let mut s = <$type>::default();
-                s.set_transform(Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotate_z(std::f32::consts::PI/5.0));
+                s.set_transformation(Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotate_z(std::f32::consts::PI/5.0));
                 let n = s.normal_at(Coord::point(0.0, 2.0_f32.sqrt()/2.0, -2.0_f32.sqrt()/2.0));
                 assert_eq!(n, Coord::vec(0.0, 0.97014254, -0.24253564));
             }
@@ -269,7 +268,7 @@ mod tests {
         intersections.append(&mut s.intersect(ray).unwrap());
         intersections.append(&mut s.intersect(ray).unwrap());
         let ray = Ray::new(Coord::point(5.0, 5.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        intersections.append(&mut s.intersect(ray).unwrap());
+        intersections.append(&mut s.intersect(ray).unwrap()); // BUG: unwrap shouldn't be empty
         let data = Intersection::aggregate_intersections(intersections);
         assert_eq!(data.len(), 4);
         let test = Intersection::new(4.0, Rc::new(s.clone()));

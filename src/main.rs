@@ -23,7 +23,7 @@ use renderable::Renderable;
 use sphere::Sphere;
 use core::f32::consts::PI;
 
-use crate::{camera::Camera, world::World};
+use crate::{camera::Camera, renderable::RenderableBase, world::World};
 
 #[derive(Debug, Clone, Copy)]
 struct Shot {

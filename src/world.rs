@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable}, sphere::Sphere};
+use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
@@ -126,7 +126,7 @@ impl World {
                 Some(mut val) => data.append(&mut val),
             }
         }
-        Intersection::aggregate_intersections(data) // TODO: should just return find_hit data
+        Intersection::aggregate_intersections(data)
     }
 
     fn shade_hit(&self, comps: Comps) -> Color {

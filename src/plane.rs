@@ -11,8 +11,8 @@ pub struct Plane {
 #[allow(dead_code)]
 impl Plane {
 
-    pub fn new(origin: Coord) -> Self {
-        todo!()
+    pub fn new(transformation: Matrix, material: Material) -> Self {
+        Self { transformation, material }
     }
 
 }
@@ -28,6 +28,7 @@ impl Renderable for Plane {
 
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>) {
         // plane only exists on xz plane in local space (before transformation is applied)
+        let ray = ray.transform(self.get_transformation().inverse().unwrap()); 
         if ray.get_direction().get_y().abs() - 0.0001 > 0.0 {
             return (ray, None);
         }
@@ -42,7 +43,10 @@ impl Renderable for Plane {
     }
 
     fn default() -> Self {
-        todo!();
+        Self { 
+            transformation: Matrix::identity(4), 
+            material: Material::default() 
+        }
     }
 }
 
@@ -50,6 +54,8 @@ impl_renderable_tests!(crate::plane::Plane, RenderableType::Plane);
 
 #[cfg(test)]
 mod tests {
+    use crate::renderable::RenderableBase;
+
     use super::*;
 
     #[test]

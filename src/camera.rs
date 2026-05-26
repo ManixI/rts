@@ -1,4 +1,4 @@
-use crate::{canvas::{Canvas, color::Color}, coord::Coord, matrix::Matrix, ray::Ray, world::World};
+use crate::{coord::Coord, matrix::Matrix, ray::Ray};
 use std::ops;
 
 

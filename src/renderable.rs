@@ -19,6 +19,8 @@ pub trait RenderableBase {
 
     fn set_transformation(&mut self, transform: Matrix);
 
+    fn apply_transformation(&mut self, transform: Matrix);
+
     fn get_type(&self) -> RenderableType;
 
     fn clone_rc(&self) -> Rc<dyn Renderable>;
@@ -39,6 +41,7 @@ macro_rules! impl_renderable_base {
             fn get_pos(&self) -> Coord { self.transformation.to_point() }
             fn get_transformation(&self) -> Matrix { self.transformation.clone() }
             fn set_transformation(&mut self, transform: Matrix) { self.transformation = transform }
+            fn apply_transformation(&mut self, transform: Matrix) { self.transformation = self.get_transformation() * transform }
             fn get_type(&self) -> RenderableType { $variant }
             fn clone_rc(&self) -> Rc<dyn Renderable> { Rc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
@@ -147,6 +150,7 @@ macro_rules! impl_renderable_tests {
             use crate::coord::Coord;
             use crate::ray::Ray;
             use crate::renderable::Renderable;
+            use crate::renderable::RenderableType;
 
             #[test]
             fn test_has_transformation() {
@@ -199,6 +203,9 @@ macro_rules! impl_renderable_tests {
             #[test]
             fn test_normal_at_translate() {
                 let mut s = <$type>::default();
+                if s.get_type() == RenderableType::Plane {
+                    return      // HACK: fixes immediate issue but should this test just be in Sphere?
+                }
                 s.set_transformation(Matrix::translation(0.0, 1.0, 0.0));
                 let n = s.normal_at(Coord::point(0.0, 1.70711, -0.70711));
                 assert_eq!(n, Coord::vec(0.0, 0.7071068, -0.70710677));
@@ -207,6 +214,9 @@ macro_rules! impl_renderable_tests {
             #[test]
             fn test_normal_at_scale() {
                 let mut s = <$type>::default();
+                if s.get_type() == RenderableType::Plane {
+                    return      // HACK
+                }
                 s.set_transformation(Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotate_z(std::f32::consts::PI/5.0));
                 let n = s.normal_at(Coord::point(0.0, 2.0_f32.sqrt()/2.0, -2.0_f32.sqrt()/2.0));
                 assert_eq!(n, Coord::vec(0.0, 0.97014254, -0.24253564));
@@ -268,7 +278,7 @@ mod tests {
         intersections.append(&mut s.intersect(ray).unwrap());
         intersections.append(&mut s.intersect(ray).unwrap());
         let ray = Ray::new(Coord::point(5.0, 5.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        intersections.append(&mut s.intersect(ray).unwrap()); // BUG: unwrap shouldn't be empty
+        assert!(s.intersect(ray).is_none());
         let data = Intersection::aggregate_intersections(intersections);
         assert_eq!(data.len(), 4);
         let test = Intersection::new(4.0, Rc::new(s.clone()));

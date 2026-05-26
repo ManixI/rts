@@ -1,5 +1,3 @@
-use std::ops::Mul;
-
 use crate::{matrix::Matrix, renderable::{Intersection, Renderable}};
 
 use super::Coord;

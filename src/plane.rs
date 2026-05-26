@@ -29,7 +29,7 @@ impl Renderable for Plane {
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>) {
         // plane only exists on xz plane in local space (before transformation is applied)
         let ray = ray.transform(self.get_transformation().inverse().unwrap()); 
-        if ray.get_direction().get_y().abs() - 0.0001 > 0.0 {
+        if ray.get_direction().get_y().abs() < 0.00001 {    // TODO: need a global EPSILON value rather then this magic value
             return (ray, None);
         }
         let t = -ray.get_origin().get_y() / ray.get_direction().get_y();
@@ -38,8 +38,16 @@ impl Renderable for Plane {
         (ray, Some(vec![Intersection::new(t, Rc::new(self.clone()))]))
     }
 
-    fn normal_at(&self, pos: Coord) -> Coord {
-        todo!()
+    /// normal is always strait up translated by local transformation regardless of the pos
+    fn normal_at(&self, _pos: Coord) -> Coord {
+        let out = self.get_transformation()
+            .inverse()
+            .unwrap()
+            .transpose() 
+            * Coord::vec(0.0, 1.0, 0.0);
+        out
+            .to_vec()
+            .normalized()
     }
 
     fn default() -> Self {
@@ -55,7 +63,6 @@ impl_renderable_tests!(crate::plane::Plane, RenderableType::Plane);
 #[cfg(test)]
 mod tests {
     use crate::renderable::RenderableBase;
-
     use super::*;
 
     #[test]
@@ -67,7 +74,7 @@ mod tests {
         let tn = Coord::vec(0.0, 1.0, 0.0);
         assert_eq!(n1, tn);
         assert_eq!(n2, tn);
-        assert_eq!(n3, tn);
+        assert_eq!(n3, tn); 
     }
     
     #[test]

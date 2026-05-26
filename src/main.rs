@@ -23,7 +23,7 @@ use renderable::Renderable;
 use sphere::Sphere;
 use core::f32::consts::PI;
 
-use crate::{camera::Camera, renderable::RenderableBase, world::World};
+use crate::{camera::Camera, plane::Plane, renderable::RenderableBase, world::World};
 
 #[derive(Debug, Clone, Copy)]
 struct Shot {
@@ -272,14 +272,14 @@ fn draw_test_spheres() {
 }
 
 fn draw_scene() {
-    let mut floor = Sphere::default();
+    let mut floor = Plane::default();
     floor.apply_transformation(Matrix::scaling(10.0, 0.01, 10.0));
     let mut mat = Material::default();
     mat.set_color(Color::new(1.0, 0.9, 0.9, 0.0));
     mat.set_specular(0.0);
     floor.set_material(mat);
 
-    let mut left_wall = floor.clone();
+    /*let mut left_wall = floor.clone();
     left_wall.set_transformation(
         Matrix::translation(0.0, 0.0, 5.0) *
         Matrix::rotate_y(-PI/4.0) *
@@ -293,7 +293,7 @@ fn draw_scene() {
         Matrix::rotate_y(PI/4.0) *
         Matrix::rotate_x(PI/2.0) *
         Matrix::scaling(10.0, 0.01, 10.0)
-    );
+    );*/
 
 
     let mut middle = Sphere::default();
@@ -331,13 +331,13 @@ fn draw_scene() {
     world.add_light(light);
 
     world.add_obj(Rc::new(floor));
-    world.add_obj(Rc::new(left_wall));
-    world.add_obj(Rc::new(right_wall));
+    //world.add_obj(Rc::new(left_wall));
+    //world.add_obj(Rc::new(right_wall));
     world.add_obj(Rc::new(middle));
     world.add_obj(Rc::new(left));
     world.add_obj(Rc::new(right));
 
-    let mut cam = Camera::new(2000, 2000, PI/3.0);
+    let mut cam = Camera::new(1000, 1000, PI/3.0);
     cam.transform(Matrix::view_transformation(
         Coord::point(0.0, 1.5, -5.0), 
         Coord::point(0.0, 1.0, 0.0), 

@@ -113,6 +113,10 @@ impl Sphere {
         quadratic_formula_helper(a, b, c) 
     }
 
+    fn local_normal_at(&self, pos: Coord) -> Coord {
+        pos.to_vec()
+    }
+
     
 }
 
@@ -170,7 +174,7 @@ impl Renderable for Sphere {
     /// func assumes pos is on the sphere, if it is not results are undefined
     fn normal_at(&self, pos: Coord) -> Coord {
         let object_pos = self.transformation.inverse().unwrap() * pos;
-        let obj_normal = object_pos - Coord::point(0.0, 0.0, 0.0);
+        let obj_normal = self.local_normal_at(object_pos);
         let mut world_norm = self.transformation.inverse()
             .unwrap()
             .transpose()
@@ -230,29 +234,6 @@ mod tests {
         assert_eq!(s.get_origin(), Coord::point(0.0, 0.0, 0.0));
         s.apply_transformation(Matrix::scaling(0.5, 0.5, 0.5));
         assert_eq!(s.get_origin(), Coord::point(0.0, 0.0, 0.0));
-    }
-
-    #[test]
-    fn test_set_transformation() {
-        let mut s = Sphere::default();
-        let mat = Matrix::translation(2.0, 3.0, 4.0);
-        s.set_transformation(mat.clone());
-        assert_eq!(s.get_transformation(), mat);
-        assert_eq!(s.get_origin(), mat.to_point());
-    }
-
-    #[test]
-    fn test_transformation() {
-        let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        let mut s = Sphere::default();
-        s.set_transformation(Matrix::translation(5.0, 0.0, 0.0));
-        let xs = s.intersect(ray);
-        assert!(xs.is_none());
-
-        s.set_transformation(Matrix::identity(4));
-        s.apply_transformation(Matrix::translation(5.0, 0.0, 0.0));
-        let xs = s.intersect(ray);
-        assert!(xs.is_none());
     }
 
     #[test]

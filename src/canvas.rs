@@ -1,4 +1,5 @@
 pub mod color;
+pub mod pattern;
 use color::*;
 
 use std::fs::File;

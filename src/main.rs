@@ -9,12 +9,13 @@ mod world;
 mod renderable;
 mod camera;
 mod plane;
+mod tex;
 
 use std::{f32, rc::Rc};
 
 use canvas::Canvas;
 use coord::Coord;
-use canvas::color::Color;
+use tex::color::Color;
 use light::{lighting, Light};
 use material::Material;
 use matrix::Matrix;
@@ -173,7 +174,7 @@ fn outline_sphere(filename: &str, resolution: usize, orb: Sphere, light: Light) 
                 canvas.set_pixel(
                     x, 
                     y, 
-                    lighting(xs[0].get_object().get_material(), light, point, cam_v, normal, false)
+                    lighting(xs[0].get_object().get_material(), light, point, cam_v, normal, false).get_color_at(point)
                 );
             }
             else {
@@ -257,7 +258,7 @@ fn draw_test_spheres() {
     let mut orb = Sphere::default();
     let mut mat = Material::default();
     mat.set_color(Color::red());
-    orb.set_material(mat);
+    orb.set_material(mat.clone());
     let light = Light::new(Coord::point(10.0, 10.0, -10.0), Color::blue());
     outline_sphere("color-add.ppm", 400, orb.clone(), light);
 

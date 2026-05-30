@@ -1,5 +1,7 @@
+use std::rc::Rc;
+
 use rtc::{impl_getters, impl_setters};
-use crate::{canvas::color::Color, coord::Coord, material::Material};
+use crate::{coord::Coord, material::Material, tex::{Tex, color::Color}};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Light {
@@ -33,17 +35,20 @@ impl Light {
 }
 
 // TODO: attach this to something, camera maybe?
-pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord, in_shadow: bool) -> Color {
-    let effective_color = material.get_color() * light.get_intensity();
+pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord, in_shadow: bool) -> Rc<dyn Tex> {
+    let effective_color = material.get_texture() * light.get_intensity();
     let light_v = (light.get_pos() - pos).normalized();
-    let ambient = effective_color * material.get_ambient();
+    let ambient = effective_color.mul_f32(material.get_ambient());
     let light_dot_normal = light_v.dot(normal);
     //let mut diffuse = Color::black();
     //let mut specular = Color::black();
     if light_dot_normal < 0.0 || in_shadow {
         return ambient;
     }
-    let diffuse = effective_color * material.get_diffuse() * light_dot_normal;
+    let diffuse = effective_color
+        .mul_f32(material.get_diffuse())
+        .mul_f32(light_dot_normal)
+        .get_color_at(pos);
     let reflect_v = (-light_v).reflect(&normal);
     let reflect_dot_cam = reflect_v.dot(camv);
     if reflect_dot_cam < 0.0 {
@@ -97,34 +102,33 @@ mod tests {
         let camv = Coord::vec(0.0, 0.0, -1.0);
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal, false);
-        assert_eq!(r, Color::new(1.9, 1.9, 1.9, 0.0));
+        let r = lighting(material.clone(), light, pos, camv, normal, false);
+        assert_eq!(r.get_color_at(pos), Color::new(1.9, 1.9, 1.9, 0.0));
 
         // 2
         let camv = Coord::vec(0.0, 2.0_f32.sqrt()/2.0, -(2.0_f32.sqrt()/2.0));
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal, false);
-        assert_eq!(r, Color::new(1.0, 1.0, 1.0, 0.0));
+        let r = lighting(material.clone(), light, pos, camv, normal, false);
+        assert_eq!(r.get_color_at(pos), Color::new(1.0, 1.0, 1.0, 0.0));
 
-        // either this or the next test is wrong
         // 3
         let camv = Coord::vec(0.0, 0.0, -1.0);
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 10.0, -10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal, false);
-        assert_eq!(r, Color::new(0.7363961, 0.7363961, 0.7363961, 0.0));
+        let r = lighting(material.clone(), light, pos, camv, normal, false);
+        assert_eq!(r.get_color_at(pos), Color::new(0.7363961, 0.7363961, 0.7363961, 0.0));
 
         // 4
         let camv = Coord::vec(0.0, -(2.0_f32.sqrt())/2.0, -(2.0_f32.sqrt()/2.0));
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 10.0, -10.0), Color::white());
-        let r = lighting(material, light, pos, camv, normal, false);
-        assert_eq!(r, Color::new(1.6363853, 1.6363853, 1.6363853, 0.0));
+        let r = lighting(material.clone(), light, pos, camv, normal, false);
+        assert_eq!(r.get_color_at(pos), Color::new(1.6363853, 1.6363853, 1.6363853, 0.0));
 
         let light = Light::new(Coord::point(0.0, 0.0, 10.0), Color::white());
         let r = lighting(material, light, pos, camv, normal,false);
-        assert_eq!(r, Color::new(0.1, 0.1, 0.1, 0.0));
+        assert_eq!(r.get_color_at(pos), Color::new(0.1, 0.1, 0.1, 0.0));
     }
 
     #[test]
@@ -135,6 +139,6 @@ mod tests {
         let normal = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
         let r = lighting(material, light, pos, camv, normal, true);
-        assert_eq!(r, Color::new(0.1, 0.1, 0.1, 0.0));
+        assert_eq!(r.get_color_at(pos), Color::new(0.1, 0.1, 0.1, 0.0));
     }
 }

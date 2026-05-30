@@ -35,7 +35,7 @@ macro_rules! impl_renderable_base {
     ($type:ty, $variant:expr) => {
         impl crate::renderable::RenderableBase for $type {
             // TODO: should return reference not actual material? 
-            fn get_material(&self) -> Material { self.material }
+            fn get_material(&self) -> Material { self.material.clone() }
             fn set_material(&mut self, mat: Material) { self.material = mat; }
             fn get_pos(&self) -> Coord { self.transformation.to_point() }
             fn get_transformation(&self) -> Matrix { self.transformation.clone() }
@@ -70,7 +70,7 @@ impl Clone for Box<dyn Renderable> {
 }
 
 pub fn compare_renderables(a: &dyn Renderable, b: &dyn Renderable) {
-    assert_eq!(a.get_material(), b.get_material());
+    assert_eq!(a.get_material().get_color(), b.get_material().get_color());
     assert_eq!(a.get_pos(), b.get_pos());
     assert_eq!(a.get_transformation(), b.get_transformation());
     assert_eq!(a.get_type(), b.get_type());
@@ -128,7 +128,7 @@ impl Debug for Intersection {
         f.debug_struct("Point")
          .field("time", &self.get_time())
          .field("object pos", &self.get_object().get_pos())
-         .field("object material", &self.get_object().get_material())
+         .field("object material", &self.get_object().get_material().get_color())
          .field("object transformation", &self.get_object().get_transformation())
          .finish()
     }

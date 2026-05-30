@@ -1,7 +1,5 @@
-pub mod color;
-pub mod pattern;
-use color::*;
 use rtc::impl_getters_setters;
+use crate::tex::color::Color;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -89,7 +87,7 @@ impl Canvas {
 
 #[cfg(test)]
 mod tests{
-    use crate::canvas::color::Color;
+    use crate::tex::color::Color;
     use super::Canvas;
 
     #[test]

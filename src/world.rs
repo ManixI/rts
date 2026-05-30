@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use rtc::impl_getters_setters;
-use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere};
+use crate::{camera::Camera, canvas::Canvas, tex::color::Color, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
@@ -77,7 +77,7 @@ impl World {
         let mut s1 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         let mut s2 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
-        let mat = Material::new(0.1, 0.7, 0.2, 200.0, Color::new(0.8, 1.0, 0.6, 0.0));
+        let mat = Material::new(0.1, 0.7, 0.2, 200.0, Rc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
         s1.set_material(mat);        
 
 
@@ -128,7 +128,7 @@ impl World {
             comps.get_eyev(), 
             comps.get_normalv(),
             self.in_shadow(comps.get_over_point())
-            );
+            ).get_color_at(comps.get_point());
         }
         color
     }
@@ -177,7 +177,7 @@ impl World {
 mod tests {
     use std::rc::Rc;
 
-    use crate::{camera::Camera, canvas::color::Color, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, sphere::Sphere, world::{self, EPSILON}};
+    use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, sphere::Sphere, tex::color::Color, world::EPSILON};
 
     use super::{Comps, World};
 
@@ -213,7 +213,7 @@ mod tests {
         
         let mut s1 = Sphere::default();
         let objs = w.get_object();
-        let mat = Material::new(0.1, 0.7, 0.2, 200.0, Color::new(0.8, 1.0, 0.6, 0.0));
+        let mat = Material::new(0.1, 0.7, 0.2, 200.0, Rc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
         s1.set_material(mat);
         assert_eq!(objs.len(), 2);
         compare_renderables(objs[0].as_ref(), &s1);
@@ -311,7 +311,7 @@ mod tests {
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.75), Coord::vec(0.0, 0.0, -1.0));
         let c = w.color_at(ray);
         //assert_eq!(c, w.get_object()[0].get_material().get_color());
-        test_colors_roughly_equal(&c, &w.get_object()[0].get_material().get_color());
+        test_colors_roughly_equal(&c, &w.get_object()[0].get_material().get_color_at(Coord::point(0.0, 0.0, 0.0)));
     }
 
     #[test]

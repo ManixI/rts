@@ -1,5 +1,7 @@
+use std::rc::Rc;
+
 use rtc::impl_getters_setters;
-use crate::{canvas::color::Color, coord::Coord};
+use crate::{coord::Coord, tex::{Tex, color::Color}};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,15 +48,7 @@ impl Pattern {
         Self { pattern_type: PatternType::Solid, color_a, color_b: Color::white() }
     }
 
-    pub fn color_at(&self, pos: Coord) -> Color {
-        match self.get_pattern_type() {
-            PatternType::Solid => self.get_color_a(),
-            PatternType::Stripe => self.stripe_at(pos),
-            PatternType::Gradient => panic!(),
-            PatternType::Checker => panic!(),
-            PatternType::Bullseye => panic!(),
-        }
-    }
+
 
     pub fn stripe_at(&self, pos: Coord) -> Color {
         let pos = pos.get_x().floor() as i32;
@@ -65,8 +59,60 @@ impl Pattern {
     }
 }
 
+impl Tex for Pattern {
+    fn get_color_at(&self, pos: Coord) -> Color {
+        match self.get_pattern_type() {
+            PatternType::Solid => self.get_color_a(),
+            PatternType::Stripe => self.stripe_at(pos),
+            PatternType::Gradient => panic!(),
+            PatternType::Checker => panic!(),
+            PatternType::Bullseye => panic!(),
+        }
+    }
+
+    fn mul_helper_color(&self, rhs: Color) -> std::rc::Rc<dyn Tex> {
+        Rc::new(Self {
+            color_a: self.get_color_a() * rhs,
+            color_b: self.get_color_b() * rhs,
+            pattern_type: self.get_pattern_type()
+        })
+    }
+
+    fn mul_f32(&self, rhs: f32) -> Rc<dyn Tex> {
+        Rc::new(Self {
+            color_a: self.get_color_a() * rhs,
+            color_b: self.get_color_b() * rhs,
+            pattern_type: self.get_pattern_type()
+        })
+    }
+
+    fn add_helper(&self, rhs: Color) -> Rc<dyn Tex> {
+        Rc::new(Self {
+            color_a: self.get_color_a() + rhs,
+            color_b: self.get_color_b() + rhs,
+            pattern_type: self.get_pattern_type()
+        })
+    }
+
+    fn get_texture_type(&self) -> super::TextureType {
+        super::TextureType::Pattern
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn compare(&self, other: Rc<dyn Tex>) -> bool {
+        match other.as_any().downcast_ref::<Pattern>() {
+            Some(p) => self == p,
+            None => false
+        }
+    }
+}
+
+#[cfg(test)]
 mod test {
-    use crate::{canvas::{color::Color, pattern::Pattern}, coord::Coord};
+    use crate::{tex::{color::Color, pattern::Pattern}, coord::Coord};
 
     #[test]
     fn test_new() {

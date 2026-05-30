@@ -1,39 +1,39 @@
-use rtc::{impl_getters, impl_setters};
-use crate::canvas::color::Color;
+use std::rc::Rc;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+use rtc::impl_getters;
+use crate::{coord::Coord, tex::{Tex, TextureType, color::Color}};
+
+#[derive(Clone, Debug)]
 pub struct Material {
     ambient: f32,
     diffuse: f32,
     specular: f32,
     shininess: f32,
-    color: Color,
+    texture: Rc<dyn Tex>, 
 }
 
 impl_getters!(Material,
     ambient: f32,
     diffuse: f32,
     specular: f32,
-    shininess: f32,
-    color: Color
+    shininess: f32
 );
 
-impl_setters!(Material, color: Color);
 
 #[allow(dead_code)]
 impl Material {
     /// ambient, diffuse, specular values should be 0 <= x <= 1
     /// shininess should be 10 <= x <= 200
-    pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32, color: Color) -> Self {
+    pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32, texture: Rc<dyn Tex>) -> Self {
         assert!(ambient >= 0.0);
         assert!(ambient >= 0.0);
         assert!(specular >= 0.0);
-        assert!( shininess >= 0.0);
-        Self {ambient, diffuse, specular, shininess, color}
+        assert!(shininess >= 0.0);
+        Self {ambient, diffuse, specular, shininess, texture}
     }
 
     pub fn default() -> Self {
-        Self { ambient: 0.1, diffuse: 0.9, specular: 0.9, shininess: 200.0, color: Color::white() }
+        Self { ambient: 0.1, diffuse: 0.9, specular: 0.9, shininess: 200.0, texture: Rc::new(Color::white()) }
     }
 
     pub fn set_ambient(&mut self, ambient: f32) {
@@ -55,6 +55,38 @@ impl Material {
         assert!( shininess >= 0.0);
         self.shininess = shininess;
     }
+
+    pub fn set_texture(&mut self, tex: Rc<dyn Tex>) {
+        self.texture = tex;
+    }
+
+    pub fn get_texture(&self) -> Rc<dyn Tex> {
+        self.texture.clone()
+    }
+
+    pub fn set_color(&mut self, color: Color) {
+        self.set_texture(Rc::new(color));
+    }
+
+    pub fn get_color_at(&self, pos: Coord) -> Color {
+        self.get_texture().get_color_at(pos)
+    }
+
+    /// to make existing tests work, only use for Colors not other textures
+    pub fn get_color(&self) -> Color {
+        assert_eq!(self.get_texture().get_texture_type(), TextureType::Color);
+        self.get_color_at(Coord::point(0.0, 0.0, 0.0))
+    }
+}
+
+impl PartialEq for Material {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_ambient() == other.get_ambient() &&
+        self.get_diffuse() == other.get_diffuse() &&
+        self.get_shininess() == other.get_shininess() &&
+        self.get_specular() == other.get_specular() &&
+        self.get_texture().compare(other.get_texture())
+    }
 }
 
 #[cfg(test)]
@@ -63,12 +95,11 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let m = Material::new(1.0, 0.0, 1.0, 27.0, Color::white());
+        let m = Material::new(1.0, 0.0, 1.0, 27.0, Rc::new(Color::white()));
         assert_eq!(m.ambient, 1.0);
         assert_eq!(m.diffuse, 0.0);
         assert_eq!(m.specular, 1.0);
         assert_eq!(m.shininess, 27.0);
-        assert_eq!(m.color, Color::white());
     }
 
     #[test]
@@ -78,6 +109,5 @@ mod tests {
         assert_eq!(m.get_diffuse(), 0.9);
         assert_eq!(m.get_specular(), 0.9);
         assert_eq!(m.get_shininess(), 200.0);
-        assert_eq!(m.get_color(), Color::white());
     }
 }

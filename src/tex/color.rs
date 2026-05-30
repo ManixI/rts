@@ -1,5 +1,7 @@
-use std::ops;
+use std::{ops, rc::Rc};
 use rtc::impl_getters_setters;
+
+use crate::{coord::Coord, tex::Tex};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
@@ -117,6 +119,39 @@ impl Color {
 
         out
     }
+}
+
+impl Tex for Color {
+    fn get_color_at(&self, _pos: Coord) -> Color {
+        *self
+    }
+
+    fn mul_helper_color(&self, rhs: Color) -> std::rc::Rc<dyn Tex> {
+        Rc::new(*self * rhs)
+    }
+
+    fn mul_f32(&self, rhs: f32) -> Rc<dyn Tex> {
+        Rc::new(*self * rhs)
+    }
+
+    fn add_helper(&self, rhs: Color) -> Rc<dyn Tex> {
+        Rc::new(*self + rhs)
+    }
+
+    fn get_texture_type(&self) -> super::TextureType {
+        super::TextureType::Color
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn compare(&self, other: Rc<dyn Tex>) -> bool {
+        match other.as_any().downcast_ref::<Color>() {
+            Some(p) => self == p,
+            None => false
+        }
+    } 
 }
 
 impl ops::Add for Color {

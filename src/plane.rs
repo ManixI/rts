@@ -2,7 +2,7 @@ use crate::{coord::Coord, impl_renderable_base, impl_renderable_tests, material:
 use std::rc::Rc;
 
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Clone)]
 pub struct Plane {
     transformation: Matrix,
     material: Material,
@@ -86,7 +86,7 @@ mod tests {
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].get_time(), 1.0);
         let o = xs[0].get_object();
-        assert_eq!(o.get_material(), p.get_material());
+        assert_eq!(o.get_material().get_color_at(Coord::point(0.0, 0.0, 0.0)), p.get_material().get_color_at(Coord::point(0.0, 0.0, 0.0)));
         assert_eq!(o.get_pos(), p.get_pos());
         assert_eq!(o.get_transformation(), p.get_transformation());
         assert_eq!(o.get_type(), p.get_type());

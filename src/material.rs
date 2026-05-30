@@ -1,6 +1,5 @@
+use rtc::{impl_getters, impl_setters};
 use crate::canvas::color::Color;
-
-
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Material {
@@ -11,11 +10,25 @@ pub struct Material {
     color: Color,
 }
 
+impl_getters!(Material,
+    ambient: f32,
+    diffuse: f32,
+    specular: f32,
+    shininess: f32,
+    color: Color
+);
+
+impl_setters!(Material, color: Color);
+
 #[allow(dead_code)]
 impl Material {
     /// ambient, diffuse, specular values should be 0 <= x <= 1
     /// shininess should be 10 <= x <= 200
     pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32, color: Color) -> Self {
+        assert!(ambient >= 0.0);
+        assert!(ambient >= 0.0);
+        assert!(specular >= 0.0);
+        assert!( shininess >= 0.0);
         Self {ambient, diffuse, specular, shininess, color}
     }
 
@@ -23,43 +36,23 @@ impl Material {
         Self { ambient: 0.1, diffuse: 0.9, specular: 0.9, shininess: 200.0, color: Color::white() }
     }
 
-    pub fn get_color(&self) -> Color {
-        self.color
-    }
-
-    pub fn get_ambient(&self) -> f32 {
-        self.ambient
-    }
-
-    pub fn get_diffuse(&self) -> f32 {
-        self.diffuse
-    }
-
-    pub fn get_specular(&self) -> f32 {
-        self.specular
-    }
-
-    pub fn get_shininess(&self) -> f32 {
-        self.shininess
-    }
-
-    pub fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
     pub fn set_ambient(&mut self, ambient: f32) {
+        assert!(ambient >= 0.0);
         self.ambient = ambient;
     }
 
     pub fn set_diffuse(&mut self, diffuse: f32) {
+        assert!(diffuse >= 0.0);
         self.diffuse = diffuse;
     }
 
     pub fn set_specular(&mut self, specular: f32) {
+        assert!(specular >= 0.0);
         self.specular = specular;
     }
 
     pub fn set_shininess(&mut self, shininess: f32) {
+        assert!( shininess >= 0.0);
         self.shininess = shininess;
     }
 }

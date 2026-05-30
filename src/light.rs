@@ -1,6 +1,5 @@
+use rtc::{impl_getters, impl_setters};
 use crate::{canvas::color::Color, coord::Coord, material::Material};
-
-
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Light {
@@ -8,9 +7,16 @@ pub struct Light {
     intensity: Color
 }
 
+impl_getters!(Light, pos: Coord, intensity: Color);
+impl_setters!(Light, intensity: Color);
+
 #[allow(dead_code)]
 impl Light {
     pub fn new(pos: Coord, intensity: Color) -> Self {
+        assert!(intensity.get_r() >= 0.0);
+        assert!(intensity.get_g() >= 0.0);
+        assert!(intensity.get_b() >= 0.0);
+        assert!(intensity.get_a() >= 0.0);
         Self { pos, intensity }
     }
     
@@ -19,17 +25,6 @@ impl Light {
     }
 
     // TODO: Dose negative intensity make sense or should this be bounded to >= 0?
-    pub fn get_intensity(&self) -> Color {
-        self.intensity
-    }
-
-    pub fn get_pos(&self) -> Coord {
-        self.pos
-    }
-
-    pub fn set_intensity(&mut self, color: Color) {
-        self.intensity = color
-    }
 
     pub fn set_pos(&mut self, pos: Coord) {
         assert!(pos.is_point());

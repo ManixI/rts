@@ -1,3 +1,4 @@
+use rtc::impl_getters_setters;
 use crate::{coord::Coord, matrix::Matrix, ray::Ray};
 use std::ops;
 
@@ -13,6 +14,16 @@ pub struct Camera {
     half_width: f32,
     half_height: f32
 }
+
+impl_getters_setters!(Camera, 
+    //hsize: f32, //TODO: sort these out
+    //vsize: f32, 
+    field_of_view: f32,
+    //transformation: Matrix,
+    pixel_size: f32,
+    half_width: f32,
+    half_height: f32
+);
 
 #[allow(dead_code)]
 impl Camera {
@@ -51,14 +62,6 @@ impl Camera {
         self.set_transformation(self.get_transformation() * transformation);
     }
 
-    pub fn set_field_of_view(&mut self, field_of_view: f32) {
-        self.field_of_view = field_of_view;
-    }
-
-    fn get_field_of_view(&self) -> f32 {
-        self.field_of_view
-    }
-
     pub fn set_hsize(&mut self, hsize: usize) {
         self.hsize = hsize as f32;
     }
@@ -73,18 +76,6 @@ impl Camera {
 
     pub fn get_vsize(&self) -> usize {
         self.vsize as usize
-    }
-
-    fn get_pixel_size(&self) -> f32 {
-        self.pixel_size
-    }
-
-    fn get_half_width(&self) -> f32 {
-        self.half_width
-    }
-
-    fn get_half_height(&self) -> f32 {
-        self.half_height
     }
 
     pub fn ray_for_pixel(&self, x: usize, y: usize) -> Ray {

@@ -1,3 +1,4 @@
+use rtc::impl_getters_setters;
 use crate::canvas::color::Color;
 
 
@@ -16,6 +17,8 @@ pub struct Pattern {
     color_a: Color,
     color_b: Color
 }
+
+impl_getters_setters!(Pattern, pattern_type: PatternType, color_a: Color, color_b: Color);
 
 #[allow(dead_code)]
 impl Pattern {
@@ -42,7 +45,6 @@ impl Pattern {
     pub fn new_solid(color_a: Color) -> Self {
         Self { pattern_type: PatternType::Solid, color_a, color_b: Color::white() }
     }
-
 }
 
 mod test {

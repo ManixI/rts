@@ -1,5 +1,5 @@
 use std::ops;
-
+use rtc::impl_getters_setters;
 use crate::matrix::Matrix;
 
 const EPSILON: f32 = 0.000001;
@@ -11,6 +11,8 @@ pub struct Coord{
     z: f32,
     w: f32
 }
+
+impl_getters_setters!(Coord, x: f32, y: f32, z: f32, w: f32);
 
 #[allow(dead_code)]
 impl Coord {
@@ -26,40 +28,9 @@ impl Coord {
         Coord { x, y, z, w }
     }
 
-    pub fn get_x(&self) -> f32 {
-        self.x
-    }
-
-    pub fn get_y(&self) -> f32 {
-        self.y
-    }
-
-    pub fn get_z(&self) -> f32 {
-        self.z
-    }
-
-    pub fn get_w(&self) -> f32 {
-        self.w
-    }
     //fn new(x: usize, y: usize, z: usize, w: usize) -> Self {
     //    Coord { x: x as f32, y: y as f32, z: z as f32, w: w as f32 }
     //}
-
-    pub fn set_x(&mut self, x: f32) {
-        self.x = x;
-    }
-
-    pub fn set_y(&mut self, y: f32) {
-        self.y = y;
-    }
-    
-    pub fn set_z(&mut self, z: f32) {
-        self.z = z;
-    }
-    
-    pub fn set_w(&mut self, w: f32) {
-        self.w = w;
-    }
     
     pub fn get_as_list(&self) -> [f32; 4] {
         let mut out = [0.0; 4];

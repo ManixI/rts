@@ -1,5 +1,5 @@
 use std::rc::Rc;
-
+use rtc::impl_getters_setters;
 use crate::{camera::Camera, canvas::{Canvas, color::Color}, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
@@ -16,6 +16,15 @@ struct Comps {
     inside: bool
 }
 
+impl_getters_setters!(Comps,
+    //object: Rc<dyn Renderable>,
+    point: Coord,
+    eyev: Coord,
+    normalv: Coord,
+    time: f32,
+    inside: bool
+);
+
 // precomputed data about an intersection of ray and renderable
 #[allow(dead_code)]
 impl Comps {
@@ -25,26 +34,6 @@ impl Comps {
 
     fn get_object(&self) -> Rc<dyn Renderable> {
         self.object.clone()
-    }
-
-    fn get_point(&self) -> Coord {
-        self.point
-    }
-
-    fn get_eyev(&self) -> Coord {
-        self.eyev
-    }
-
-    fn get_normalv(&self) -> Coord {
-        self.normalv
-    }
-    
-    fn get_time(&self) -> f32 {
-        self.time
-    }
-
-    fn get_inside(&self) -> bool {
-        self.inside
     }
 
     fn get_over_point(&self) -> Coord {

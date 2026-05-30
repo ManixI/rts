@@ -9,7 +9,6 @@ mod world;
 mod renderable;
 mod camera;
 mod plane;
-mod generate;
 
 use std::{f32, rc::Rc};
 

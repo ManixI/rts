@@ -1,5 +1,4 @@
 use std::{fmt::Debug, rc::Rc};
-
 use crate::{coord::Coord, material::Material, matrix::Matrix, ray::Ray};
 
 #[derive(PartialEq, Debug)]
@@ -35,7 +34,7 @@ pub trait RenderableBase {
 macro_rules! impl_renderable_base {
     ($type:ty, $variant:expr) => {
         impl crate::renderable::RenderableBase for $type {
-            // TODO: should return reference not actual material 
+            // TODO: should return reference not actual material? 
             fn get_material(&self) -> Material { self.material }
             fn set_material(&mut self, mat: Material) { self.material = mat; }
             fn get_pos(&self) -> Coord { self.transformation.to_point() }

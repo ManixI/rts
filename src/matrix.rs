@@ -31,8 +31,8 @@ impl Matrix {
         Self{data}
     }
 
-    pub fn get_data(&self) -> Vec<Vec<f32>> {
-        self.data.clone()
+    pub fn get_data(&self) -> &Vec<Vec<f32>> {
+        &self.data
     }
 
     pub fn get_size(&self) -> usize {
@@ -256,6 +256,7 @@ impl Matrix {
         orientation * Self::translation(-pos.get_x(), -pos.get_y(), -pos.get_z())
     }
 }
+
 
 // TODO: optimize this
 // TODO: multiplication should not consume variables

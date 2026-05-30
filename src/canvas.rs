@@ -1,7 +1,7 @@
 pub mod color;
 pub mod pattern;
 use color::*;
-
+use rtc::impl_getters_setters;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -11,6 +11,8 @@ pub struct Canvas{
     width: usize,
     pixels: Vec<Vec<Color>>,
 }
+
+impl_getters_setters!(Canvas, height: usize, width: usize);
 
 #[allow(dead_code)]
 impl Canvas {
@@ -83,13 +85,6 @@ impl Canvas {
         Ok(())
     }
 
-    pub fn get_height(&self) -> usize {
-        self.height
-    }
-
-    pub fn get_width(&self) -> usize {
-        self.width
-    }
 }
 
 #[cfg(test)]
@@ -100,8 +95,8 @@ mod tests{
     #[test]
     fn test_create() {
         let c = Canvas::new(10, 20);
-        assert_eq!(c.width, 10);
-        assert_eq!(c.height, 20);
+        assert_eq!(c.get_width(), 10);
+        assert_eq!(c.get_height(), 20);
         let test_color = Color::new(0.0, 0.0, 0.0, 0.0);
         for row in c.pixels {
             for val in row {

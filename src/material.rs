@@ -91,7 +91,11 @@ impl PartialEq for Material {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::path::MAIN_SEPARATOR;
+
+use crate::{light::{Light, lighting}, matrix::Matrix, tex::pattern::Pattern};
+
+use super::*;
 
     #[test]
     fn test_new() {
@@ -109,5 +113,22 @@ mod tests {
         assert_eq!(m.get_diffuse(), 0.9);
         assert_eq!(m.get_specular(), 0.9);
         assert_eq!(m.get_shininess(), 200.0);
+    }
+
+    #[test]
+    fn test_pattern() {
+        let m = Material::new(
+            1.0,
+            0.0, 
+            0.0,
+            10.0, 
+            Rc::new(Pattern::new_stripe(Color::black(), Color::white(), Matrix::identity(4))));
+        let eyev = Coord::vec(0.0, 0.0, -1.0);
+        let normalv = Coord::vec(0.0, 0.0, -1.0);
+        let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
+        let c1 = lighting(m.clone(), light, Coord::point(0.9, 0.0, 0.0), eyev, normalv, false);
+        let c2 = lighting(m, light, Coord::point(1.1, 0.0, 0.0), eyev, normalv, false);
+        assert_eq!(c1, Color::black());
+        assert_eq!(c2, Color::white());
     }
 }

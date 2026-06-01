@@ -1,8 +1,8 @@
-use crate::{coord::Coord, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}};
+use crate::{tex::color::Color, coord::Coord, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}};
 use std::rc::Rc;
 
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Plane {
     transformation: Matrix,
     material: Material,
@@ -54,6 +54,17 @@ impl Renderable for Plane {
         Self { 
             transformation: Matrix::identity(4), 
             material: Material::default() 
+        }
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn compare(&self, other: Rc<dyn Renderable>) -> bool {
+        match other.as_any().downcast_ref::<Plane>() {
+            Some(p) => self == p,
+            None => false
         }
     }
 }

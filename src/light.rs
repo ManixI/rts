@@ -35,10 +35,12 @@ impl Light {
 }
 
 // TODO: attach this to something, camera maybe?
-pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord, in_shadow: bool) -> Rc<dyn Tex> {
+pub fn lighting(material: Material, light: Light, pos: Coord, camv: Coord, normal: Coord, in_shadow: bool) -> Color {
     let effective_color = material.get_texture() * light.get_intensity();
     let light_v = (light.get_pos() - pos).normalized();
-    let ambient = effective_color.mul_f32(material.get_ambient());
+    let ambient = effective_color
+        .mul_f32(material.get_ambient())
+        .get_color_at(pos);
     let light_dot_normal = light_v.dot(normal);
     //let mut diffuse = Color::black();
     //let mut specular = Color::black();

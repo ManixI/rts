@@ -1,7 +1,7 @@
 use std::{ops, rc::Rc};
 use rtc::impl_getters_setters;
 
-use crate::{coord::Coord, tex::Tex};
+use crate::{coord::Coord, matrix::Matrix, tex::Tex};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
@@ -151,7 +151,17 @@ impl Tex for Color {
             Some(p) => self == p,
             None => false
         }
+    }
+
+    /// dose not make sense to call give a transformation dose not effect a solid color
+    fn get_transformation(&self) -> crate::matrix::Matrix {
+        Matrix::identity(4)
     } 
+
+    /// dose not make sense to call give a transformation dose not effect a solid color
+    fn set_transformation(&mut self, _mat: Matrix) {
+    
+    }
 }
 
 impl ops::Add for Color {

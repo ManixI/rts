@@ -3,7 +3,7 @@ pub mod pattern;
 
 use std::{fmt, ops::{Add, Mul}, rc::Rc, any::Any};
 
-use crate::coord::Coord;
+use crate::{coord::Coord, matrix::Matrix};
 use color::Color;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -21,6 +21,8 @@ pub trait Tex: fmt::Debug {
     fn get_texture_type(&self) -> TextureType;
     fn compare(&self, other: Rc<dyn Tex>) -> bool;
     fn as_any(&self) -> &dyn Any;
+    fn get_transformation(&self) -> Matrix;
+    fn set_transformation(&mut self, mat: Matrix);
 }
 
 impl Mul<Color> for Rc<dyn Tex> {

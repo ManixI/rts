@@ -1,5 +1,5 @@
 use std::{fmt::Debug, rc::Rc};
-use crate::{coord::Coord, material::Material, matrix::Matrix, ray::Ray};
+use crate::{coord::Coord, material::Material, matrix::Matrix, ray::Ray, tex::color::Color};
 
 #[derive(PartialEq, Debug)]
 pub enum RenderableType {
@@ -25,6 +25,8 @@ pub trait RenderableBase {
     fn clone_rc(&self) -> Rc<dyn Renderable>;
 
     fn clone_dyn(&self) -> Box<dyn Renderable>;
+
+    fn get_color_at(&self, pos: Coord) -> Color;
 }
 
 /**
@@ -44,6 +46,10 @@ macro_rules! impl_renderable_base {
             fn get_type(&self) -> RenderableType { $variant }
             fn clone_rc(&self) -> Rc<dyn Renderable> { Rc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
+            fn get_color_at(&self, pos: Coord) -> Color {
+                let local_pos = self.get_transformation().inverse().unwrap() * pos;
+                self.get_material().get_color_at(local_pos)
+            }
         }
         
     };
@@ -61,6 +67,10 @@ pub trait Renderable: RenderableBase {
     fn normal_at(&self, pos: Coord) -> Coord;
 
     fn default() -> Self where Self: Sized;
+
+    fn as_any(&self) -> &dyn std::any::Any;
+
+    fn compare(&self, other: Rc<dyn Renderable>) -> bool;
 }
 
 impl Clone for Box<dyn Renderable> {

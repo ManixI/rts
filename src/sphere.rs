@@ -4,11 +4,12 @@ use crate::{impl_renderable_base, impl_renderable_tests};
 use crate::material::Material;
 use crate::matrix::Matrix;
 use crate::ray::Ray;
-use crate::renderable::{Intersection, Renderable, RenderableType};
+use crate::renderable::{Intersection, Renderable, RenderableBase, RenderableType};
+use crate::tex::color::Color;
 use super::Coord;
 
 
-#[derive(/*Debug, PartialEq, */Clone)]
+#[derive(/*Debug, */PartialEq, Clone)]
 pub struct Sphere {
     //origin: Coord,
     //radius: f32,
@@ -173,7 +174,7 @@ impl Renderable for Sphere {
 
     /// func assumes pos is on the sphere, if it is not results are undefined
     fn normal_at(&self, pos: Coord) -> Coord {
-        let object_pos = self.transformation.inverse().unwrap() * pos;
+        let object_pos = self.get_transformation().inverse().unwrap() * pos;
         let obj_normal = self.local_normal_at(object_pos);
         let mut world_norm = self.transformation.inverse()
             .unwrap()
@@ -188,6 +189,17 @@ impl Renderable for Sphere {
         Self { 
             transformation: Matrix::identity(4), 
             material: Material::default(),
+        }
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn compare(&self, other: Rc<dyn Renderable>) -> bool {
+        match other.as_any().downcast_ref::<Sphere>() {
+            Some(p) => self == p,
+            None => false
         }
     }
 }

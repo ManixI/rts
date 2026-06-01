@@ -128,7 +128,7 @@ impl World {
             comps.get_eyev(), 
             comps.get_normalv(),
             self.in_shadow(comps.get_over_point())
-            ).get_color_at(comps.get_point());
+            );
         }
         color
     }

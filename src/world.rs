@@ -122,7 +122,7 @@ impl World {
         let mut color = Color::black();
         for light in self.get_light() {
             color = color + lighting(
-            comps.get_object().get_material(), 
+            comps.get_object(), 
             *light, 
             comps.get_point(), 
             comps.get_eyev(), 

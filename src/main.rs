@@ -174,7 +174,7 @@ fn outline_sphere(filename: &str, resolution: usize, orb: Sphere, light: Light) 
                 canvas.set_pixel(
                     x, 
                     y, 
-                    lighting(xs[0].get_object().get_material(), light, point, cam_v, normal, false)
+                    lighting(xs[0].get_object(), light, point, cam_v, normal, false)
                 );
             }
             else {

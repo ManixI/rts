@@ -93,7 +93,7 @@ impl PartialEq for Material {
 mod tests {
     use std::path::MAIN_SEPARATOR;
 
-use crate::{light::{Light, lighting}, matrix::Matrix, tex::pattern::Pattern};
+use crate::{light::{Light, lighting}, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::pattern::Pattern};
 
 use super::*;
 
@@ -123,11 +123,14 @@ use super::*;
             0.0,
             10.0, 
             Rc::new(Pattern::new_stripe(Color::black(), Color::white(), Matrix::identity(4))));
+        let mut o = Sphere::default();
+        o.set_material(m);
+        let o = Rc::new(o);
         let eyev = Coord::vec(0.0, 0.0, -1.0);
         let normalv = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());
-        let c1 = lighting(m.clone(), light, Coord::point(0.9, 0.0, 0.0), eyev, normalv, false);
-        let c2 = lighting(m, light, Coord::point(1.1, 0.0, 0.0), eyev, normalv, false);
+        let c1 = lighting(o.clone(), light, Coord::point(0.9, 0.0, 0.0), eyev, normalv, false);
+        let c2 = lighting(o, light, Coord::point(1.1, 0.0, 0.0), eyev, normalv, false);
         assert_eq!(c1, Color::black());
         assert_eq!(c2, Color::white());
     }

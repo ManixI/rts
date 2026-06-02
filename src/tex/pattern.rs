@@ -54,12 +54,24 @@ impl Pattern {
         Self { pattern_type: PatternType::Solid, color_a, color_b: Color::white(), transformation }
     }  
 
-    pub fn stripe_at(&self, pos: Coord) -> Color {
+    fn stripe_at(&self, pos: Coord) -> Color {
         let pos = pos.get_x().floor() as i32;
         match pos % 2 {
             0 => self.get_color_a(),
             _ => self.get_color_b(), // modulo can be both positive or negative 1
         }
+    }
+
+    fn gradiant_at(&self, pos: Coord) -> Color {
+        todo!()
+    }
+
+    fn checker_at(&self, pos: Coord) -> Color {
+        todo!();
+    }
+
+    fn bullseye_at(&self, pos: Coord) -> Color {
+        todo!()
     }
 }
 
@@ -70,9 +82,9 @@ impl Tex for Pattern {
         match self.get_pattern_type() {
             PatternType::Solid => self.get_color_a(),
             PatternType::Stripe => self.stripe_at(local_pos),
-            PatternType::Gradient => panic!(),
-            PatternType::Checker => panic!(),
-            PatternType::Bullseye => panic!(),
+            PatternType::Gradient => self.gradiant_at(local_pos),
+            PatternType::Checker => self.checker_at(local_pos),
+            PatternType::Bullseye => self.bullseye_at(local_pos),
         }
     }
 
@@ -130,8 +142,8 @@ impl Tex for Pattern {
 #[cfg(test)]
 mod test {
     use std::rc::Rc;
-
-use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::{color::Color, pattern::Pattern}};
+    use parameterized_macro::parameterized;
+    use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::{color::Color, pattern::Pattern, pattern::PatternType, pattern::PatternType::*}};
 
     #[test]
     fn test_new() {
@@ -167,34 +179,70 @@ use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Rende
         assert_eq!(p.stripe_at(Coord::point(-1.1, 0.0, 0.0)), Color::white());
     }
 
-    #[test]
-    fn test_stripe_obj_transformed() {
+    #[parameterized(pattern = {
+            Stripe, 
+            Gradient,
+            Checker,
+            Bullseye,
+            Solid
+    }, expected = {
+        Color::red(),
+        Color::white(),
+        Color::black(),
+        Color::white(),
+        Color::red()
+    })]
+    fn test_obj_transformed(pattern: PatternType, expected: Color) {
         let mut o = Sphere::default();
         o.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
-        let p = Pattern::new_stripe(Color::red(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new(pattern, Color::red(), Color::black(), Matrix::identity(4));
         let m = Material::new(1.0, 0.0, 0.0, 10.0, Rc::new(p));
         o.set_material(m);
         
-        let c = o.get_color_at(Coord::point(1.5, 0.0, 0.0));
-        assert_eq!(c, Color::red());
+        let c = o.get_color_at(Coord::point(1.5, 2.5, 0.0));
+        assert_eq!(c, expected);
     }
 
-    #[test]
-    fn test_stripe_pattern_transformed() {
-        let p = Pattern::new_stripe(Color::red(), Color::black(), Matrix::scaling(2.0, 2.0, 2.0));
+    #[parameterized(pattern = {
+        Stripe, 
+        Gradient,
+        Checker,
+        Bullseye,
+        Solid
+    }, expected = {
+        Color::red(),
+        Color::white(),
+        Color::black(),
+        Color::white(),
+        Color::red()
+    })]
+    fn test_stripe_pattern_transformed(pattern: PatternType, expected: Color) {
+        let p = Pattern::new(pattern, Color::red(), Color::black(), Matrix::scaling(2.0, 2.0, 2.0));
         let m = Material::new(1.0, 0.0, 0.0, 10.0, Rc::new(p));
         let mut o = Sphere::default();
         o.set_material(m);
-        assert_eq!(o.get_color_at(Coord::point(1.5, 0.0, 0.0)), Color::red())
+        assert_eq!(o.get_color_at(Coord::point(1.5, 0.0, 0.0)), expected)
     }
 
-    #[test]
-    fn test_stripe_both_transformed() {
-        let p = Pattern::new_stripe(Color::red(), Color::black(), Matrix::translation(0.5, 0.0, 0.0));
+    #[parameterized(pattern = {
+        Stripe, 
+        Gradient,
+        Checker,
+        Bullseye,
+        Solid
+    }, expected = {
+        Color::red(),
+        Color::white(),
+        Color::black(),
+        Color::white(),
+        Color::red()
+    })]
+    fn test_stripe_both_transformed(pattern: PatternType, expected: Color) {
+        let p = Pattern::new(pattern, Color::red(), Color::black(), Matrix::translation(0.5, 0.0, 0.0));
         let m = Material::new(1.0, 0.0, 0.0, 10.0, Rc::new(p));
         let mut o = Sphere::default();
         o.set_material(m);
         o.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
-        assert_eq!(o.get_color_at(Coord::point(2.5, 0.0, 0.0)), Color::red());
+        assert_eq!(o.get_color_at(Coord::point(2.5, 0.0, 0.0)), expected);
     }
 }

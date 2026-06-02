@@ -152,7 +152,7 @@ macro_rules! impl_renderable_tests {
     ($type:ty, $variant:expr) => {
 
         #[cfg(test)]
-        mod macro_tests {
+        mod renderable_tests {
             use crate::matrix::Matrix;
             use crate::renderable::RenderableBase;
             use crate::material::Material;

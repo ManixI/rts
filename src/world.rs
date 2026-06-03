@@ -145,6 +145,7 @@ impl World {
 
     pub fn render_world(&self, cam: &Camera) -> Canvas {
         let mut out = Canvas::new(cam.get_hsize(), cam.get_vsize());
+        // TODO: multithread this
         for y in 0..(cam.get_vsize()-1) {
             for x in 0..(cam.get_hsize()-1) {
                 let ray = cam.ray_for_pixel(x, y);

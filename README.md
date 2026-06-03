@@ -2,4 +2,6 @@
 
 ## TODO:
  - code coverage
- - 
+ - other image formats
+   - png
+   - gif (for animations)

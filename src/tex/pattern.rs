@@ -34,6 +34,10 @@ impl Pattern {
         Self { pattern_type, color_a, color_b, transformation }
     }
 
+    pub fn debug_pattern() -> Self {
+        Self::new_checker(Color::purple(), Color::black(), Matrix::identity(4))
+    }
+
     pub fn new_stripe(color_a: Color, color_b: Color, transformation: Matrix) -> Self {
         Self { pattern_type: PatternType::Stripe, color_a, color_b, transformation }
     }
@@ -62,8 +66,13 @@ impl Pattern {
         }
     }
 
-    fn gradiant_at(&self, pos: Coord) -> Color {
-        todo!()
+    /// this currently only generates a gradient from 0 - 1
+    /// this needs to bd scaled properly to actually work
+    fn gradient_at(&self, pos: Coord) -> Color {
+        let cola = self.get_color_a();
+        let colb = self.get_color_b();
+        let x = pos.get_x();
+        cola + (colb - cola) * (x - x.floor())
     }
 
     fn checker_at(&self, pos: Coord) -> Color {
@@ -82,7 +91,7 @@ impl Tex for Pattern {
         match self.get_pattern_type() {
             PatternType::Solid => self.get_color_a(),
             PatternType::Stripe => self.stripe_at(local_pos),
-            PatternType::Gradient => self.gradiant_at(local_pos),
+            PatternType::Gradient => self.gradient_at(local_pos),
             PatternType::Checker => self.checker_at(local_pos),
             PatternType::Bullseye => self.bullseye_at(local_pos),
         }
@@ -143,7 +152,7 @@ impl Tex for Pattern {
 mod test {
     use std::rc::Rc;
     use parameterized_macro::parameterized;
-    use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::{color::Color, pattern::Pattern, pattern::PatternType, pattern::PatternType::*}};
+    use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::{Tex, color::Color, pattern::{Pattern, PatternType::{self, *}}}};
 
     #[test]
     fn test_new() {
@@ -179,6 +188,16 @@ mod test {
         assert_eq!(p.stripe_at(Coord::point(-1.1, 0.0, 0.0)), Color::white());
     }
 
+    #[test]
+    fn test_gradient() {
+        let p = Pattern::new_gradient(Color::white(), Color::black(), Matrix::identity(4));
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::white());
+        assert_eq!(p.get_color_at(Coord::point(0.25, 0.0, 0.0)), Color::new(0.75, 0.75, 0.75, 0.0));
+        assert_eq!(p.get_color_at(Coord::point(0.5, 0.0, 0.0)), Color::new(0.5, 0.5, 0.5, 0.0));
+        assert_eq!(p.get_color_at(Coord::point(0.75, 0.0, 0.0)), Color::new(0.25, 0.25, 0.25, 0.0));
+        //assert_eq!(p.get_color_at(Coord::point(1.0, 0.0, 0.0)), Color::black());
+    }
+
     #[parameterized(pattern = {
             Stripe, 
             Gradient,
@@ -187,7 +206,7 @@ mod test {
             Solid
     }, expected = {
         Color::red(),
-        Color::white(),
+        Color::new(0.25, 0.0, 0.0, 0.0),
         Color::black(),
         Color::white(),
         Color::red()
@@ -211,7 +230,7 @@ mod test {
         Solid
     }, expected = {
         Color::red(),
-        Color::white(),
+        Color::new(0.25, 0.0, 0.0, 0.0),
         Color::black(),
         Color::white(),
         Color::red()
@@ -232,7 +251,7 @@ mod test {
         Solid
     }, expected = {
         Color::red(),
-        Color::white(),
+        Color::new(0.25, 0.0, 0.0, 0.0),
         Color::black(),
         Color::white(),
         Color::red()

@@ -122,7 +122,7 @@ use super::*;
             0.0, 
             0.0,
             10.0, 
-            Rc::new(Pattern::new_stripe(Color::black(), Color::white(), Matrix::identity(4))));
+            Rc::new(Pattern::new_stripe(Rc::new(Color::black()), Rc::new(Color::white()), Matrix::identity(4))));
         let mut o = Sphere::default();
         o.set_material(m);
         let o = Rc::new(o);

@@ -39,19 +39,14 @@ pub fn lighting(object: Rc<dyn Renderable>, light: Light, pos: Coord, camv: Coor
     let effective_color = object.get_color_at(pos) * light.get_intensity();
     let material = object.get_material();
     let light_v = (light.get_pos() - pos).normalized();
-    let ambient = effective_color
-        .mul_f32(material.get_ambient())
-        .get_color_at(pos);
+    let ambient = (effective_color * material.get_ambient()).get_color_at(pos);
     let light_dot_normal = light_v.dot(normal);
     //let mut diffuse = Color::black();
     //let mut specular = Color::black();
     if light_dot_normal < 0.0 || in_shadow {
         return ambient;
     }
-    let diffuse = effective_color
-        .mul_f32(material.get_diffuse())
-        .mul_f32(light_dot_normal)
-        .get_color_at(pos);
+    let diffuse = (effective_color * material.get_diffuse() * light_dot_normal).get_color_at(pos);
     let reflect_v = (-light_v).reflect(&normal);
     let reflect_dot_cam = reflect_v.dot(camv);
     if reflect_dot_cam < 0.0 {

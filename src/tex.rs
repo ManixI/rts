@@ -1,7 +1,7 @@
 pub mod color;
 pub mod pattern;
 
-use std::{fmt, ops::{Add, Mul}, rc::Rc, any::Any};
+use std::{any::Any, fmt, ops::{self, Add, Mul}, rc::Rc};
 
 use crate::{coord::Coord, matrix::Matrix};
 use color::Color;
@@ -16,7 +16,6 @@ pub enum TextureType {
 pub trait Tex: fmt::Debug {
     fn get_color_at(&self, pos: Coord) -> Color;
     fn mul_helper_color(&self, rhs: Color) -> Rc<dyn Tex>;
-    fn mul_f32(&self, rhs: f32) -> Rc<dyn Tex>;
     fn add_helper(&self, rhs: Color) -> Rc<dyn Tex>;    // TODO: expand this to be able to sum patterns maybe? Would require re-work of how patterns work though (ie stacking patterns)
     fn get_texture_type(&self) -> TextureType;
     fn compare(&self, other: Rc<dyn Tex>) -> bool;

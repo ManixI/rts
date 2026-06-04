@@ -13,64 +13,64 @@ pub enum PatternType {
     Solid
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Pattern {
     pattern_type: PatternType,
-    color_a: Color,
-    color_b: Color,
+    color_a: Rc<dyn Tex>,
+    color_b: Rc<dyn Tex>,
     transformation: Matrix
 }
 
 impl_getters_setters!(
     Pattern, 
     pattern_type: PatternType, 
-    color_a: Color, 
-    color_b: Color
+    color_a: Rc<dyn Tex>, 
+    color_b: Rc<dyn Tex>
 );
 
 #[allow(dead_code)]
 impl Pattern {
-    pub fn new(pattern_type: PatternType, color_a: Color, color_b: Color, transformation: Matrix) -> Self {
+    pub fn new(pattern_type: PatternType, color_a: Rc<dyn Tex>, color_b: Rc<dyn Tex>, transformation: Matrix) -> Self {
         Self { pattern_type, color_a, color_b, transformation }
     }
 
     pub fn debug_pattern() -> Self {
-        Self::new_checker(Color::purple(), Color::black(), Matrix::identity(4))
+        Self::new_checker(Rc::new(Color::purple()), Rc::new(Color::black()), Matrix::identity(4))
     }
 
-    pub fn new_stripe(color_a: Color, color_b: Color, transformation: Matrix) -> Self {
+    pub fn new_stripe(color_a: Rc<dyn Tex>, color_b: Rc<dyn Tex>, transformation: Matrix) -> Self {
         Self { pattern_type: PatternType::Stripe, color_a, color_b, transformation }
     }
 
-    pub fn new_gradient(color_a: Color, color_b: Color, transformation: Matrix) -> Self {
+    pub fn new_gradient(color_a: Rc<dyn Tex>, color_b: Rc<dyn Tex>, transformation: Matrix) -> Self {
         Self { pattern_type: PatternType::Gradient, color_a, color_b, transformation }
     }
 
-    pub fn new_checker(color_a: Color, color_b: Color, transformation: Matrix) -> Self {
+    pub fn new_checker(color_a: Rc<dyn Tex>, color_b: Rc<dyn Tex>, transformation: Matrix) -> Self {
         Self { pattern_type: PatternType::Checker, color_a, color_b, transformation }
     }
 
-    pub fn new_bullseye(color_a: Color, color_b: Color, transformation: Matrix) -> Self {
+    pub fn new_bullseye(color_a: Rc<dyn Tex>, color_b: Rc<dyn Tex>, transformation: Matrix) -> Self {
         Self { pattern_type: PatternType::Bullseye, color_a, color_b, transformation }
     }
 
-    pub fn new_solid(color_a: Color, transformation: Matrix) -> Self {
-        Self { pattern_type: PatternType::Solid, color_a, color_b: Color::white(), transformation }
+    pub fn new_solid(color_a: Rc<dyn Tex>, transformation: Matrix) -> Self {
+        Self { pattern_type: PatternType::Solid, color_a, color_b: Rc::new(Color::white()), transformation }
     }  
 
     fn stripe_at(&self, pos: Coord) -> Color {
-        let pos = pos.get_x().floor() as i32;
-        match pos % 2 {
-            0 => self.get_color_a(),
-            _ => self.get_color_b(), // modulo can be both positive or negative 1
+        let x = pos.get_x().floor() as i32;
+        match x % 2 {
+            0 => self.get_color_a().get_color_at(pos),
+            _ => self.get_color_b().get_color_at(pos), // modulo can be both positive or negative 1
         }
     }
 
     /// this currently only generates a gradient from 0 - 1
     /// this needs to bd scaled properly to actually work
     fn gradient_at(&self, pos: Coord) -> Color {
-        let cola = self.get_color_a();
-        let colb = self.get_color_b();
+        let cola = self.get_color_a().get_color_at(pos);
+        let colb = self.get_color_b().get_color_at(pos);
         let x = pos.get_x();
         cola + (colb - cola) * (x - x.floor())
     }
@@ -80,9 +80,9 @@ impl Pattern {
         let y = pos.get_y();
         let z = pos.get_z();
         if (x.floor() + y.floor() + z.floor()) as usize % 2 == 0 {
-            return self.get_color_a();
+            return self.get_color_a().get_color_at(pos);
         }
-        self.get_color_b()
+        self.get_color_b().get_color_at(pos)
     }
 
     /// bullseye across XZ plane
@@ -90,9 +90,9 @@ impl Pattern {
         let x = pos.get_x();
         let z = pos.get_z();
         if (x.powi(2) + z.powi(2)).sqrt().floor() as usize % 2 == 0 {
-            return self.get_color_a();
+            return self.get_color_a().get_color_at(pos);
         }
-        self.get_color_b()
+        self.get_color_b().get_color_at(pos)
     }
 }
 
@@ -101,7 +101,7 @@ impl Tex for Pattern {
     fn get_color_at(&self, pos: Coord) -> Color {
         let local_pos = self.get_transformation().inverse().unwrap() * pos;
         match self.get_pattern_type() {
-            PatternType::Solid => self.get_color_a(),
+            PatternType::Solid => self.get_color_a().get_color_at(local_pos),
             PatternType::Stripe => self.stripe_at(local_pos),
             PatternType::Gradient => self.gradient_at(local_pos),
             PatternType::Checker => self.checker_at(local_pos),
@@ -110,15 +110,6 @@ impl Tex for Pattern {
     }
 
     fn mul_helper_color(&self, rhs: Color) -> std::rc::Rc<dyn Tex> {
-        Rc::new(Self {
-            color_a: self.get_color_a() * rhs,
-            color_b: self.get_color_b() * rhs,
-            pattern_type: self.get_pattern_type(),
-            transformation: self.get_transformation()
-        })
-    }
-
-    fn mul_f32(&self, rhs: f32) -> Rc<dyn Tex> {
         Rc::new(Self {
             color_a: self.get_color_a() * rhs,
             color_b: self.get_color_b() * rhs,
@@ -160,22 +151,33 @@ impl Tex for Pattern {
     }
 }
 
+impl PartialEq for Pattern {
+    fn eq(&self, other: &Self) -> bool {
+        self.pattern_type == other.pattern_type
+            && self.transformation == other.transformation
+            && self.get_color_a().compare(other.get_color_a())
+            && self.get_color_b().compare(other.get_color_b())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::rc::Rc;
     use parameterized_macro::parameterized;
     use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::{Tex, color::Color, pattern::{Pattern, PatternType::{self, *}}}};
 
+    // TODO: nested pattern tests
+
     #[test]
     fn test_new() {
-        let p = Pattern::new_stripe(Color::white(), Color::black(), Matrix::identity(4));
-        assert_eq!(p.get_color_a(), Color::white());
-        assert_eq!(p.get_color_b(), Color::black());
+        let p = Pattern::new_stripe(Rc::new(Color::white()), Rc::new(Color::black()), Matrix::identity(4));
+        assert_eq!(p.get_color_a().get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::white());
+        assert_eq!(p.get_color_b().get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::black());
     }
 
     #[test]
     fn test_stripe_y() {
-        let p = Pattern::new_stripe(Color::white(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new_stripe(Rc::new(Color::white()), Rc::new(Color::black()), Matrix::identity(4));
         assert_eq!(p.stripe_at(Coord::point(0.0, 0.0, 0.0)), Color::white());
         assert_eq!(p.stripe_at(Coord::point(0.0, 1.0, 0.0)), Color::white());
         assert_eq!(p.stripe_at(Coord::point(0.0, 2.0, 0.0)), Color::white());
@@ -183,7 +185,7 @@ mod test {
 
     #[test]
     fn test_stripe_z() {
-        let p = Pattern::new_stripe(Color::white(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new_stripe(Rc::new(Color::white()), Rc::new(Color::black()), Matrix::identity(4));
         assert_eq!(p.stripe_at(Coord::point(0.0, 0.0, 0.0)), Color::white());
         assert_eq!(p.stripe_at(Coord::point(0.0, 0.0, 1.0)), Color::white());
         assert_eq!(p.stripe_at(Coord::point(0.0, 0.0, 2.0)), Color::white());
@@ -191,7 +193,7 @@ mod test {
 
     #[test]
     fn test_stripe_x() {
-        let p = Pattern::new_stripe(Color::white(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new_stripe(Rc::new(Color::white()), Rc::new(Color::black()), Matrix::identity(4));
         assert_eq!(p.stripe_at(Coord::point(0.0, 0.0, 0.0)), Color::white());
         assert_eq!(p.stripe_at(Coord::point(0.9, 0.0, 0.0)), Color::white());
         assert_eq!(p.stripe_at(Coord::point(1.0, 0.0, 0.0)), Color::black());
@@ -202,7 +204,7 @@ mod test {
 
     #[test]
     fn test_gradient() {
-        let p = Pattern::new_gradient(Color::white(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new_gradient(Rc::new(Color::white()), Rc::new(Color::black()), Matrix::identity(4));
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::white());
         assert_eq!(p.get_color_at(Coord::point(0.25, 0.0, 0.0)), Color::new(0.75, 0.75, 0.75, 0.0));
         assert_eq!(p.get_color_at(Coord::point(0.5, 0.0, 0.0)), Color::new(0.5, 0.5, 0.5, 0.0));
@@ -212,7 +214,7 @@ mod test {
 
     #[test]
     fn test_bullseye() {
-        let p = Pattern::new_bullseye(Color::red(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new_bullseye(Rc::new(Color::red()), Rc::new(Color::black()), Matrix::identity(4));
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::red());
         assert_eq!(p.get_color_at(Coord::point(1.0, 0.0, 0.0)), Color::black());
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 1.0)), Color::black());
@@ -221,7 +223,7 @@ mod test {
 
     #[test]
     fn test_checker_x() {
-        let p = Pattern::new_checker(Color::red(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new_checker(Rc::new(Color::red()), Rc::new(Color::black()), Matrix::identity(4));
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::red());
         assert_eq!(p.get_color_at(Coord::point(0.99, 0.0, 0.0)), Color::red());
         assert_eq!(p.get_color_at(Coord::point(1.1, 0.0, 0.0)), Color::black());
@@ -229,7 +231,7 @@ mod test {
 
     #[test]
     fn test_checker_y() {
-        let p = Pattern::new_checker(Color::red(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new_checker(Rc::new(Color::red()), Rc::new(Color::black()), Matrix::identity(4));
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::red());
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.99, 0.0)), Color::red());
         assert_eq!(p.get_color_at(Coord::point(0.0, 1.1, 0.0)), Color::black());
@@ -237,7 +239,7 @@ mod test {
 
     #[test]
     fn test_checker_z() {
-        let p = Pattern::new_checker(Color::red(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new_checker(Rc::new(Color::red()), Rc::new(Color::black()), Matrix::identity(4));
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::red());
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.99)), Color::red());
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 1.1)), Color::black());
@@ -259,7 +261,7 @@ mod test {
     fn test_obj_transformed(pattern: PatternType, expected: Color) {
         let mut o = Sphere::default();
         o.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
-        let p = Pattern::new(pattern, Color::red(), Color::black(), Matrix::identity(4));
+        let p = Pattern::new(pattern, Rc::new(Color::red()), Rc::new(Color::black()), Matrix::identity(4));
         let m = Material::new(1.0, 0.0, 0.0, 10.0, Rc::new(p));
         o.set_material(m);
         
@@ -281,7 +283,7 @@ mod test {
         Color::red()
     })]
     fn test_stripe_pattern_transformed(pattern: PatternType, expected: Color) {
-        let p = Pattern::new(pattern, Color::red(), Color::black(), Matrix::scaling(2.0, 2.0, 2.0));
+        let p = Pattern::new(pattern, Rc::new(Color::red()), Rc::new(Color::black()), Matrix::scaling(2.0, 2.0, 2.0));
         let m = Material::new(1.0, 0.0, 0.0, 10.0, Rc::new(p));
         let mut o = Sphere::default();
         o.set_material(m);
@@ -302,7 +304,7 @@ mod test {
         Color::red()
     })]
     fn test_stripe_both_transformed(pattern: PatternType, expected: Color) {
-        let p = Pattern::new(pattern, Color::red(), Color::black(), Matrix::translation(0.5, 0.0, 0.0));
+        let p = Pattern::new(pattern, Rc::new(Color::red()), Rc::new(Color::black()), Matrix::translation(0.5, 0.0, 0.0));
         let m = Material::new(1.0, 0.0, 0.0, 10.0, Rc::new(p));
         let mut o = Sphere::default();
         o.set_material(m);

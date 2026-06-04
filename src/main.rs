@@ -305,8 +305,8 @@ fn draw_scene() {
     mat.set_texture(
         Rc::new(
             Pattern::new_stripe(
-                Color::red(), 
-                Color::green(), 
+                Rc::new(Color::red()),
+                Rc::new(Color::green()),
                 Matrix::scaling(0.05, 1.0, 1.0) * Matrix::rotate_y(f32::consts::PI / 4.0)
             )
         )
@@ -322,7 +322,7 @@ fn draw_scene() {
     //mat.set_color(Color::new(0.5, 1.0, 0.1, 0.0));
     mat.set_diffuse(0.7);
     mat.set_specular(0.3);
-    mat.set_texture(Rc::new(Pattern::new_gradient(Color::blue(), Color::red(),Matrix::scaling(0.25, 0.25, 0.25))));
+    mat.set_texture(Rc::new(Pattern::new_gradient(Rc::new(Color::blue()), Rc::new(Color::red()), Matrix::scaling(0.25, 0.25, 0.25))));
     right.set_material(mat);
 
     let mut left = Sphere::default();

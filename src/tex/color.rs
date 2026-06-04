@@ -130,10 +130,6 @@ impl Tex for Color {
         Rc::new(*self * rhs)
     }
 
-    fn mul_f32(&self, rhs: f32) -> Rc<dyn Tex> {
-        Rc::new(*self * rhs)
-    }
-
     fn add_helper(&self, rhs: Color) -> Rc<dyn Tex> {
         Rc::new(*self + rhs)
     }

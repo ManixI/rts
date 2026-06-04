@@ -76,7 +76,13 @@ impl Pattern {
     }
 
     fn checker_at(&self, pos: Coord) -> Color {
-        todo!();
+        let x = pos.get_x();
+        let y = pos.get_y();
+        let z = pos.get_z();
+        if (x.floor() + y.floor() + z.floor()) as usize % 2 == 0 {
+            return self.get_color_a();
+        }
+        self.get_color_b()
     }
 
     /// bullseye across XZ plane
@@ -213,6 +219,30 @@ mod test {
         assert_eq!(p.get_color_at(Coord::point(0.708, 0.0, 0.708)), Color::black());
     }
 
+    #[test]
+    fn test_checker_x() {
+        let p = Pattern::new_checker(Color::red(), Color::black(), Matrix::identity(4));
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::red());
+        assert_eq!(p.get_color_at(Coord::point(0.99, 0.0, 0.0)), Color::red());
+        assert_eq!(p.get_color_at(Coord::point(1.1, 0.0, 0.0)), Color::black());
+    }
+
+    #[test]
+    fn test_checker_y() {
+        let p = Pattern::new_checker(Color::red(), Color::black(), Matrix::identity(4));
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::red());
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.99, 0.0)), Color::red());
+        assert_eq!(p.get_color_at(Coord::point(0.0, 1.1, 0.0)), Color::black());
+    }
+
+    #[test]
+    fn test_checker_z() {
+        let p = Pattern::new_checker(Color::red(), Color::black(), Matrix::identity(4));
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::red());
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.99)), Color::red());
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 1.1)), Color::black());
+    }
+
     #[parameterized(pattern = {
             Stripe, 
             Gradient,
@@ -246,7 +276,7 @@ mod test {
     }, expected = {
         Color::red(),
         Color::new(0.25, 0.0, 0.0, 0.0),
-        Color::black(),
+        Color::red(),
         Color::red(),
         Color::red()
     })]
@@ -267,7 +297,7 @@ mod test {
     }, expected = {
         Color::red(),
         Color::new(0.25, 0.0, 0.0, 0.0),
-        Color::black(),
+        Color::red(),
         Color::red(),
         Color::red()
     })]

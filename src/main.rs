@@ -307,7 +307,7 @@ fn draw_scene() {
             Pattern::new_stripe(
                 Color::red(), 
                 Color::green(), 
-                Matrix::scaling(0.05, 1.0, 1.0) * Matrix::rotate_z(f32::consts::PI / 4.0)
+                Matrix::scaling(0.05, 1.0, 1.0) * Matrix::rotate_y(f32::consts::PI / 4.0)
             )
         )
     );

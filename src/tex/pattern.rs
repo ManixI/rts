@@ -79,8 +79,14 @@ impl Pattern {
         todo!();
     }
 
+    /// bullseye across XZ plane
     fn bullseye_at(&self, pos: Coord) -> Color {
-        todo!()
+        let x = pos.get_x();
+        let z = pos.get_z();
+        if (x.powi(2) + z.powi(2)).sqrt().floor() as usize % 2 == 0 {
+            return self.get_color_a();
+        }
+        self.get_color_b()
     }
 }
 
@@ -198,6 +204,15 @@ mod test {
         //assert_eq!(p.get_color_at(Coord::point(1.0, 0.0, 0.0)), Color::black());
     }
 
+    #[test]
+    fn test_bullseye() {
+        let p = Pattern::new_bullseye(Color::red(), Color::black(), Matrix::identity(4));
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 0.0)), Color::red());
+        assert_eq!(p.get_color_at(Coord::point(1.0, 0.0, 0.0)), Color::black());
+        assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 1.0)), Color::black());
+        assert_eq!(p.get_color_at(Coord::point(0.708, 0.0, 0.708)), Color::black());
+    }
+
     #[parameterized(pattern = {
             Stripe, 
             Gradient,
@@ -208,7 +223,7 @@ mod test {
         Color::red(),
         Color::new(0.25, 0.0, 0.0, 0.0),
         Color::black(),
-        Color::white(),
+        Color::red(),
         Color::red()
     })]
     fn test_obj_transformed(pattern: PatternType, expected: Color) {
@@ -232,7 +247,7 @@ mod test {
         Color::red(),
         Color::new(0.25, 0.0, 0.0, 0.0),
         Color::black(),
-        Color::white(),
+        Color::red(),
         Color::red()
     })]
     fn test_stripe_pattern_transformed(pattern: PatternType, expected: Color) {
@@ -253,7 +268,7 @@ mod test {
         Color::red(),
         Color::new(0.25, 0.0, 0.0, 0.0),
         Color::black(),
-        Color::white(),
+        Color::red(),
         Color::red()
     })]
     fn test_stripe_both_transformed(pattern: PatternType, expected: Color) {

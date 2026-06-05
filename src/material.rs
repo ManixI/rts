@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use rtc::impl_getters;
+use crate::impl_getters;
 use crate::{coord::Coord, tex::{Tex, TextureType, color::Color}};
 
 #[derive(Clone, Debug)]

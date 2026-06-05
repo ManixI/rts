@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use rtc::impl_getters_setters;
+use crate::impl_getters_setters;
 use crate::{camera::Camera, canvas::Canvas, tex::color::Color, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere};
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I

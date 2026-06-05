@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 parameterized-macro = "3.0.0"
 paste = "1.0.15"
+rand = "0.10.1"

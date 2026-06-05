@@ -1,5 +1,5 @@
 use std::{ops, rc::Rc};
-use rtc::impl_getters_setters;
+use crate::impl_getters_setters;
 
 use crate::{coord::Coord, matrix::Matrix, tex::Tex};
 

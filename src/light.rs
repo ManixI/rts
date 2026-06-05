@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use rtc::{impl_getters, impl_setters};
+use crate::{impl_getters, impl_setters};
 use crate::{coord::Coord, material::Material, renderable::Renderable, tex::{Tex, color::Color}};
 
 #[derive(Debug, Clone, Copy, PartialEq)]

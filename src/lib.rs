@@ -1,3 +1,17 @@
+pub mod coord;
+pub mod matrix;
+pub mod canvas;
+pub mod camera;
+pub mod light;
+pub mod material;
+pub mod plane;
+pub mod ray;
+pub mod renderable;
+pub mod sphere;
+pub mod tex;
+pub mod world;
+use crate::coord::Coord;
+
 #[macro_export]
 macro_rules! impl_getters {
     ($struct:ty, $($field:ident: $type:ty),*) => {
@@ -30,4 +44,8 @@ macro_rules! impl_getters_setters {
             }
         }
     };
+}
+
+pub fn purlin_noise(seed: f32, pos: Coord) -> Coord {
+    todo!()
 }

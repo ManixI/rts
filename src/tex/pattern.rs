@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use rtc::impl_getters_setters;
+use crate::impl_getters_setters;
 use crate::{coord::Coord, matrix::Matrix, tex::{Tex, color::Color}};
 
 
@@ -10,7 +10,9 @@ pub enum PatternType {
     Gradient,
     Checker,
     Bullseye,
-    Solid
+    Solid,
+    Blended,
+    Perturbed
 }
 
 #[derive(Debug, Clone)]
@@ -58,6 +60,20 @@ impl Pattern {
         Self { pattern_type: PatternType::Solid, color_a, color_b: Rc::new(Color::white()), transformation }
     }  
 
+    /// adds organic jitter to a subpattern
+    /// color b is used to store the rng val, so do not use
+    pub fn new_perturbed(color_a: Rc<dyn Tex>) -> Self {
+        Self { pattern_type: PatternType::Perturbed, 
+            color_a, 
+            color_b: Rc::new(Color::new(rand::random_range(0.0..=1.0), 0.0, 0.0, 0.0)), 
+            transformation: Matrix::identity(4) }
+    }
+
+    /// blends 2 sub patterns for every pixel by summing them
+    pub fn new_blended(color_a: Rc<dyn Tex>, color_b: Rc<dyn Tex>, transformation: Matrix) -> Self {
+        Self { pattern_type: PatternType::Blended, color_a, color_b, transformation }
+    }
+
     fn stripe_at(&self, pos: Coord) -> Color {
         let x = pos.get_x().floor() as i32;
         match x % 2 {
@@ -94,6 +110,18 @@ impl Pattern {
         }
         self.get_color_b().get_color_at(pos)
     }
+
+    fn blended_at(&self, pos: Coord) -> Color {
+        self.get_color_a().get_color_at(pos) + self.get_color_b().get_color_at(pos)
+    }
+
+    fn perturbed_at(&self, pos: Coord) -> Color {
+        let origin = Coord::point(0.0, 0.0, 0.0);
+        let perlin_seed = self.get_color_b().get_color_at(origin).get_r();
+        // TODO: apply jitter to pos
+        let noise = crate::purlin_noise(perlin_seed, pos);
+        self.get_color_a().get_color_at(pos + noise)
+    }
 }
 
 impl Tex for Pattern {
@@ -106,6 +134,8 @@ impl Tex for Pattern {
             PatternType::Gradient => self.gradient_at(local_pos),
             PatternType::Checker => self.checker_at(local_pos),
             PatternType::Bullseye => self.bullseye_at(local_pos),
+            PatternType::Blended => self.blended_at(local_pos),
+            PatternType::Perturbed => self.perturbed_at(local_pos),
         }
     }
 
@@ -167,6 +197,8 @@ mod test {
     use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::{Tex, color::Color, pattern::{Pattern, PatternType::{self, *}}}};
 
     // TODO: nested pattern tests
+    // TODO: blended pattern tests
+    // TODO: perturbed tests
 
     #[test]
     fn test_new() {

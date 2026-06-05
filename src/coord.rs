@@ -1,5 +1,5 @@
 use std::ops;
-use rtc::impl_getters_setters;
+use crate::impl_getters_setters;
 use crate::matrix::Matrix;
 
 const EPSILON: f32 = 0.000001;

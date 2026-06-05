@@ -1,4 +1,4 @@
-use rtc::impl_getters;
+use crate::impl_getters;
 use crate::{matrix::Matrix, renderable::{Intersection, Renderable}};
 use super::Coord;
 

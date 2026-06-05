@@ -1,4 +1,4 @@
-use rtc::impl_getters_setters;
+use crate::impl_getters_setters;
 use crate::tex::color::Color;
 use std::fs::File;
 use std::io::prelude::*;

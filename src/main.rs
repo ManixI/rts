@@ -1,30 +1,21 @@
-mod coord;
-mod canvas;
-mod matrix;
-mod ray;
-mod sphere;
-mod light;
-mod material;
-mod world;
-mod renderable;
-mod camera;
-mod plane;
-mod tex;
-
 use std::{f32, rc::Rc};
-
-use canvas::Canvas;
-use coord::Coord;
-use tex::color::Color;
-use light::{lighting, Light};
-use material::Material;
-use matrix::Matrix;
-use ray::Ray;
-use renderable::Renderable;
-use sphere::Sphere;
 use core::f32::consts::PI;
 
-use crate::{camera::Camera, plane::Plane, renderable::RenderableBase, tex::pattern::Pattern, world::World};
+use rtc::{
+    canvas::Canvas,
+    coord::Coord,
+    tex::color::Color,
+    light::{lighting, Light},
+    material::Material,
+    matrix::Matrix,
+    ray::Ray,
+    renderable::{Renderable, RenderableBase},
+    sphere::Sphere,
+    camera::Camera,
+    plane::Plane,
+    tex::pattern::Pattern,
+    world::World,
+};
 
 #[derive(Debug, Clone, Copy)]
 struct Shot {

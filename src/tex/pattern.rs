@@ -85,6 +85,8 @@ impl Pattern {
     /// this currently only generates a gradient from 0 - 1
     /// this needs to bd scaled properly to actually work
     fn gradient_at(&self, pos: Coord) -> Color {
+        // TODO: use Sin wave for smooth up and down gradient
+        // could also try mod + interpolation to get sharp sin wave
         let cola = self.get_color_a().get_color_at(pos);
         let colb = self.get_color_b().get_color_at(pos);
         let x = pos.get_x();

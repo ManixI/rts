@@ -1,7 +1,7 @@
 pub mod color;
 pub mod pattern;
 
-use std::{any::Any, fmt, ops::{self, Add, Mul}, sync::Arc};
+use std::{any::Any, fmt, ops::{Add, Mul}, sync::Arc};
 
 use crate::{coord::Coord, matrix::Matrix};
 use color::Color;

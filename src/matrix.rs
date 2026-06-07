@@ -1,4 +1,4 @@
-use std::ops;
+use std::{f32::consts::PI, ops};
 use super::Coord;
 
 // TODO: optimize this to use arrays, generic traits, etc.
@@ -120,6 +120,18 @@ impl Matrix {
         new.data[1][0] = radians.sin();
         new.data[1][1] = radians.cos();
         new
+    }
+
+    pub fn rotate_x_degrees(degrees: f32) -> Self {
+        Matrix::rotate_x(degrees * PI / 180.0)
+    }
+
+    pub fn rotate_y_degrees(degrees: f32) -> Self {
+        Matrix::rotate_y(degrees * PI / 180.0)
+    }
+
+    pub fn rotate_z_degrees(degrees: f32) -> Self {
+        Matrix::rotate_z(degrees * PI / 180.0)
     }
 
     pub fn to_vec(&self) -> Coord {

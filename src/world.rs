@@ -7,7 +7,6 @@ use rayon::prelude::*;
 // probably just make a node type or something
 
 static EPSILON: f32 = 0.005; // this needs to be surprisingly big
-static NUM_CORED: usize = 24;
 
 #[derive(Clone)]
 struct Comps {

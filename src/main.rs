@@ -23,6 +23,7 @@ struct Shot {
     vel: Coord,
 }
 
+#[allow(dead_code)]
 impl Shot {
     fn new(pos: Coord, vel: Coord) -> Self {
         Shot { pos, vel }
@@ -179,6 +180,7 @@ fn outline_sphere(filename: &str, resolution: usize, orb: Sphere, light: Light) 
 }
 
 // TODO: make this a test case for lighting func
+#[allow(dead_code)]
 fn draw_test_spheres() {
     let orbs = vec![Sphere::default(); 6];
     let small_vals = vec![0.0, 0.1, 0.25, 0.5, 0.75, 1.0];
@@ -279,7 +281,7 @@ fn draw_scene() {
             )
         )
     );
-    mat.set_reflection(0.5);
+    mat.set_reflection(0.125);
     floor.set_material(mat);
 
     let mut left_wall = Plane::default();
@@ -288,14 +290,25 @@ fn draw_scene() {
         Matrix::rotate_y(-PI/4.0) *
         Matrix::rotate_x(PI/2.0)
     );
-    left_wall.get_material().set_texture(Arc::new(Pattern::new_stripe(Arc::new(Color::new(1.0, 0.8, 0.1, 0.0)), Arc::new(Color::white()), Matrix::rotate_z(PI/4.0))));
+    let mut mat = left_wall.get_material();
+    mat.set_texture(Arc::new(Pattern::new_stripe(Arc::new(Color::new(1.0, 0.8, 0.1, 0.0)), Arc::new(Color::white()), Matrix::rotate_y(PI/2.0))));
+    left_wall.set_material(mat.clone());
 
     let mut right_wall = Plane::default();
     right_wall.set_transformation(
         Matrix::translation(0.0, 0.0, 5.0) *
-        Matrix::rotate_y(PI/4.0) *
-        Matrix::rotate_x(PI/2.0) 
+            Matrix::rotate_y_degrees(45.0) *
+            Matrix::rotate_x(PI/2.0) *
+            Matrix::rotate_z_degrees(180.0)
     );
+    let mut mirror_mat = Material::default();
+    mirror_mat.set_color(Color::white());
+    mirror_mat.set_reflection(1.0);
+    mirror_mat.set_diffuse(0.1);
+    mirror_mat.set_shininess(0.1);
+    mirror_mat.set_specular(0.1);
+    //right_wall.set_material(mirror_mat.clone());
+    //left_wall.set_material(mirror_mat);
 
 
     let mut middle = Sphere::default();
@@ -308,7 +321,8 @@ fn draw_scene() {
             Pattern::new_stripe(
                 Arc::new(Color::red()),
                 Arc::new(Color::green()),
-                Matrix::scaling(0.05, 1.0, 1.0) * Matrix::rotate_y(f32::consts::PI / 4.0)
+                Matrix::scaling(0.05, 0.5, 0.5) 
+                    * Matrix::rotate_z(f32::consts::PI / 2.0)
             )
         )
     );
@@ -323,7 +337,16 @@ fn draw_scene() {
     //mat.set_color(Color::new(0.5, 1.0, 0.1, 0.0));
     mat.set_diffuse(0.7);
     mat.set_specular(0.3);
-    mat.set_texture(Arc::new(Pattern::new_gradient(Arc::new(Color::blue()), Arc::new(Color::red()), Matrix::scaling(0.25, 0.25, 0.25))));
+    mat.set_texture(
+        Arc::new(
+            Pattern::new_gradient(
+                Arc::new(Color::blue()), 
+                Arc::new(Color::red()), 
+                Matrix::scaling(2.0, 2.0, 2.0)
+                    * Matrix::translation(1.5, 1.5, 1.5)
+            )
+        )
+    );
     right.set_material(mat);
 
     let mut left = Sphere::default();
@@ -343,16 +366,17 @@ fn draw_scene() {
 
     world.add_obj(Arc::new(floor));
     world.add_obj(Arc::new(left_wall));
-    world.add_obj(Arc::new(right_wall));
+    //world.add_obj(Arc::new(right_wall));
     world.add_obj(Arc::new(middle));
     world.add_obj(Arc::new(left));
     world.add_obj(Arc::new(right));
 
-    let mut cam = Camera::new(1000, 1000, PI/3.0);
+    let mut cam = Camera::new(800, 800, PI/3.0);
     cam.transform(Matrix::view_transformation(
         Coord::point(0.0, 1.5, -5.0), 
         Coord::point(0.0, 1.0, 0.0), 
     Coord::vec(0.0, 1.0, 0.0)));
+    world.set_max_depth(5);
     let canvas = world.render_world_multi(&cam);
     let _ = canvas.to_file("out.ppm");
     

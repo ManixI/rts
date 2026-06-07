@@ -4,7 +4,7 @@ use crate::{impl_renderable_base, impl_renderable_tests};
 use crate::material::Material;
 use crate::matrix::Matrix;
 use crate::ray::Ray;
-use crate::renderable::{Intersection, Renderable, RenderableBase, RenderableType};
+use crate::renderable::{Intersection, Renderable, RenderableType};
 use crate::tex::color::Color;
 use super::Coord;
 

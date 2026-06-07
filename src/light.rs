@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{impl_getters, impl_setters};
-use crate::{coord::Coord, material::Material, renderable::Renderable, tex::{Tex, color::Color}};
+use crate::{coord::Coord, renderable::Renderable, tex::{Tex, color::Color}};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Light {

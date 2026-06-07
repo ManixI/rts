@@ -35,6 +35,7 @@ macro_rules! impl_setters {
 }
 
 #[macro_export]
+#[allow(dead_code)]
 macro_rules! impl_getters_setters {
     ($struct:ty, $($field:ident: $type:ty),*) => {
         paste::paste! {

@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::impl_getters;
 use crate::{coord::Coord, tex::{Tex, TextureType, color::Color}};
@@ -10,7 +10,7 @@ pub struct Material {
     specular: f32,
     shininess: f32,
     reflection: f32,
-    texture: Rc<dyn Tex>, 
+    texture: Arc<dyn Tex>, 
 }
 
 impl_getters!(Material,
@@ -26,7 +26,7 @@ impl_getters!(Material,
 impl Material {
     /// ambient, diffuse, specular values should be 0 <= x <= 1
     /// shininess should be 10 <= x <= 200
-    pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32, reflection: f32, texture: Rc<dyn Tex>) -> Self {
+    pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32, reflection: f32, texture: Arc<dyn Tex>) -> Self {
         assert!(ambient >= 0.0);
         assert!(ambient >= 0.0);
         assert!(specular >= 0.0);
@@ -36,7 +36,7 @@ impl Material {
     }
 
     pub fn default() -> Self {
-        Self { ambient: 0.1, diffuse: 0.9, specular: 0.9, shininess: 200.0, reflection: 0.0, texture: Rc::new(Color::white()) }
+        Self { ambient: 0.1, diffuse: 0.9, specular: 0.9, shininess: 200.0, reflection: 0.0, texture: Arc::new(Color::white()) }
     }
 
     pub fn set_ambient(&mut self, ambient: f32) {
@@ -64,16 +64,16 @@ impl Material {
         self.reflection = reflection;
     }
 
-    pub fn set_texture(&mut self, tex: Rc<dyn Tex>) {
+    pub fn set_texture(&mut self, tex: Arc<dyn Tex>) {
         self.texture = tex;
     }
 
-    pub fn get_texture(&self) -> Rc<dyn Tex> {
+    pub fn get_texture(&self) -> Arc<dyn Tex> {
         self.texture.clone()
     }
 
     pub fn set_color(&mut self, color: Color) {
-        self.set_texture(Rc::new(color));
+        self.set_texture(Arc::new(color));
     }
 
     pub fn get_color_at(&self, pos: Coord) -> Color {
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let m = Material::new(1.0, 0.0, 1.0, 27.0, 0.0, Rc::new(Color::white()));
+        let m = Material::new(1.0, 0.0, 1.0, 27.0, 0.0, Arc::new(Color::white()));
         assert_eq!(m.ambient, 1.0);
         assert_eq!(m.diffuse, 0.0);
         assert_eq!(m.specular, 1.0);
@@ -130,10 +130,10 @@ mod tests {
             0.0,
             10.0, 
             0.0,
-            Rc::new(Pattern::new_stripe(Rc::new(Color::black()), Rc::new(Color::white()), Matrix::identity(4))));
+            Arc::new(Pattern::new_stripe(Arc::new(Color::black()), Arc::new(Color::white()), Matrix::identity(4))));
         let mut o = Sphere::default();
         o.set_material(m);
-        let o = Rc::new(o);
+        let o = Arc::new(o);
         let eyev = Coord::vec(0.0, 0.0, -1.0);
         let normalv = Coord::vec(0.0, 0.0, -1.0);
         let light = Light::new(Coord::point(0.0, 0.0, -10.0), Color::white());

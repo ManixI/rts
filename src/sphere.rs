@@ -1,5 +1,5 @@
 use core::f32;
-use std::rc::Rc;
+use std::sync::Arc;
 use crate::{impl_renderable_base, impl_renderable_tests};
 use crate::material::Material;
 use crate::matrix::Matrix;
@@ -165,7 +165,7 @@ impl Renderable for Sphere {
             return (ray, None);
         }
         let data = data.unwrap();
-        let t = Rc::new(self.clone());
+        let t = Arc::new(self.clone());
         let r1 = ray.get_direction().reflect(self.normal_at((ray.get_direction() * data[0]).to_pos()));
         let r2 = ray.get_direction().reflect(self.normal_at((ray.get_direction() * data[1]).to_pos()));
         (
@@ -198,7 +198,7 @@ impl Renderable for Sphere {
         self
     }
 
-    fn compare(&self, other: Rc<dyn Renderable>) -> bool {
+    fn compare(&self, other: Arc<dyn Renderable>) -> bool {
         match other.as_any().downcast_ref::<Sphere>() {
             Some(p) => self == p,
             None => false

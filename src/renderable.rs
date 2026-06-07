@@ -1,4 +1,4 @@
-use std::{fmt::Debug, rc::Rc};
+use std::{fmt::Debug, sync::Arc};
 use crate::{coord::Coord, material::Material, matrix::Matrix, ray::Ray, tex::color::Color};
 
 #[derive(PartialEq, Debug)]
@@ -22,7 +22,7 @@ pub trait RenderableBase {
 
     fn get_type(&self) -> RenderableType;
 
-    fn clone_rc(&self) -> Rc<dyn Renderable>;
+    fn clone_rc(&self) -> Arc<dyn Renderable>;
 
     fn clone_dyn(&self) -> Box<dyn Renderable>;
 
@@ -36,7 +36,7 @@ pub trait RenderableBase {
 macro_rules! impl_renderable_base {
     ($type:ty, $variant:expr) => {
         impl crate::renderable::RenderableBase for $type {
-            // TODO: should return reference not actual material? 
+            // TODO: should return reference not actual material? ie Material should be Arc<Material>
             fn get_material(&self) -> Material { self.material.clone() }
             fn set_material(&mut self, mat: Material) { self.material = mat; }
             fn get_pos(&self) -> Coord { self.transformation.to_point() }
@@ -44,7 +44,7 @@ macro_rules! impl_renderable_base {
             fn set_transformation(&mut self, transform: Matrix) { self.transformation = transform }
             fn apply_transformation(&mut self, transform: Matrix) { self.transformation = self.get_transformation() * transform }
             fn get_type(&self) -> RenderableType { $variant }
-            fn clone_rc(&self) -> Rc<dyn Renderable> { Rc::new(self.clone()) }
+            fn clone_rc(&self) -> Arc<dyn Renderable> { Arc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
             fn get_color_at(&self, pos: Coord) -> Color {
                 let local_pos = self.get_transformation().inverse().unwrap() * pos;
@@ -59,7 +59,7 @@ macro_rules! impl_renderable_base {
  * trait to define an object as renderable by the engine
  * requires RenderableBase implementation (use impl_renderable_base(Type, RenderableBase:Type))
  */
-pub trait Renderable: RenderableBase {
+pub trait Renderable: RenderableBase + Send + Sync {
     fn intersect(&self, ray: Ray) -> Option<Vec<Intersection>>;
 
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>);
@@ -70,7 +70,7 @@ pub trait Renderable: RenderableBase {
 
     fn as_any(&self) -> &dyn std::any::Any;
 
-    fn compare(&self, other: Rc<dyn Renderable>) -> bool;
+    fn compare(&self, other: Arc<dyn Renderable>) -> bool;
 }
 
 impl Clone for Box<dyn Renderable> {
@@ -89,13 +89,13 @@ pub fn compare_renderables(a: &dyn Renderable, b: &dyn Renderable) {
 #[derive(Clone)]
 pub struct Intersection {
     t: f32,
-    object: Rc<dyn Renderable>,
+    object: Arc<dyn Renderable>,
     reflectv: Coord
 }
 
 #[allow(dead_code)]
 impl Intersection {
-    pub fn new(t: f32, object: Rc<dyn Renderable>, reflectv: Coord) -> Self {
+    pub fn new(t: f32, object: Arc<dyn Renderable>, reflectv: Coord) -> Self {
         assert!(reflectv.is_vec());
         Self { t, object, reflectv }
     }
@@ -108,11 +108,11 @@ impl Intersection {
         self.reflectv
     }
 
-    pub fn get_object(&self) -> Rc<dyn Renderable> {
+    pub fn get_object(&self) -> Arc<dyn Renderable> {
         self.object.clone()
     }
 
-    pub fn get_object_pointer(&self) -> Rc<dyn Renderable> {
+    pub fn get_object_pointer(&self) -> Arc<dyn Renderable> {
         self.object.clone()
     }
 
@@ -243,11 +243,12 @@ macro_rules! impl_renderable_tests {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-    use crate::{coord::Coord, ray::Ray, renderable::{Renderable, RenderableBase}, sphere::Sphere};
+    use std::sync::Arc;
+
+use crate::{coord::Coord, ray::Ray, renderable::{Renderable, RenderableBase}, sphere::Sphere};
     use super::Intersection;
 
-    fn compare(a: Rc<dyn Renderable>, b: Rc<dyn Renderable>) {
+    fn compare(a: Arc<dyn Renderable>, b: Arc<dyn Renderable>) {
         assert_eq!(a.get_material(), b.get_material());
         assert_eq!(a.get_pos(), b.get_pos());
         assert_eq!(a.get_transformation(), b.get_transformation());
@@ -261,7 +262,7 @@ mod tests {
 
     #[test]
     fn test_creation() {
-        let s = Rc::new(Sphere::default());
+        let s = Arc::new(Sphere::default());
         let intersection = Intersection::new(3.5, s.clone(), Coord::vec(0.0, 0.0, 0.0));
         assert_eq!(intersection.t, 3.5);
         //compare(intersection.object, s);
@@ -273,7 +274,7 @@ mod tests {
     #[test]
     fn test_create_2() {
         let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        let s = Rc::new(Sphere::default());
+        let s = Arc::new(Sphere::default());
         let xs = s.intersect(r);
         assert!(xs.is_some());
         let xs = xs.unwrap();
@@ -296,12 +297,12 @@ mod tests {
         assert!(s.intersect(ray).is_none());
         let data = Intersection::aggregate_intersections(intersections);
         assert_eq!(data.len(), 4);
-        let test = Intersection::new(4.0, Rc::new(s.clone()), Coord::vec(0.0, 0.0, 0.0));
+        let test = Intersection::new(4.0, Arc::new(s.clone()), Coord::vec(0.0, 0.0, 0.0));
         compare_intersection(&data[0], &test);
         compare_intersection(&data[1], &test);
         //assert_eq!(data[0], test);
         //assert_eq!(data[2], test);
-        let test = Intersection::new(6.0, Rc::new(s), Coord::vec(0.0, 0.0, 0.0));
+        let test = Intersection::new(6.0, Arc::new(s), Coord::vec(0.0, 0.0, 0.0));
         compare_intersection(&data[2], &test);
         compare_intersection(&data[3], &test);
         //assert_eq!(data[1], test);
@@ -310,7 +311,7 @@ mod tests {
 
     #[test]
     fn test_detect_hit() {
-        let s = Rc::new(Sphere::default());
+        let s = Arc::new(Sphere::default());
         let i1 = Intersection::new(1.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
         let i2 = Intersection::new(2.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
         let data = vec![i1.clone(), i2];

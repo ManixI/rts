@@ -1,38 +1,43 @@
-use std::rc::Rc;
+use std::sync::Arc;
 use crate::impl_getters_setters;
 use crate::{camera::Camera, canvas::Canvas, tex::color::Color, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere};
+use rayon::prelude::*;
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
 // probably just make a node type or something
 
 static EPSILON: f32 = 0.005; // this needs to be surprisingly big
+static NUM_CORED: usize = 24;
 
+#[derive(Clone)]
 struct Comps {
-    object: Rc<dyn Renderable>,
+    object: Arc<dyn Renderable>,
     point: Coord,
     eyev: Coord,
     normalv: Coord,
     time: f32,
-    inside: bool
+    inside: bool,
+    reflectv: Coord
 }
 
 impl_getters_setters!(Comps,
-    //object: Rc<dyn Renderable>,
+    //object: Arc<dyn Renderable>,
     point: Coord,
     eyev: Coord,
     normalv: Coord,
     time: f32,
-    inside: bool
+    inside: bool,
+    reflectv: Coord
 );
 
 // precomputed data about an intersection of ray and renderable
 #[allow(dead_code)]
 impl Comps {
-    fn new(object: Rc<dyn Renderable>, point: Coord, eyev: Coord, normalv: Coord, time: f32, inside: bool) -> Self {
-        Self { object, point, eyev, normalv, time, inside }
+    fn new(object: Arc<dyn Renderable>, point: Coord, eyev: Coord, normalv: Coord, time: f32, inside: bool, reflectv: Coord) -> Self {
+        Self { object, point, eyev, normalv, time, inside, reflectv }
     }
 
-    fn get_object(&self) -> Rc<dyn Renderable> {
+    fn get_object(&self) -> Arc<dyn Renderable> {
         self.object.clone()
     }
 
@@ -56,20 +61,24 @@ impl Comps {
             -ray.get_direction(), 
             normalv, 
             intersection.get_time(),
-            inside
+            inside,
+            intersection.get_reflectv()
         )
     }
 }
 
 pub struct World {
     light: Vec<Light>,
-    objects: Vec<Rc<dyn Renderable>>
+    objects: Vec<Arc<dyn Renderable>>,
+    max_depth: usize
 }
+
+impl_getters_setters!(World, max_depth: usize);
 
 #[allow(dead_code)]
 impl World {
     pub fn new() -> Self {
-        Self { light: Vec::new(), objects: Vec::<Rc<dyn Renderable>>::new() }
+        Self { light: Vec::new(), objects: Vec::<Arc<dyn Renderable>>::new(), max_depth: 10 }
     }
 
     pub fn default() -> Self {
@@ -77,14 +86,14 @@ impl World {
         let mut s1 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         let mut s2 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
-        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, Rc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
+        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, Arc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
         s1.set_material(mat);        
 
 
-        let s1 = Rc::new(s1) as Rc<dyn Renderable>;
-        let s2 = Rc::new(s2) as Rc<dyn Renderable>;
+        let s1 = Arc::new(s1) as Arc<dyn Renderable>;
+        let s2 = Arc::new(s2) as Arc<dyn Renderable>;
         let objs = vec![s1, s2];
-        Self { light: vec![l], objects: objs }
+        Self { light: vec![l], objects: objs, max_depth: 10 }
     }
 
     pub fn get_light(&self) -> &Vec<Light> {
@@ -99,11 +108,11 @@ impl World {
         self.light.push(light);
     }
 
-    fn get_object(&self) -> Vec<Rc<dyn Renderable>> {
+    fn get_object(&self) -> Vec<Arc<dyn Renderable>> {
         self.objects.clone()
     }
 
-    pub fn add_obj(&mut self, obj: Rc<dyn Renderable>) {
+    pub fn add_obj(&mut self, obj: Arc<dyn Renderable>) {
         self.objects.push(obj);
     }
 
@@ -118,7 +127,7 @@ impl World {
         Intersection::aggregate_intersections(data)
     }
 
-    fn shade_hit(&self, comps: Comps) -> Color {
+    fn shade_hit(&self, comps: Comps, depth: usize) -> Color {
         let mut color = Color::black();
         for light in self.get_light() {
             color = color + lighting(
@@ -130,17 +139,20 @@ impl World {
             self.in_shadow(comps.get_over_point())
             );
         }
-        color
+        color + self.reflected_color(comps, depth + 1)
     }
 
-    fn color_at(&self, ray: Ray) -> Color {
+    fn color_at(&self, ray: Ray, depth: usize) -> Color {
+        if depth >= self.get_max_depth() {
+            return Color::black();
+        }
         let intersections = self.get_intersections(ray);
         let hit = Intersection::find_hit(&intersections);
         if hit.is_none() {
             return Color::black();
         }
         let comps = Comps::prepare_computations(hit.unwrap().clone(), ray);
-        self.shade_hit(comps)
+        self.shade_hit(comps, depth)
     }
 
     pub fn render_world(&self, cam: &Camera) -> Canvas {
@@ -149,11 +161,30 @@ impl World {
         for y in 0..(cam.get_vsize()-1) {
             for x in 0..(cam.get_hsize()-1) {
                 let ray = cam.ray_for_pixel(x, y);
-                let color = self.color_at(ray);
+                let color = self.color_at(ray, 0);
                 out.set_pixel(x, y, color);
             }
         }
+        out
+    }
 
+    pub fn render_world_multi(&self, cam: &Camera) -> Canvas {
+        let pixels: Vec<(usize, usize, Color)> = (0..cam.get_vsize()-1)
+            .into_par_iter()
+            .flat_map(|y| {
+                (0..cam.get_hsize()-1)
+                    .into_par_iter()
+                    .map(move |x| {
+                        let ray = cam.ray_for_pixel(x, y);
+                        let color = self.color_at(ray, 0);
+                        (x, y, color)
+                    })  
+            })
+            .collect();
+        let mut out = Canvas::new(cam.get_hsize(), cam.get_vsize());
+        for (x, y, color) in pixels {
+            out.set_pixel(x, y, color);
+        }
         out
     }
 
@@ -171,14 +202,24 @@ impl World {
             Some(val) => val.get_time() <= dist // TODO: add EPSILON to cover for floating point errors
         }
     }
+
+    fn reflected_color(&self, data: Comps, depth: usize) ->  Color {
+        let reflective = data.get_object().get_material().get_reflection();
+        if reflective <= 0.0 {
+            return Color::black();
+        }
+        let ray = Ray::new(data.get_over_point(), data.get_reflectv());
+        let color = self.color_at(ray, depth);
+        color * reflective
+    }
 }
 
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
+    use std::sync::Arc;
 
-    use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, sphere::Sphere, tex::color::Color, world::EPSILON};
+use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matrix::Matrix, plane::Plane, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, sphere::Sphere, tex::color::Color, world::EPSILON};
 
     use super::{Comps, World};
 
@@ -214,7 +255,7 @@ mod tests {
         
         let mut s1 = Sphere::default();
         let objs = w.get_object();
-        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, Rc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
+        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, Arc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
         s1.set_material(mat);
         assert_eq!(objs.len(), 2);
         compare_renderables(objs[0].as_ref(), &s1);
@@ -245,7 +286,7 @@ mod tests {
     #[test]
     fn test_prepare_computations() {
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        let shape = Rc::new(Sphere::default());
+        let shape = Arc::new(Sphere::default());
         let i = Intersection::new(4.0, shape.clone(), Coord::vec(0.0, 0.0, 0.0));
         let comp = Comps::prepare_computations(i.clone(), ray);
         assert_eq!(comp.get_time(), i.get_time());
@@ -261,7 +302,7 @@ mod tests {
     #[test]
     fn test_prepare_computations_inside() {
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
-        let shape = Rc::new(Sphere::default());
+        let shape = Arc::new(Sphere::default());
         let i = Intersection::new(1.0, shape.clone(), Coord::vec(0.0, 0.0, 0.0));
         let comp = Comps::prepare_computations(i.clone(), ray);
 
@@ -278,7 +319,7 @@ mod tests {
         let shape = w.get_object()[0].clone();
         let i = Intersection::new(4.0, shape, Coord::vec(0.0, 0.0, 0.0));
         let comps = Comps::prepare_computations(i, ray);
-        let c = w.shade_hit(comps);
+        let c = w.shade_hit(comps, 0);
         assert_eq!(c, Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
 
         let mut w = World::default();
@@ -287,7 +328,7 @@ mod tests {
         let shape = w.get_object()[1].clone();
         let i = Intersection::new(0.5, shape, Coord::vec(0.0, 0.0, 0.0));
         let comps = Comps::prepare_computations(i, ray);
-        let c = w.shade_hit(comps);
+        let c = w.shade_hit(comps, 0);
         assert_eq!(c, Color::new(0.9049845, 0.9049845, 0.9049845, 0.0));
     }
 
@@ -295,12 +336,12 @@ mod tests {
     fn test_color_at() {
         let w = World::default();
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 1.0, 0.0));
-        let c = w.color_at(ray);
+        let c = w.color_at(ray, 0);
         assert_eq!(c, Color::black());
 
         let w = World::default();
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        let c = w.color_at(ray);
+        let c = w.color_at(ray, 0);
         assert_eq!(c, Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
     
         // not sure if this actually works as I think it should, get material is suspect
@@ -310,7 +351,7 @@ mod tests {
         w.get_object()[0].get_material().set_ambient(1.0);
         w.get_object()[1].get_material().set_ambient(1.0);
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.75), Coord::vec(0.0, 0.0, -1.0));
-        let c = w.color_at(ray);
+        let c = w.color_at(ray, 0);
         //assert_eq!(c, w.get_object()[0].get_material().get_color());
         test_colors_roughly_equal(&c, &w.get_object()[0].get_material().get_color_at(Coord::point(0.0, 0.0, 0.0)));
     }
@@ -363,26 +404,75 @@ mod tests {
         w.set_light(l);
 
         let s1 = Sphere::default();
-        w.add_obj(Rc::new(s1));
+        w.add_obj(Arc::new(s1));
 
-        let s2 = Rc::new(Sphere::new(Coord::point(0.0, 0.0, 10.0)));
+        let s2 = Arc::new(Sphere::new(Coord::point(0.0, 0.0, 10.0)));
         w.add_obj(s2.clone());
 
         let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
         let i = Intersection::new(4.0, s2, Coord::vec(0.0, 0.0, 0.0));
 
         let comps = Comps::prepare_computations(i, r);
-        let c = w.shade_hit(comps);
+        let c = w.shade_hit(comps, 0);
         assert_eq!(c, Color::new(0.1, 0.1, 0.1, 0.0))
     }
 
     #[test]
     fn test_shadow_over_point() {
         let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
-        let s = Rc::new(Sphere::new(Coord::point(0.0, 0.0, 1.0)));
+        let s = Arc::new(Sphere::new(Coord::point(0.0, 0.0, 1.0)));
         let i = Intersection::new(5.0, s, Coord::vec(0.0, 0.0, 0.0));
         let comps = Comps::prepare_computations(i, r);
         assert!(comps.get_over_point().get_z() < -EPSILON/2.0);
         assert!(comps.get_point().get_z() > comps.get_over_point().get_z());
+    }
+
+    #[test]
+    fn test_reflection_of_mat() {
+        let l = Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white());
+        let mut s2 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
+        s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
+        let mut m = Material::default();
+        m.set_ambient(1.0);
+
+        let mut w = World::new();
+        w.add_light(l);
+        w.add_obj(Arc::new(s2));
+
+        let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
+        let xs = w.get_intersections(ray);
+        let xs = Intersection::aggregate_intersections(xs)[0].clone();
+        let data = Comps::prepare_computations(xs, ray);
+        assert_eq!(w.reflected_color(data, 0), Color::black());
+    }
+
+    #[test]
+    fn test_reflection() {
+        let mut w = World::default();
+        let mut mat = Material::default();
+        mat.set_reflection(0.5);
+        let p = Plane::new(Matrix::translation(0.0, -1.0, 0.0), mat);
+        w.add_obj(Arc::new(p.clone()));
+
+        let ray = Ray::new(Coord::point(0.0, 0.0, -3.0), Coord::vec(0.0, -2_f32.sqrt()/2.0, 2_f32.sqrt()/2.0));
+        let i = p.intersect(ray);
+        let comps = Comps::prepare_computations(i.unwrap()[0].clone(), ray);
+        assert_eq!(w.reflected_color(comps.clone(), 0), Color::new(0.1911927, 0.23899086, 0.14339453, 0.0));
+        assert_eq!(w.reflected_color(comps, 10), Color::black())
+    }
+
+    #[test]
+    fn test_infinite_reflection() {
+        // TODO: need a more ergonomic way to create worlds/objects/etc.
+        let mut w = World::new();
+        let mut mat = Material::default();
+        mat.set_reflection(1.0);
+        let upper = Plane::new(Matrix::translation(0.0, 1.0, 0.0), mat.clone());
+        let lower = Plane::new(Matrix::translation(1.0, -1.0, 1.0), mat);
+        w.add_obj(Arc::new(upper));
+        w.add_obj(Arc::new(lower));
+        w.add_light(Light::new(Coord::point(0.0, 0.0, 0.0), Color::white()));
+        let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 1.0, 0.0));
+        assert_ne!(w.color_at(ray, 0), Color::black())
     }
 }

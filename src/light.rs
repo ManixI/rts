@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{impl_getters, impl_setters};
 use crate::{coord::Coord, material::Material, renderable::Renderable, tex::{Tex, color::Color}};
@@ -35,7 +35,7 @@ impl Light {
 }
 
 // TODO: attach this to something, camera maybe?
-pub fn lighting(object: Rc<dyn Renderable>, light: Light, pos: Coord, camv: Coord, normal: Coord, in_shadow: bool) -> Color {
+pub fn lighting(object: Arc<dyn Renderable>, light: Light, pos: Coord, camv: Coord, normal: Coord, in_shadow: bool) -> Color {
     let effective_color = object.get_color_at(pos) * light.get_intensity();
     let material = object.get_material();
     let light_v = (light.get_pos() - pos).normalized();
@@ -96,7 +96,7 @@ mod tests {
         let material = Material::default();
         let mut s = Sphere::default();
         s.set_material(material);
-        let s = Rc::new(s);
+        let s = Arc::new(s);
         let pos = Coord::point(0.0, 0.0, 0.0);
 
         // 1
@@ -137,7 +137,7 @@ mod tests {
         let material = Material::default();
         let mut s = Sphere::default();
         s.set_material(material);
-        let s = Rc::new(s);
+        let s = Arc::new(s);
         let pos = Coord::point(0.0, 0.0, 0.0);
         let camv = Coord::vec(0.0, 0.0, -1.0);
         let normal = Coord::vec(0.0, 0.0, -1.0);

@@ -1,5 +1,6 @@
+use std::sync::Arc;
+
 use crate::{tex::color::Color, coord::Coord, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}};
-use std::rc::Rc;
 
 
 #[derive(Clone, PartialEq)]
@@ -36,7 +37,7 @@ impl Renderable for Plane {
         // TODO: would this work if I just returned a reference to self instead of a RC box of it?
         // TODO: is there a better way to do the RC then to make a new one here?
         let reflection = ray.get_direction().reflect(self.normal_at(Coord::point(0.0, 0.0, 0.0)));
-        (ray, Some(vec![Intersection::new(t, Rc::new(self.clone()), reflection)]))
+        (ray, Some(vec![Intersection::new(t, Arc::new(self.clone()), reflection)]))
     }
 
     /// normal is always strait up translated by local transformation regardless of the pos
@@ -62,7 +63,7 @@ impl Renderable for Plane {
         self
     }
 
-    fn compare(&self, other: Rc<dyn Renderable>) -> bool {
+    fn compare(&self, other: Arc<dyn Renderable>) -> bool {
         match other.as_any().downcast_ref::<Plane>() {
             Some(p) => self == p,
             None => false

@@ -1,4 +1,4 @@
-use std::{f32, rc::Rc};
+use std::{f32, sync::Arc};
 use core::f32::consts::PI;
 
 use rtc::{
@@ -265,27 +265,37 @@ fn draw_test_spheres() {
 
 fn draw_scene() {
     let mut floor = Plane::default();
-    floor.apply_transformation(Matrix::scaling(10.0, 0.01, 10.0));
+    //floor.apply_transformation(Matrix::translation(0.0, 0.0, 0.0));
     let mut mat = Material::default();
-    mat.set_color(Color::new(1.0, 0.9, 0.9, 0.0));
+    //mat.set_color(Color::new(1.0, 0.9, 0.9, 0.0));
     mat.set_specular(0.0);
+    mat.set_texture(
+        Arc::new(
+            Pattern::new_checker(
+                Arc::new(Color::white()), 
+                Arc::new(Color::black()), 
+                Matrix::translation(-10.0, -10.0, 0.0) // BUG: this translation makes the checker significantly clearer then the identity
+                //Matrix::identity(4)
+            )
+        )
+    );
+    mat.set_reflection(0.5);
     floor.set_material(mat);
 
-    /*let mut left_wall = floor.clone();
+    let mut left_wall = Plane::default();
     left_wall.set_transformation(
         Matrix::translation(0.0, 0.0, 5.0) *
         Matrix::rotate_y(-PI/4.0) *
-        Matrix::rotate_x(PI/2.0) *
-        Matrix::scaling(10.0, 0.01, 10.0)
+        Matrix::rotate_x(PI/2.0)
     );
+    left_wall.get_material().set_texture(Arc::new(Pattern::new_stripe(Arc::new(Color::new(1.0, 0.8, 0.1, 0.0)), Arc::new(Color::white()), Matrix::rotate_z(PI/4.0))));
 
-    let mut right_wall = floor.clone();
+    let mut right_wall = Plane::default();
     right_wall.set_transformation(
         Matrix::translation(0.0, 0.0, 5.0) *
         Matrix::rotate_y(PI/4.0) *
-        Matrix::rotate_x(PI/2.0) *
-        Matrix::scaling(10.0, 0.01, 10.0)
-    );*/
+        Matrix::rotate_x(PI/2.0) 
+    );
 
 
     let mut middle = Sphere::default();
@@ -294,10 +304,10 @@ fn draw_scene() {
     mat.set_diffuse(0.7);
     mat.set_specular(0.3);
     mat.set_texture(
-        Rc::new(
+        Arc::new(
             Pattern::new_stripe(
-                Rc::new(Color::red()),
-                Rc::new(Color::green()),
+                Arc::new(Color::red()),
+                Arc::new(Color::green()),
                 Matrix::scaling(0.05, 1.0, 1.0) * Matrix::rotate_y(f32::consts::PI / 4.0)
             )
         )
@@ -313,7 +323,7 @@ fn draw_scene() {
     //mat.set_color(Color::new(0.5, 1.0, 0.1, 0.0));
     mat.set_diffuse(0.7);
     mat.set_specular(0.3);
-    mat.set_texture(Rc::new(Pattern::new_gradient(Rc::new(Color::blue()), Rc::new(Color::red()), Matrix::scaling(0.25, 0.25, 0.25))));
+    mat.set_texture(Arc::new(Pattern::new_gradient(Arc::new(Color::blue()), Arc::new(Color::red()), Matrix::scaling(0.25, 0.25, 0.25))));
     right.set_material(mat);
 
     let mut left = Sphere::default();
@@ -331,19 +341,19 @@ fn draw_scene() {
     let light = Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white());
     world.add_light(light);
 
-    world.add_obj(Rc::new(floor));
-    //world.add_obj(Rc::new(left_wall));
-    //world.add_obj(Rc::new(right_wall));
-    world.add_obj(Rc::new(middle));
-    world.add_obj(Rc::new(left));
-    world.add_obj(Rc::new(right));
+    world.add_obj(Arc::new(floor));
+    world.add_obj(Arc::new(left_wall));
+    world.add_obj(Arc::new(right_wall));
+    world.add_obj(Arc::new(middle));
+    world.add_obj(Arc::new(left));
+    world.add_obj(Arc::new(right));
 
     let mut cam = Camera::new(1000, 1000, PI/3.0);
     cam.transform(Matrix::view_transformation(
         Coord::point(0.0, 1.5, -5.0), 
         Coord::point(0.0, 1.0, 0.0), 
     Coord::vec(0.0, 1.0, 0.0)));
-    let canvas = world.render_world(&cam);
+    let canvas = world.render_world_multi(&cam);
     let _ = canvas.to_file("out.ppm");
     
 }

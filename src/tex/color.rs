@@ -1,4 +1,5 @@
-use std::{ops, rc::Rc};
+use std::ops;
+use std::sync::Arc;
 use crate::impl_getters_setters;
 
 use crate::{coord::Coord, matrix::Matrix, tex::Tex};
@@ -126,12 +127,12 @@ impl Tex for Color {
         *self
     }
 
-    fn mul_helper_color(&self, rhs: Color) -> std::rc::Rc<dyn Tex> {
-        Rc::new(*self * rhs)
+    fn mul_helper_color(&self, rhs: Color) -> Arc<dyn Tex> {
+        Arc::new(*self * rhs)
     }
 
-    fn add_helper(&self, rhs: Color) -> Rc<dyn Tex> {
-        Rc::new(*self + rhs)
+    fn add_helper(&self, rhs: Color) -> Arc<dyn Tex> {
+        Arc::new(*self + rhs)
     }
 
     fn get_texture_type(&self) -> super::TextureType {
@@ -142,7 +143,7 @@ impl Tex for Color {
         self
     }
 
-    fn compare(&self, other: Rc<dyn Tex>) -> bool {
+    fn compare(&self, other: Arc<dyn Tex>) -> bool {
         match other.as_any().downcast_ref::<Color>() {
             Some(p) => self == p,
             None => false

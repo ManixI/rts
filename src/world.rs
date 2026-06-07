@@ -77,7 +77,7 @@ impl World {
         let mut s1 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         let mut s2 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
-        let mat = Material::new(0.1, 0.7, 0.2, 200.0, Rc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
+        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, Rc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
         s1.set_material(mat);        
 
 
@@ -214,7 +214,7 @@ mod tests {
         
         let mut s1 = Sphere::default();
         let objs = w.get_object();
-        let mat = Material::new(0.1, 0.7, 0.2, 200.0, Rc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
+        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, Rc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
         s1.set_material(mat);
         assert_eq!(objs.len(), 2);
         compare_renderables(objs[0].as_ref(), &s1);
@@ -246,7 +246,7 @@ mod tests {
     fn test_prepare_computations() {
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let shape = Rc::new(Sphere::default());
-        let i = Intersection::new(4.0, shape.clone());
+        let i = Intersection::new(4.0, shape.clone(), Coord::vec(0.0, 0.0, 0.0));
         let comp = Comps::prepare_computations(i.clone(), ray);
         assert_eq!(comp.get_time(), i.get_time());
         assert_eq!(comp.get_object().get_transformation(), shape.get_transformation());
@@ -262,7 +262,7 @@ mod tests {
     fn test_prepare_computations_inside() {
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
         let shape = Rc::new(Sphere::default());
-        let i = Intersection::new(1.0, shape.clone());
+        let i = Intersection::new(1.0, shape.clone(), Coord::vec(0.0, 0.0, 0.0));
         let comp = Comps::prepare_computations(i.clone(), ray);
 
         assert_eq!(comp.get_point(), Coord::point(0.0, 0.0, 1.0));
@@ -276,7 +276,7 @@ mod tests {
         let w = World::default();
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let shape = w.get_object()[0].clone();
-        let i = Intersection::new(4.0, shape);
+        let i = Intersection::new(4.0, shape, Coord::vec(0.0, 0.0, 0.0));
         let comps = Comps::prepare_computations(i, ray);
         let c = w.shade_hit(comps);
         assert_eq!(c, Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
@@ -285,7 +285,7 @@ mod tests {
         w.set_light(Light::new(Coord::point(0.0, 0.25, 0.0), Color::white()));
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
         let shape = w.get_object()[1].clone();
-        let i = Intersection::new(0.5, shape);
+        let i = Intersection::new(0.5, shape, Coord::vec(0.0, 0.0, 0.0));
         let comps = Comps::prepare_computations(i, ray);
         let c = w.shade_hit(comps);
         assert_eq!(c, Color::new(0.9049845, 0.9049845, 0.9049845, 0.0));
@@ -369,7 +369,7 @@ mod tests {
         w.add_obj(s2.clone());
 
         let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
-        let i = Intersection::new(4.0, s2);
+        let i = Intersection::new(4.0, s2, Coord::vec(0.0, 0.0, 0.0));
 
         let comps = Comps::prepare_computations(i, r);
         let c = w.shade_hit(comps);
@@ -380,7 +380,7 @@ mod tests {
     fn test_shadow_over_point() {
         let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let s = Rc::new(Sphere::new(Coord::point(0.0, 0.0, 1.0)));
-        let i = Intersection::new(5.0, s);
+        let i = Intersection::new(5.0, s, Coord::vec(0.0, 0.0, 0.0));
         let comps = Comps::prepare_computations(i, r);
         assert!(comps.get_over_point().get_z() < -EPSILON/2.0);
         assert!(comps.get_point().get_z() > comps.get_over_point().get_z());

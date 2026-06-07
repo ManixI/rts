@@ -90,16 +90,22 @@ pub fn compare_renderables(a: &dyn Renderable, b: &dyn Renderable) {
 pub struct Intersection {
     t: f32,
     object: Rc<dyn Renderable>,
+    reflectv: Coord
 }
 
 #[allow(dead_code)]
 impl Intersection {
-    pub fn new(t: f32, object: Rc<dyn Renderable>) -> Self {
-        Self { t, object }
+    pub fn new(t: f32, object: Rc<dyn Renderable>, reflectv: Coord) -> Self {
+        assert!(reflectv.is_vec());
+        Self { t, object, reflectv }
     }
 
     pub fn get_time(&self) -> f32 {
         self.t
+    }
+
+    pub fn get_reflectv(&self) -> Coord {
+        self.reflectv
     }
 
     pub fn get_object(&self) -> Rc<dyn Renderable> {
@@ -256,7 +262,7 @@ mod tests {
     #[test]
     fn test_creation() {
         let s = Rc::new(Sphere::default());
-        let intersection = Intersection::new(3.5, s.clone());
+        let intersection = Intersection::new(3.5, s.clone(), Coord::vec(0.0, 0.0, 0.0));
         assert_eq!(intersection.t, 3.5);
         //compare(intersection.object, s);
         assert_eq!(intersection.object.get_material(), s.get_material());
@@ -290,12 +296,12 @@ mod tests {
         assert!(s.intersect(ray).is_none());
         let data = Intersection::aggregate_intersections(intersections);
         assert_eq!(data.len(), 4);
-        let test = Intersection::new(4.0, Rc::new(s.clone()));
+        let test = Intersection::new(4.0, Rc::new(s.clone()), Coord::vec(0.0, 0.0, 0.0));
         compare_intersection(&data[0], &test);
         compare_intersection(&data[1], &test);
         //assert_eq!(data[0], test);
         //assert_eq!(data[2], test);
-        let test = Intersection::new(6.0, Rc::new(s));
+        let test = Intersection::new(6.0, Rc::new(s), Coord::vec(0.0, 0.0, 0.0));
         compare_intersection(&data[2], &test);
         compare_intersection(&data[3], &test);
         //assert_eq!(data[1], test);
@@ -305,27 +311,27 @@ mod tests {
     #[test]
     fn test_detect_hit() {
         let s = Rc::new(Sphere::default());
-        let i1 = Intersection::new(1.0, s.clone());
-        let i2 = Intersection::new(2.0, s.clone());
+        let i1 = Intersection::new(1.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
+        let i2 = Intersection::new(2.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
         let data = vec![i1.clone(), i2];
         compare_intersection(Intersection::find_hit(&data).unwrap(), &i1);
         //assert_eq!(Intersection::find_hit(&data).unwrap(), &i1);
 
-        let i1 = Intersection::new(-1.0, s.clone());
-        let i2 = Intersection::new(1.0, s.clone());
+        let i1 = Intersection::new(-1.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
+        let i2 = Intersection::new(1.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
         let data = vec![i1, i2.clone()];
         compare_intersection(Intersection::find_hit(&data).unwrap(), &i2);
         //assert_eq!(Intersection::find_hit(&data).unwrap(), &i2);
 
-        let i1 = Intersection::new(-1.0, s.clone());
-        let i2 = Intersection::new(-2.0, s.clone());
+        let i1 = Intersection::new(-1.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
+        let i2 = Intersection::new(-2.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
         let data = vec![i1, i2];
         assert!(Intersection::find_hit(&data).is_none());
     
-        let i1 = Intersection::new(5.0, s.clone());
-        let i2 = Intersection::new(7.0, s.clone());
-        let i3 = Intersection::new(-3.0, s.clone());
-        let i4 = Intersection::new(2.0, s.clone());
+        let i1 = Intersection::new(5.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
+        let i2 = Intersection::new(7.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
+        let i3 = Intersection::new(-3.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
+        let i4 = Intersection::new(2.0, s.clone(), Coord::vec(0.0, 0.0, 0.0));
         let data = vec![i1, i2, i3, i4.clone()];
         compare_intersection(Intersection::find_hit(&data).unwrap(), &i4);
         //assert_eq!(Intersection::find_hit(&data).unwrap(), &i4);

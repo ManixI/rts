@@ -58,6 +58,10 @@ impl Coord {
         Self {x: self.get_x(), y: self.get_y(), z: self.get_z(), w: 0.0}
     }
 
+    pub fn to_pos(&self) -> Self {
+        Self {x: self.get_x(), y: self.get_y(), z: self.get_z(), w: 1.0}
+    }
+
     pub fn vec(x: f32, y: f32, z: f32) -> Self {
         Coord {x, y, z, w: 0.0}
     }
@@ -139,7 +143,7 @@ impl Coord {
 
 
     //TODO: optimize this
-    pub fn reflect(&self, norm: &Self) -> Self {
+    pub fn reflect(&self, norm: Self) -> Self {
         self.clone() - norm.clone() * 2.0 * self.dot(norm.clone())
     }
     /// given two vectors, returns the scalar s required to convert this vector to the other vector
@@ -510,10 +514,10 @@ mod tests {
     fn test_reflection() {
         let vec = Coord::vec(1.0, -1.0, 0.0);
         let norm = Coord::vec(0.0, 1.0, 0.0);
-        assert_eq!(vec.reflect(&norm), Coord::vec(1.0, 1.0, 0.0));
+        assert_eq!(vec.reflect(norm), Coord::vec(1.0, 1.0, 0.0));
 
         let vec = Coord::vec(0.0, -1.0, 0.0);
         let norm = Coord::vec(2.0_f32.sqrt()/2.0, 2.0_f32.sqrt()/2.0, 0.0);
-        assert_eq!(vec.reflect(&norm), Coord::vec(1.0, 0.0, 0.0));
+        assert_eq!(vec.reflect(norm), Coord::vec(1.0, 0.0, 0.0));
     }
 }

@@ -35,7 +35,8 @@ impl Renderable for Plane {
         let t = -ray.get_origin().get_y() / ray.get_direction().get_y();
         // TODO: would this work if I just returned a reference to self instead of a RC box of it?
         // TODO: is there a better way to do the RC then to make a new one here?
-        (ray, Some(vec![Intersection::new(t, Rc::new(self.clone()))]))
+        let reflection = ray.get_direction().reflect(self.normal_at(Coord::point(0.0, 0.0, 0.0)));
+        (ray, Some(vec![Intersection::new(t, Rc::new(self.clone()), reflection)]))
     }
 
     /// normal is always strait up translated by local transformation regardless of the pos
@@ -101,5 +102,18 @@ mod tests {
         assert_eq!(o.get_pos(), p.get_pos());
         assert_eq!(o.get_transformation(), p.get_transformation());
         assert_eq!(o.get_type(), p.get_type());
+    }
+
+    #[test]
+    fn test_reflectv_computation() {
+        let p = Plane::default();
+        let r = Ray::new(
+            Coord::point(0.0, 1.0, -1.0), 
+            Coord::vec(0.0, -2.0_f32.sqrt() / 2.0, 2.0_f32.sqrt() / 2.0)
+        );
+        let xs = p.intersect(r).unwrap();
+        let xs = Intersection::aggregate_intersections(xs);
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0].get_reflectv(), Coord::vec(0.0, 2.0_f32.sqrt() / 2.0, 2.0_f32.sqrt() / 2.0))
     }
 }

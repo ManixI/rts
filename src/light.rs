@@ -47,7 +47,7 @@ pub fn lighting(object: Rc<dyn Renderable>, light: Light, pos: Coord, camv: Coor
         return ambient;
     }
     let diffuse = (effective_color * material.get_diffuse() * light_dot_normal).get_color_at(pos);
-    let reflect_v = (-light_v).reflect(&normal);
+    let reflect_v = (-light_v).reflect(normal);
     let reflect_dot_cam = reflect_v.dot(camv);
     if reflect_dot_cam < 0.0 {
         return ambient + diffuse;

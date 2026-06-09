@@ -36,6 +36,16 @@ impl Sphere {
             material: Material::default(),
         }
     }
+
+    pub fn glass_sphere() -> Self {
+        let mut mat = Material::default();
+        mat.set_transparency(1.0);
+        mat.set_refractive_index(1.5);
+        Self {
+            transformation: Matrix::identity(4),
+            material: mat
+        }
+    }
     
     // TODO: remove clone here
     pub fn apply_transformation(&mut self, mat: Matrix) {
@@ -372,5 +382,13 @@ mod tests {
         let n = s.normal_at(Coord::point(0.0, (2.0_f32.sqrt())/2.0, -(2.0_f32.sqrt())/2.0));
         let n = test_near_0(&n);
         assert_eq!(n, Coord::vec(0.0, 0.97014254, -0.24253564));
+    }
+
+    #[test]
+    fn test_glass_sphere() {
+        let s = Sphere::glass_sphere();
+        let mat = s.get_material();
+        assert_eq!(mat.get_refractive_index(), 1.5);
+        assert_eq!(mat.get_transparency(), 1.0);
     }
 }

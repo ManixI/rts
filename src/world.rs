@@ -9,14 +9,16 @@ use rayon::prelude::*;
 static EPSILON: f32 = 0.005; // this needs to be surprisingly big
 
 #[derive(Clone)]
-struct Comps {
+pub(crate) struct Comps {
     object: Arc<dyn Renderable>,
     point: Coord,
     eyev: Coord,
     normalv: Coord,
     time: f32,
     inside: bool,
-    reflectv: Coord
+    reflectv: Coord,
+    n1: f32,
+    n2: f32
 }
 
 impl_getters_setters!(Comps,
@@ -26,14 +28,16 @@ impl_getters_setters!(Comps,
     normalv: Coord,
     time: f32,
     inside: bool,
-    reflectv: Coord
+    reflectv: Coord,
+    n1: f32,
+    n2: f32
 );
 
 // precomputed data about an intersection of ray and renderable
 #[allow(dead_code)]
 impl Comps {
-    fn new(object: Arc<dyn Renderable>, point: Coord, eyev: Coord, normalv: Coord, time: f32, inside: bool, reflectv: Coord) -> Self {
-        Self { object, point, eyev, normalv, time, inside, reflectv }
+    fn new(object: Arc<dyn Renderable>, point: Coord, eyev: Coord, normalv: Coord, time: f32, inside: bool, reflectv: Coord, n1: f32, n2: f32) -> Self {
+        Self { object, point, eyev, normalv, time, inside, reflectv, n1, n2 }
     }
 
     fn get_object(&self) -> Arc<dyn Renderable> {
@@ -41,10 +45,14 @@ impl Comps {
     }
 
     fn get_over_point(&self) -> Coord {
-        self.get_point() + self.normalv * EPSILON
+        self.get_point() + self.get_normalv() * EPSILON
     }
 
-    fn prepare_computations(intersection: Intersection, ray: Ray) -> Self {
+    fn get_under_point(&self) -> Coord {
+        self.get_point() - self.get_normalv() * EPSILON
+    }
+
+    pub(crate) fn prepare_computations(intersection: Intersection, ray: Ray, inter_list: Vec<Intersection>) -> Self {
         let mut inside = false;
         let mut normalv = intersection.get_object().normal_at(ray.position(intersection.get_time()));
         if normalv.dot(-ray.get_direction()) < 0.0 {
@@ -54,6 +62,35 @@ impl Comps {
             normalv = -normalv;
         }
 
+        let mut containers: Vec<Intersection> = Vec::new();
+        let mut n1 = 1.0;
+        let mut n2 = 1.0;
+        // TODO: there's got to be a more optimal way to do this
+        for obj in inter_list {
+            if obj == intersection {
+                if containers.len() != 0 {
+                    n1 = containers[containers.len()-1].get_object().get_material().get_refractive_index();
+                } 
+            }
+            let mut skip_push = true;
+            for i in 0..containers.len() {
+                if containers[i].get_object().compare(obj.get_object()) {
+                    containers.remove(i);
+                    skip_push = false;
+                    break;
+                }
+            }
+            if  skip_push {
+                containers.push(obj.clone());
+            }
+            if obj == intersection {
+                if containers.len() != 0 {
+                    n2 = containers[containers.len()-1].get_object().get_material().get_refractive_index();
+                }
+                break
+            }
+        }
+
         Self::new(
             intersection.get_object(), 
             ray.position(intersection.get_time()), 
@@ -61,7 +98,9 @@ impl Comps {
             normalv, 
             intersection.get_time(),
             inside,
-            intersection.get_reflectv()
+            intersection.get_reflectv(),
+            n1, 
+            n2
         )
     }
 }
@@ -85,7 +124,7 @@ impl World {
         let mut s1 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         let mut s2 = Sphere::new(Coord::point(0.0, 0.0, 0.0));
         s2.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
-        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, Arc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
+        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, 1.0, 0.0, Arc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
         s1.set_material(mat);        
 
 
@@ -150,7 +189,7 @@ impl World {
         if hit.is_none() {
             return Color::black();
         }
-        let comps = Comps::prepare_computations(hit.unwrap().clone(), ray);
+        let comps = Comps::prepare_computations(hit.unwrap().clone(), ray, intersections);
         self.shade_hit(comps, depth)
     }
 
@@ -254,7 +293,7 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         
         let mut s1 = Sphere::default();
         let objs = w.get_object();
-        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, Arc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
+        let mat = Material::new(0.1, 0.7, 0.2, 200.0, 0.0, 1.0, 0.0, Arc::new(Color::new(0.8, 1.0, 0.6, 0.0)));
         s1.set_material(mat);
         assert_eq!(objs.len(), 2);
         compare_renderables(objs[0].as_ref(), &s1);
@@ -287,7 +326,7 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let shape = Arc::new(Sphere::default());
         let i = Intersection::new(4.0, shape.clone(), Coord::vec(0.0, 0.0, 0.0));
-        let comp = Comps::prepare_computations(i.clone(), ray);
+        let comp = Comps::prepare_computations(i.clone(), ray, vec![i.clone()]);
         assert_eq!(comp.get_time(), i.get_time());
         assert_eq!(comp.get_object().get_transformation(), shape.get_transformation());
         assert_eq!(comp.get_object().get_type(), shape.get_type());
@@ -303,7 +342,7 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
         let shape = Arc::new(Sphere::default());
         let i = Intersection::new(1.0, shape.clone(), Coord::vec(0.0, 0.0, 0.0));
-        let comp = Comps::prepare_computations(i.clone(), ray);
+        let comp = Comps::prepare_computations(i.clone(), ray, vec![i.clone()]);
 
         assert_eq!(comp.get_point(), Coord::point(0.0, 0.0, 1.0));
         assert_eq!(comp.get_eyev(), Coord::vec(0.0, 0.0, -1.0));
@@ -317,7 +356,7 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let shape = w.get_object()[0].clone();
         let i = Intersection::new(4.0, shape, Coord::vec(0.0, 0.0, 0.0));
-        let comps = Comps::prepare_computations(i, ray);
+        let comps = Comps::prepare_computations(i.clone(), ray, vec![i.clone()]);
         let c = w.shade_hit(comps, 0);
         assert_eq!(c, Color::new(0.38066125, 0.4758265, 0.28549594, 0.0));
 
@@ -326,7 +365,7 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
         let shape = w.get_object()[1].clone();
         let i = Intersection::new(0.5, shape, Coord::vec(0.0, 0.0, 0.0));
-        let comps = Comps::prepare_computations(i, ray);
+        let comps = Comps::prepare_computations(i.clone(), ray, vec![i.clone()]);
         let c = w.shade_hit(comps, 0);
         assert_eq!(c, Color::new(0.9049845, 0.9049845, 0.9049845, 0.0));
     }
@@ -411,7 +450,7 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         let r = Ray::new(Coord::point(0.0, 0.0, 5.0), Coord::vec(0.0, 0.0, 1.0));
         let i = Intersection::new(4.0, s2, Coord::vec(0.0, 0.0, 0.0));
 
-        let comps = Comps::prepare_computations(i, r);
+        let comps = Comps::prepare_computations(i.clone(), r, vec![i.clone()]);
         let c = w.shade_hit(comps, 0);
         assert_eq!(c, Color::new(0.1, 0.1, 0.1, 0.0))
     }
@@ -421,7 +460,7 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let s = Arc::new(Sphere::new(Coord::point(0.0, 0.0, 1.0)));
         let i = Intersection::new(5.0, s, Coord::vec(0.0, 0.0, 0.0));
-        let comps = Comps::prepare_computations(i, r);
+        let comps = Comps::prepare_computations(i.clone(), r, vec![i.clone()]);
         assert!(comps.get_over_point().get_z() < -EPSILON/2.0);
         assert!(comps.get_point().get_z() > comps.get_over_point().get_z());
     }
@@ -440,8 +479,8 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
 
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
         let xs = w.get_intersections(ray);
-        let xs = Intersection::aggregate_intersections(xs)[0].clone();
-        let data = Comps::prepare_computations(xs, ray);
+        let xs2 = Intersection::aggregate_intersections(xs.clone())[0].clone();
+        let data = Comps::prepare_computations(xs2, ray, xs);
         assert_eq!(w.reflected_color(data, 0), Color::black());
     }
 
@@ -455,7 +494,7 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
 
         let ray = Ray::new(Coord::point(0.0, 0.0, -3.0), Coord::vec(0.0, -2_f32.sqrt()/2.0, 2_f32.sqrt()/2.0));
         let i = p.intersect(ray);
-        let comps = Comps::prepare_computations(i.unwrap()[0].clone(), ray);
+        let comps = Comps::prepare_computations(i.clone().unwrap()[0].clone(), ray, i.unwrap().clone());
         assert_eq!(w.reflected_color(comps.clone(), 0), Color::new(0.1911927, 0.23899086, 0.14339453, 0.0));
         assert_eq!(w.reflected_color(comps, 10), Color::black())
     }
@@ -473,5 +512,59 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         w.add_light(Light::new(Coord::point(0.0, 0.0, 0.0), Color::white()));
         let ray = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 1.0, 0.0));
         assert_ne!(w.color_at(ray, 0), Color::black())
+    }
+
+    #[test]
+    fn test_refraction() {
+        // TODO: this test is a good example of what is bad about the current impl of getters/setters/etc.
+        let mut mat = Material::default();
+        mat.set_transparency(1.0);
+        mat.set_refractive_index(1.5);
+        let mut s1 = Sphere::default();
+        s1.set_material(mat.clone());
+        s1.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
+
+        let mut s2 = Sphere::default();
+        s2.set_transformation(Matrix::translation(0.0, 0.0, -0.25));
+        mat.set_refractive_index(2.0);
+        s2.set_material(mat.clone());
+
+        let mut s3 = Sphere::default();
+        s3.set_transformation(Matrix::translation(0.0, 0.0, 0.25));
+        mat.set_refractive_index(2.5);
+        s3.set_material(mat);
+
+        let s1 = Arc::new(s1);
+        let s2 = Arc::new(s2);
+        let s3 = Arc::new(s3);
+
+        let ray = Ray::new(Coord::point(0.0, 0.0, -4.0), Coord::vec(0.0, 0.0, 1.0));
+        let reflectv = Coord::vec(0.0, 0.0, 0.0);
+        let xs = vec![
+            (Intersection::new(2.0, s1.clone(), reflectv), 1.0, 1.5),
+            (Intersection::new(2.75, s2.clone(), reflectv), 1.5, 2.0),
+            (Intersection::new(3.25, s3.clone(), reflectv), 2.0, 2.5),
+            (Intersection::new(4.75, s2, reflectv), 2.5, 2.5),
+            (Intersection::new(5.25, s3, reflectv), 2.5, 1.5),
+            (Intersection::new(6.0, s1, reflectv), 1.5, 1.0)
+        ];
+
+        for (intersection, n1, n2) in xs.clone() {
+            let comps = Comps::prepare_computations(intersection, ray, xs.iter().map(|x| x.0.clone()).collect());
+            assert_eq!(comps.get_n1(), n1);
+            assert_eq!(comps.get_n2(), n2);
+        }
+    }
+
+    #[test]
+    fn test_under_point() {
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let mut s = Sphere::glass_sphere();
+        s.apply_transformation(Matrix::translation(0.0, 0.0, 1.0));
+        let i = Intersection::new(5.0, Arc::new(s), Coord::vec(0.0, 0.0, 0.0));
+        let xs = vec![i.clone()];
+        let comps = Comps::prepare_computations(i, r, xs);
+        assert!(comps.get_under_point().get_z() > EPSILON / 2.0);
+    assert!(comps.get_under_point().get_z() > comps.get_point().get_z());
     }
 }

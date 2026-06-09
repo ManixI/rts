@@ -139,6 +139,12 @@ impl Intersection {
     }
 }
 
+impl PartialEq for Intersection{
+    fn eq(&self, other: &Self) -> bool {
+        self.t == other.t && self.object.compare(other.object.clone()) && self.reflectv == other.reflectv
+    }
+}
+
 impl Debug for Intersection {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Point")

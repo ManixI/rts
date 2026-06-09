@@ -296,7 +296,7 @@ mod test {
         let mut o = Sphere::default();
         o.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
         let p = Pattern::new(pattern, Arc::new(Color::red()), Arc::new(Color::black()), Matrix::identity(4));
-        let m = Material::new(1.0, 0.0, 0.0, 10.0, 0.0, Arc::new(p));
+        let m = Material::new(1.0, 0.0, 0.0, 10.0, 0.0, 1.0, 0.0, Arc::new(p));
         o.set_material(m);
         
         let c = o.get_color_at(Coord::point(1.5, 2.5, 0.0));
@@ -318,7 +318,7 @@ mod test {
     })]
     fn test_stripe_pattern_transformed(pattern: PatternType, expected: Color) {
         let p = Pattern::new(pattern, Arc::new(Color::red()), Arc::new(Color::black()), Matrix::scaling(2.0, 2.0, 2.0));
-        let m = Material::new(1.0, 0.0, 0.0, 10.0, 0.0, Arc::new(p));
+        let m = Material::new(1.0, 0.0, 0.0, 10.0, 0.0, 1.0, 0.0, Arc::new(p));
         let mut o = Sphere::default();
         o.set_material(m);
         assert_eq!(o.get_color_at(Coord::point(1.5, 0.0, 0.0)), expected)
@@ -339,7 +339,7 @@ mod test {
     })]
     fn test_stripe_both_transformed(pattern: PatternType, expected: Color) {
         let p = Pattern::new(pattern, Arc::new(Color::red()), Arc::new(Color::black()), Matrix::translation(0.5, 0.0, 0.0));
-        let m = Material::new(1.0, 0.0, 0.0, 10.0, 0.0, Arc::new(p));
+        let m = Material::new(1.0, 0.0, 0.0, 10.0, 0.0, 1.0, 0.0, Arc::new(p));
         let mut o = Sphere::default();
         o.set_material(m);
         o.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));

@@ -10,6 +10,8 @@ pub struct Material {
     specular: f32,
     shininess: f32,
     reflection: f32,
+    refractive_index: f32,
+    transparency: f32,
     texture: Arc<dyn Tex>, 
 }
 
@@ -18,7 +20,9 @@ impl_getters!(Material,
     diffuse: f32,
     specular: f32,
     shininess: f32,
-    reflection: f32
+    reflection: f32,
+    refractive_index: f32,
+    transparency: f32
 );
 
 
@@ -26,17 +30,28 @@ impl_getters!(Material,
 impl Material {
     /// ambient, diffuse, specular values should be 0 <= x <= 1
     /// shininess should be 10 <= x <= 200
-    pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32, reflection: f32, texture: Arc<dyn Tex>) -> Self {
+    pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32, reflection: f32, refractive_index: f32, transparency: f32, texture: Arc<dyn Tex>) -> Self {
         assert!(ambient >= 0.0);
         assert!(ambient >= 0.0);
         assert!(specular >= 0.0);
         assert!(shininess >= 0.0);
         assert!(reflection >= 0.0);
-        Self {ambient, diffuse, specular, shininess, reflection, texture}
+        assert!(transparency >= 0.0);
+        Self {ambient, diffuse, specular, shininess, reflection, refractive_index, transparency, texture}
     }
 
     pub fn default() -> Self {
-        Self { ambient: 0.1, diffuse: 0.9, specular: 0.9, shininess: 200.0, reflection: 0.0, texture: Arc::new(Color::white()) }
+        Self { ambient: 0.1, diffuse: 0.9, specular: 0.9, shininess: 200.0, reflection: 0.0, refractive_index: 1.0, transparency: 0.0, texture: Arc::new(Color::white()) }
+    }
+
+    pub fn set_transparency(&mut self, transparency: f32) {
+        assert!(transparency >= 0.0);
+        self.transparency = transparency;
+    }
+
+    pub fn set_refractive_index(&mut self, refractive_index: f32) {
+        assert!(refractive_index >= 0.0);
+        self.refractive_index = refractive_index;
     }
 
     pub fn set_ambient(&mut self, ambient: f32) {
@@ -100,17 +115,19 @@ impl PartialEq for Material {
 #[cfg(test)]
 mod tests {
     use std::path::MAIN_SEPARATOR;
-    use crate::{light::{Light, lighting}, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::pattern::Pattern};
+    use crate::{light::{Light, lighting}, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere, tex::pattern::Pattern, world::Comps};
     use super::*;
 
     #[test]
     fn test_new() {
-        let m = Material::new(1.0, 0.0, 1.0, 27.0, 0.0, Arc::new(Color::white()));
+        let m = Material::new(1.0, 0.0, 1.0, 27.0, 0.0, 1.0, 0.0, Arc::new(Color::white()));
         assert_eq!(m.ambient, 1.0);
         assert_eq!(m.diffuse, 0.0);
         assert_eq!(m.specular, 1.0);
         assert_eq!(m.shininess, 27.0);
         assert_eq!(m.get_reflection(), 0.0);
+        assert_eq!(m.get_refractive_index(), 1.0);
+        assert_eq!(m.get_transparency(), 0.0);
     }
 
     #[test]
@@ -129,6 +146,8 @@ mod tests {
             0.0, 
             0.0,
             10.0, 
+            0.0,
+            1.0,
             0.0,
             Arc::new(Pattern::new_stripe(Arc::new(Color::black()), Arc::new(Color::white()), Matrix::identity(4))));
         let mut o = Sphere::default();

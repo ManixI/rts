@@ -250,6 +250,13 @@ impl World {
         let color = self.color_at(ray, depth);
         color * reflective
     }
+
+    fn refracted_color(&self, data: Comps, depth: usize) -> Color {
+        if depth > self.get_max_depth() || data.get_object().get_material().get_transparency() == 0.0 {
+            return Color::black();
+        }
+        Color::white()
+    }
 }
 
 
@@ -565,6 +572,19 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         let xs = vec![i.clone()];
         let comps = Comps::prepare_computations(i, r, xs);
         assert!(comps.get_under_point().get_z() > EPSILON / 2.0);
-    assert!(comps.get_under_point().get_z() > comps.get_point().get_z());
+        assert!(comps.get_under_point().get_z() > comps.get_point().get_z());
+    }
+
+    #[test]
+    fn test_refracted_opaque() {
+        let w = World::default();
+        let s = w.get_object()[0].clone();      // TODO: should be renamed to get_objects
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let xs = vec![
+            Intersection::new(4.0, s.clone(), Coord::vec(0.0, 0.0, 0.0)),
+            Intersection::new(6.0, s.clone(), Coord::vec(0.0, 0.0, 0.0))
+        ];
+        let comps = Comps::prepare_computations(xs[0].clone(), r, xs);
+        assert_eq!(w.refracted_color(comps, 5), Color::black())
     }
 }

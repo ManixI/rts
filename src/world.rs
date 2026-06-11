@@ -111,6 +111,8 @@ pub struct World {
     max_depth: usize
 }
 
+// TODO: need to implement way to remove objects
+
 impl_getters_setters!(World, max_depth: usize);
 
 #[allow(dead_code)]
@@ -586,5 +588,25 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         ];
         let comps = Comps::prepare_computations(xs[0].clone(), r, xs);
         assert_eq!(w.refracted_color(comps, 5), Color::black())
+    }
+
+    #[test]
+    fn test_refracted_depth() {
+        let w = World::default();
+        let l = w.get_light()[0].clone();
+        let s = Arc::new(Sphere::glass_sphere());
+        let mut w = World::new();
+        w.add_obj(s.clone());
+        w.add_light(l);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let xs = vec![
+            Intersection::new(4.0, s.clone(), Coord::vec(0.0, 0.0, 0.0)),
+            Intersection::new(6.0, s.clone(), Coord::vec(0.0, 0.0, 0.0))
+        ];
+        let comps = Comps::prepare_computations(xs[0].clone(), r, xs);
+
+        w.set_max_depth(5);
+        assert_eq!(w.refracted_color(comps, 6), Color::black());
     }
 }

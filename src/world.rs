@@ -257,6 +257,17 @@ impl World {
         if depth > self.get_max_depth() || data.get_object().get_material().get_transparency() == 0.0 {
             return Color::black();
         }
+
+        // find refraction angle via Snell's law
+        let ratio = data.get_n1() / data.get_n2();
+        let cosi = data.get_eyev().dot(data.get_normalv());
+        let sin2 = ratio.powi(2) * (1.0 - cosi.powi(2));
+
+        if sin2 > 1.0 {
+            // full internal refraction
+            return Color::black();
+        }
+
         Color::white()
     }
 }
@@ -608,5 +619,27 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
 
         w.set_max_depth(5);
         assert_eq!(w.refracted_color(comps, 6), Color::black());
+    }
+
+    #[test]
+    fn test_refracted_total_internal() {
+        let w = World::default();
+        let l = w.get_light()[0].clone();
+        let s = Arc::new(Sphere::glass_sphere());
+        let mut w = World::new();
+        w.add_obj(s.clone());
+        w.add_light(l);
+
+        let r = Ray::new(
+            Coord::point(0.0, 0.0, 2_f32.sqrt()/2.0),
+            Coord::vec(0.0, 1.0, 0.0)
+        );
+        let xs = vec![
+            Intersection::new(-2_f32.sqrt()/2.0, s.clone(), Coord::vec(0.0, 0.0, 0.0)),
+            Intersection::new(2_f32.sqrt()/2.0, s.clone(), Coord::vec(0.0, 0.0, 0.0))
+        ];
+
+        let comps = Comps::prepare_computations(xs[1].clone(), r, xs);
+        assert_eq!(w.refracted_color(comps, 0), Color::black());
     }
 }

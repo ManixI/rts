@@ -268,7 +268,10 @@ impl World {
             return Color::black();
         }
 
-        Color::white()
+        let cost = (1.0 - sin2).sqrt();
+        let direction = data.get_normalv() * (ratio * cosi - cost) - data.get_eyev() * ratio;
+        let refracted_ray = Ray::new(data.get_under_point(), direction);
+        self.color_at(refracted_ray, depth+1) * data.get_object().get_material().get_transparency()
     }
 }
 
@@ -277,7 +280,7 @@ impl World {
 mod tests {
     use std::sync::Arc;
 
-use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matrix::Matrix, plane::Plane, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, sphere::Sphere, tex::color::Color, world::EPSILON};
+use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matrix::Matrix, plane::Plane, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, sphere::Sphere, tex::{color::Color, pattern::Pattern}, world::EPSILON};
 
     use super::{Comps, World};
 
@@ -642,4 +645,38 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         let comps = Comps::prepare_computations(xs[1].clone(), r, xs);
         assert_eq!(w.refracted_color(comps, 0), Color::black());
     }
+
+    #[test]
+    fn test_refracted_color() {
+        let mut a = Sphere::default();
+        let mut mat = Material::default();
+        mat.set_ambient(1.0);
+        mat.set_texture(Arc::new(Pattern::test_pattern(Matrix::identity(4))));
+        a.set_material(mat);
+        let a = Arc::new(a);
+
+        let mut b = Sphere::default();
+        let mut mat = Material::default();
+        mat.set_transparency(1.0);
+        mat.set_refractive_index(1.5);
+        b.set_material(mat);
+        let b = Arc::new(b);
+
+        let mut w = World::new();
+        w.add_obj(a.clone());
+        w.add_obj(b.clone());
+        let l= Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white());
+        w.add_light(l);
+
+        let r = Ray::new(Coord::point(0.0, 0.0, 0.1), Coord::vec(0.0, 1.0, 0.0));
+        let xs = vec![
+            Intersection::new(-0.9899, a.clone(), Coord::vec(0.0, 0.0, 0.0)),
+            Intersection::new(-0.4899, b.clone(), Coord::vec(0.0, 0.0, 0.0)),
+            Intersection::new(0.4899, b.clone(), Coord::vec(0.0, 0.0, 0.0)),
+            Intersection::new(0.9899, a.clone(), Coord::vec(0.0, 0.0, 0.0))
+        ];
+        let comps = Comps::prepare_computations(xs[2].clone(), r, xs);
+        assert_eq!(w.refracted_color(comps, 0), Color::new(0.0, 0.9988119, 0.048732005, 0.0))
+    }
+
 }

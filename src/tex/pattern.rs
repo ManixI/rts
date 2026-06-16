@@ -12,7 +12,8 @@ pub enum PatternType {
     Bullseye,
     Solid,
     Blended,
-    Perturbed
+    Perturbed,
+    Test
 }
 
 #[derive(Debug, Clone)]
@@ -56,6 +57,10 @@ impl Pattern {
         Self { pattern_type: PatternType::Bullseye, color_a, color_b, transformation }
     }
 
+    pub fn test_pattern(transformation: Matrix) -> Self {
+        Self { pattern_type: PatternType::Test, color_a: Arc::new(Color::purple()), color_b: Arc::new(Color::black()), transformation }
+    }
+    
     pub fn new_solid(color_a: Arc<dyn Tex>, transformation: Matrix) -> Self {
         Self { pattern_type: PatternType::Solid, color_a, color_b: Arc::new(Color::white()), transformation }
     }  
@@ -124,6 +129,10 @@ impl Pattern {
         let noise = crate::purlin_noise(perlin_seed, pos);
         self.get_color_a().get_color_at(pos + noise)
     }
+
+    fn test_pattern_at(&self, pos: Coord) -> Color {
+        Color::new(pos.get_x(), pos.get_y(), pos.get_z(), 0.0)
+    }
 }
 
 impl Tex for Pattern {
@@ -138,6 +147,7 @@ impl Tex for Pattern {
             PatternType::Bullseye => self.bullseye_at(local_pos),
             PatternType::Blended => self.blended_at(local_pos),
             PatternType::Perturbed => self.perturbed_at(local_pos),
+            PatternType::Test => self.test_pattern_at(local_pos,)
         }
     }
 

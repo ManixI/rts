@@ -103,6 +103,11 @@ impl Comps {
             n2
         )
     }
+
+    /// Fresnel effect factor
+    fn schlick(&self) -> f32 {
+        todo!()
+    }
 }
 
 pub struct World {
@@ -179,7 +184,7 @@ impl World {
             self.in_shadow(comps.get_over_point())
             );
         }
-        color + self.reflected_color(comps, depth + 1)
+        color + self.reflected_color(comps.clone(), depth + 1) + self.refracted_color(comps, depth + 1)
     }
 
     fn color_at(&self, ray: Ray, depth: usize) -> Color {
@@ -679,4 +684,37 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
         assert_eq!(w.refracted_color(comps, 0), Color::new(0.0, 0.9988119, 0.048732005, 0.0))
     }
 
+
+    #[test]
+    fn test_shade_hit_refracted() {
+        let mut w = World::default();
+        let mut mat = Plane::default().get_material();
+        mat.set_transparency(0.5);
+        mat.set_refractive_index(1.5);
+        let mut p = Plane::default();
+        p.set_material(mat);
+        p.apply_transformation(Matrix::translation(0.0, -1.0, 0.0));
+        let p = Arc::new(p);
+
+        let mut mat = Sphere::default().get_material();
+        mat.set_color(Color::new(1.0, 0.0, 0.0, 0.0));
+        mat.set_ambient(0.5);
+        let mut s = Sphere::default();
+        s.set_material(mat);
+        s.apply_transformation(Matrix::translation(0.0, -3.5, -0.5));
+        let s = Arc::new(s);
+
+        w.add_obj(p.clone());
+        w.add_obj(s.clone());
+
+        let r = Ray::new(Coord::point(0.0, 0.0, -3.0), Coord::vec(0.0, -2_f32.sqrt()/2.0, 2_f32.sqrt()/2.0));
+        let xs = vec![Intersection::new(2_f32.sqrt(), p.clone(), Coord::vec(0.0, 0.0, 0.0))];
+        let comps = Comps::prepare_computations(xs[0].clone(), r, xs);
+        assert_eq!(w.shade_hit(comps, 0), Color::new(0.93642543, 0.68642545, 0.68642545, 0.0));
+    }
+
+    #[test]
+    fn test_schlick_total_internal_refraction() {
+        
+    }
 }

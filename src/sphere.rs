@@ -176,8 +176,8 @@ impl Renderable for Sphere {
         }
         let data = data.unwrap();
         let t = Arc::new(self.clone());
-        let r1 = ray.get_direction().reflect(self.normal_at((ray.get_direction() * data[0]).to_pos()));
-        let r2 = ray.get_direction().reflect(self.normal_at((ray.get_direction() * data[1]).to_pos()));
+        let r1 = ray.get_direction().reflect(self.normal_at((ray.position(data[0])).to_pos()));
+        let r2 = ray.get_direction().reflect(self.normal_at((ray.position(data[1])).to_pos()));
         (
             ray,
             Some(vec![Intersection::new(data[0], t.clone(), r1), Intersection::new(data[1], t, r2)])

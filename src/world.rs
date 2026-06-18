@@ -106,7 +106,22 @@ impl Comps {
 
     /// Fresnel effect factor
     fn schlick(&self) -> f32 {
-        todo!()
+        let mut cos = self.get_eyev().dot(self.get_normalv());
+
+        if self.get_n1() > self.get_n2() {
+            let n = self.get_n1() / self.get_n2();
+            let sin2_t = n.powi(2) * (1.0 - cos.powi(2));
+            if sin2_t > 1.0 {
+                return 1.0;
+            }
+
+            let cos_t = (1.0 - sin2_t).sqrt();
+            
+            cos = cos_t;
+        }
+
+        let r0 = ((self.get_n1() - self.get_n2()) / (self.get_n1() + self.get_n2())).powi(2);
+        r0 + (1.0 - r0) * (1.0 - cos).powi(5)
     }
 }
 
@@ -184,7 +199,17 @@ impl World {
             self.in_shadow(comps.get_over_point())
             );
         }
-        color + self.reflected_color(comps.clone(), depth + 1) + self.refracted_color(comps, depth + 1)
+        let reflected =  self.reflected_color(comps.clone(), depth + 1);
+        let refracted = self.refracted_color(comps.clone(), depth + 1);
+
+        let mat = comps.get_object().get_material();
+        if mat.get_reflection() > 0.0 && mat.get_transparency() > 0.0 {
+            let reflectance = comps.schlick();
+            return color + 
+                reflected * reflectance + 
+                refracted * (1.0 - reflectance);
+        }
+        color + reflected + refracted
     }
 
     fn color_at(&self, ray: Ray, depth: usize) -> Color {
@@ -233,7 +258,7 @@ impl World {
         out
     }
 
-    fn in_shadow(&self, p: Coord) -> bool {
+    fn in_shadow(&self, p: Coord) -> bool { // TODO: change this to a float that is the inverse of the intersected object's transparency, and keep going until it is above 1.0 or hit's the object in question (don't count exiting just entering)
         // TODO: current impl only supports 1 light source
         let l = self.get_light()[0];
         let dir = l.get_pos() - p;
@@ -715,6 +740,65 @@ use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matr
 
     #[test]
     fn test_schlick_total_internal_refraction() {
-        
+        let s = Arc::new(Sphere::glass_sphere());
+        let r = Ray::new(Coord::point(0.0, 0.0, 2_f32.sqrt()), Coord::vec(0.0, 1.0, 0.0));
+        let xs = vec![
+            Intersection::new(-2_f32.sqrt()/2.0, s.clone(), Coord::vec(0.0, 0.0, 0.0)),
+            Intersection::new(2_f32.sqrt()/2.0, s.clone(), Coord::vec(0.0, 0.0, 0.0))
+        ];
+        let comps = Comps::prepare_computations(xs[1].clone(), r, xs);
+        assert_eq!(comps.schlick(), 1.0)
+    }
+
+    #[test]
+    fn test_schlick_perpendicular_ray() {
+        let s = Arc::new(Sphere::glass_sphere());
+        let r = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 1.0, 0.0));
+        let xs = vec![
+            Intersection::new(-1.0, s.clone(), Coord::vec(0.0, 0.0, 0.0)),
+            Intersection::new(1.0, s.clone(), Coord::vec(0.0, 0.0, 0.0))
+        ];
+        let comps = Comps::prepare_computations(xs[1].clone(), r, xs);
+        assert_eq!(comps.schlick(), 0.040000003) // dam floating point errors
+    }
+
+    #[test]
+    fn test_schlick_slight_angle() {
+        let s = Arc::new(Sphere::glass_sphere());
+        let r = Ray::new(Coord::point(0.0, 0.99, -2.0), Coord::vec(0.0, 0.0, 1.0));
+        let xs = vec![
+            Intersection::new(1.8589, s.clone(), Coord::vec(0.0, 0.0, 0.0))
+        ];
+        let comps = Comps::prepare_computations(xs[0].clone(), r, xs);
+        assert_eq!(comps.schlick(), 0.48873067)
+    }
+
+    #[test]
+    fn test_shade_hit_refracted_and_reflected() {
+        let mut w = World::default();
+        let mut mat = Plane::default().get_material();
+        mat.set_transparency(0.5);
+        mat.set_refractive_index(1.5);
+        mat.set_reflection(0.5);
+        let mut p = Plane::default();
+        p.set_material(mat);
+        p.apply_transformation(Matrix::translation(0.0, -1.0, 0.0));
+        let p = Arc::new(p);
+
+        let mut mat = Sphere::default().get_material();
+        mat.set_color(Color::new(1.0, 0.0, 0.0, 0.0));
+        mat.set_ambient(0.5);
+        let mut s = Sphere::default();
+        s.set_material(mat);
+        s.apply_transformation(Matrix::translation(0.0, -3.5, -0.5));
+        let s = Arc::new(s);
+
+        w.add_obj(p.clone());
+        w.add_obj(s.clone());
+
+        let r = Ray::new(Coord::point(0.0, 0.0, -3.0), Coord::vec(0.0, -2_f32.sqrt()/2.0, 2_f32.sqrt()/2.0));
+        let xs = vec![Intersection::new(2_f32.sqrt(), p.clone(), Coord::vec(0.0, -2_f32.sqrt()/2.0, 2_f32.sqrt()/2.0))];
+        let comps = Comps::prepare_computations(xs[0].clone(), r, xs);
+        assert_eq!(w.shade_hit(comps, 0), Color::new(0.945551, 0.70107293, 0.70098877, 0.0)); // TODO: some significant floating point error propigation here compared to correct value on p164
     }
 }

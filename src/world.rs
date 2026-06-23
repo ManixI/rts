@@ -301,7 +301,7 @@ impl World {
         let cost = (1.0 - sin2).sqrt();
         let direction = data.get_normalv() * (ratio * cosi - cost) - data.get_eyev() * ratio;
         let refracted_ray = Ray::new(data.get_under_point(), direction);
-        self.color_at(refracted_ray, depth+1) * data.get_object().get_material().get_transparency()
+        self.color_at(refracted_ray, depth) * data.get_object().get_material().get_transparency()
     }
 }
 

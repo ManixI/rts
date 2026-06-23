@@ -382,6 +382,96 @@ fn draw_scene() {
     
 }
 
+#[allow(dead_code)]
+fn draw_bubble_sphere() {
+    let half = 5.0;
+
+    let mut checker_mat = Material::default();
+    checker_mat.set_specular(0.0);
+    checker_mat.set_texture(Arc::new(Pattern::new_checker(
+        Arc::new(Color::white()),
+        Arc::new(Color::black()),
+        Matrix::identity(4),
+    )));
+
+    // Box: six checker planes enclosing the origin.
+    let mut floor = Plane::default();
+    floor.set_material(checker_mat.clone());
+    floor.set_transformation(Matrix::translation(0.0, -half, 0.0));
+
+    let mut ceiling = Plane::default();
+    ceiling.set_material(checker_mat.clone());
+    ceiling.set_transformation(Matrix::translation(0.0, half, 0.0) * Matrix::rotate_x(PI));
+
+    let mut back = Plane::default();
+    back.set_material(checker_mat.clone());
+    back.set_transformation(Matrix::translation(0.0, 0.0, half) * Matrix::rotate_x(PI / 2.0));
+
+    let mut front = Plane::default();
+    front.set_material(checker_mat.clone());
+    front.set_transformation(Matrix::translation(0.0, 0.0, -half) * Matrix::rotate_x(-PI / 2.0));
+
+    let mut left_wall = Plane::default();
+    left_wall.set_material(checker_mat.clone());
+    left_wall.set_transformation(Matrix::translation(-half, 0.0, 0.0) * Matrix::rotate_z(-PI / 2.0));
+
+    let mut right_wall = Plane::default();
+    right_wall.set_material(checker_mat.clone());
+    right_wall.set_transformation(Matrix::translation(half, 0.0, 0.0) * Matrix::rotate_z(PI / 2.0));
+
+    // Glass sphere at the center of the box.
+    let mut glass = Sphere::default();
+    let mut glass_mat = Material::default();
+    glass_mat.set_color(Color::black());
+    glass_mat.set_diffuse(0.1);
+    glass_mat.set_ambient(0.0);
+    glass_mat.set_specular(1.0);
+    glass_mat.set_shininess(300.0);
+    glass_mat.set_reflection(0.9);
+    glass_mat.set_transparency(1.0);
+    glass_mat.set_refractive_index(5.0);
+    glass.set_material(glass_mat);
+
+    // Air bubble in the center of the glass sphere.
+    let mut air = Sphere::default();
+    air.set_transformation(Matrix::scaling(0.5, 0.5, 0.5));
+    let mut air_mat = Material::default();
+    air_mat.set_color(Color::black());
+    air_mat.set_diffuse(0.1);
+    air_mat.set_ambient(0.0);
+    air_mat.set_specular(1.0);
+    air_mat.set_shininess(300.0);
+    air_mat.set_reflection(0.9);
+    air_mat.set_transparency(1.0);
+    air_mat.set_refractive_index(1.0);
+    air.set_material(air_mat);
+
+    let mut world = World::new();
+    // Light above and to the left of the sphere, behind the camera.
+    world.add_light(Light::new(Coord::point(-4.0, 4.0, -4.5), Color::white()));
+
+    //world.add_obj(Arc::new(floor));
+    //world.add_obj(Arc::new(ceiling));
+    world.add_obj(Arc::new(back));
+    //world.add_obj(Arc::new(front));
+    //world.add_obj(Arc::new(left_wall));
+    //world.add_obj(Arc::new(right_wall));
+    world.add_obj(Arc::new(glass));
+    world.add_obj(Arc::new(air));
+
+    // Camera inside the box, looking dead on at the sphere.
+    let mut cam = Camera::new(1500, 1500, PI / 3.0);
+    cam.transform(Matrix::view_transformation(
+        Coord::point(0.0, 0.0, -4.0),
+        Coord::point(0.0, 0.0, 0.0),
+        Coord::vec(0.0, 1.0, 0.0),
+    ));
+    world.set_max_depth(6);
+    let canvas = world.render_world_multi(&cam);
+    let _ = canvas.to_file("bubble.ppm");
+}
+
+
 fn main() {
     //let mut env = Environment::new(-0.01, -0.1, 900, 550);
     //env.add_shot(Shot::new(Coord::point(0.0, 1.0, 0.0), Coord::vec(5.0, 8.2, 0.0) * 11.25));
@@ -395,5 +485,5 @@ fn main() {
     //let _ = outline_sphere("sphere.ppm", 400, Sphere::default());
 
     //draw_test_spheres();
-    draw_scene();
+    draw_bubble_sphere();
 }

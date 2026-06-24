@@ -10,6 +10,7 @@ pub mod renderable;
 pub mod sphere;
 pub mod tex;
 pub mod world;
+pub mod cube;
 use crate::coord::Coord;
 
 #[macro_export]

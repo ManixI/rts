@@ -4,7 +4,9 @@ use crate::{coord::Coord, material::Material, matrix::Matrix, ray::Ray, tex::col
 #[derive(PartialEq, Debug)]
 pub enum RenderableType {
     Sphere,
-    Plane
+    Plane,
+    Cube,
+    Mesh
 }
 
 pub trait RenderableBase {

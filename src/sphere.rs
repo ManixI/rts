@@ -220,8 +220,6 @@ impl Renderable for Sphere {
 mod tests {
     use core::f32;
     use std::thread::spawn;
-    use super::*;
-
     use crate::{renderable::RenderableBase, sphere};
 
     use super::*;

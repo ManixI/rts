@@ -15,6 +15,7 @@ use rtc::{
     plane::Plane,
     tex::pattern::Pattern,
     world::World,
+    cube::Cube,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -429,7 +430,7 @@ fn draw_bubble_sphere() {
     glass_mat.set_shininess(300.0);
     glass_mat.set_reflection(0.9);
     glass_mat.set_transparency(1.0);
-    glass_mat.set_refractive_index(5.0);
+    glass_mat.set_refractive_index(1.5);
     glass.set_material(glass_mat);
 
     // Air bubble in the center of the glass sphere.
@@ -443,7 +444,7 @@ fn draw_bubble_sphere() {
     air_mat.set_shininess(300.0);
     air_mat.set_reflection(0.9);
     air_mat.set_transparency(1.0);
-    air_mat.set_refractive_index(1.0);
+    air_mat.set_refractive_index(3.0);
     air.set_material(air_mat);
 
     let mut world = World::new();

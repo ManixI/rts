@@ -205,7 +205,7 @@ impl PartialEq for Pattern {
 #[cfg(test)]
 mod test {
     use std::sync::Arc;
-    use parameterized_macro::parameterized;
+    use test_case::test_case;
     use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::{Tex, color::Color, pattern::{Pattern, PatternType::{self, *}}}};
 
     // TODO: nested pattern tests
@@ -289,19 +289,11 @@ mod test {
         assert_eq!(p.get_color_at(Coord::point(0.0, 0.0, 1.1)), Color::black());
     }
 
-    #[parameterized(pattern = {
-            Stripe, 
-            Gradient,
-            Checker,
-            Bullseye,
-            Solid
-    }, expected = {
-        Color::red(),
-        Color::new(0.25, 0.0, 0.0, 0.0),
-        Color::black(),
-        Color::red(),
-        Color::red()
-    })]
+    #[test_case(Stripe,   Color::red()                    ; "stripe")]
+    #[test_case(Gradient, Color::new(0.25, 0.0, 0.0, 0.0) ; "gradient")]
+    #[test_case(Checker,  Color::black()                  ; "checker")]
+    #[test_case(Bullseye, Color::red()                    ; "bullseye")]
+    #[test_case(Solid,    Color::red()                    ; "solid")]
     fn test_obj_transformed(pattern: PatternType, expected: Color) {
         let mut o = Sphere::default();
         o.set_transformation(Matrix::scaling(2.0, 2.0, 2.0));
@@ -313,19 +305,11 @@ mod test {
         assert_eq!(c, expected);
     }
 
-    #[parameterized(pattern = {
-        Stripe, 
-        Gradient,
-        Checker,
-        Bullseye,
-        Solid
-    }, expected = {
-        Color::red(),
-        Color::new(0.25, 0.0, 0.0, 0.0),
-        Color::red(),
-        Color::red(),
-        Color::red()
-    })]
+    #[test_case(Stripe,   Color::red()                    ; "stripe")]
+    #[test_case(Gradient, Color::new(0.25, 0.0, 0.0, 0.0) ; "gradient")]
+    #[test_case(Checker,  Color::red()                    ; "checker")]
+    #[test_case(Bullseye, Color::red()                    ; "bullseye")]
+    #[test_case(Solid,    Color::red()                    ; "solid")]
     fn test_stripe_pattern_transformed(pattern: PatternType, expected: Color) {
         let p = Pattern::new(pattern, Arc::new(Color::red()), Arc::new(Color::black()), Matrix::scaling(2.0, 2.0, 2.0));
         let m = Material::new(1.0, 0.0, 0.0, 10.0, 0.0, 1.0, 0.0, Arc::new(p));
@@ -334,19 +318,11 @@ mod test {
         assert_eq!(o.get_color_at(Coord::point(1.5, 0.0, 0.0)), expected)
     }
 
-    #[parameterized(pattern = {
-        Stripe, 
-        Gradient,
-        Checker,
-        Bullseye,
-        Solid
-    }, expected = {
-        Color::red(),
-        Color::new(0.25, 0.0, 0.0, 0.0),
-        Color::red(),
-        Color::red(),
-        Color::red()
-    })]
+    #[test_case(Stripe,   Color::red()                    ; "stripe")]
+    #[test_case(Gradient, Color::new(0.25, 0.0, 0.0, 0.0) ; "gradient")]
+    #[test_case(Checker,  Color::red()                    ; "checker")]
+    #[test_case(Bullseye, Color::red()                    ; "bullseye")]
+    #[test_case(Solid,    Color::red()                    ; "solid")]
     fn test_stripe_both_transformed(pattern: PatternType, expected: Color) {
         let p = Pattern::new(pattern, Arc::new(Color::red()), Arc::new(Color::black()), Matrix::translation(0.5, 0.0, 0.0));
         let m = Material::new(1.0, 0.0, 0.0, 10.0, 0.0, 1.0, 0.0, Arc::new(p));

@@ -1,6 +1,8 @@
-use std::sync::Arc;
+use std::{cmp::min, sync::Arc};
 
 use crate::{coord::Coord, impl_renderable_base, impl_renderable_tests, material::{self, Material}, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}, sphere::Sphere, tex::color::Color};
+
+static EPSILON: f32 = 0.005; // TODO: unify this with other epsilon values
 
 // TODO: move all primitives under primitive subdir
 
@@ -15,8 +17,28 @@ impl Cube {
         Self { transformation, material }
     }
 
-    pub fn default() -> Self {
-        Self { transformation: Matrix::identity(4), material: Material::default() }
+    /// given a 1d coord and dir, returns the two times of intersection with a cube on that plane
+    fn check_axis(pos: f32, dir: f32) -> (f32, f32) {
+        let max_numerator = 1.0 - pos;
+        let min_numerator = -1.0 - pos;
+
+        let (tmin, tmax) = if dir.abs() >= EPSILON {
+            (
+                min_numerator / dir,
+                max_numerator / dir
+            )
+        } else {
+            (
+                f32::INFINITY * min_numerator.signum(),
+                f32::INFINITY * max_numerator.signum()
+            )
+        };
+
+        (
+            f32::min(tmin, tmax),
+            f32::max(tmin, tmax)
+        )
+        //(tmin, tmax)
     }
 }
 
@@ -26,11 +48,32 @@ impl_renderable_tests!(crate::cube::Cube, RenderableType::Cube);
 
 impl Renderable for Cube {
     fn intersect(&self, ray: Ray) -> Option<Vec<Intersection>> {
-        todo!()
+        let (_, out) = self.intersect_get_ray(ray);
+        out
     }
 
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>) {
-        todo!()
+        let ray = ray.transform(self.get_transformation().inverse().unwrap());
+
+        let (xtmin, xtmax) = Cube::check_axis(ray.get_origin().get_x(), ray.get_direction().get_x());
+        let (ytmin, ytmax) = Cube::check_axis(ray.get_origin().get_y(), ray.get_direction().get_y());
+        let (ztmin, ztmax) = Cube::check_axis(ray.get_origin().get_z(), ray.get_direction().get_z());
+    
+        let tmin = vec![xtmin, ytmin, ztmin].into_iter().reduce(f32::max).unwrap();
+        let tmax = vec![xtmax, ytmax, ztmax].into_iter().reduce(f32::min).unwrap();
+
+        let obj = Arc::new(self.clone());   // TODO: remove this clone
+        let data = if tmax >= tmin {
+            Some(
+                vec![
+                    Intersection::new(tmin, obj.clone(), Coord::vec(0.0, 0.0, 0.0)),
+                    Intersection::new(tmax, obj, Coord::vec(0.0, 0.0, 0.0))        
+            ])
+        } else {
+            None
+        };
+
+        (ray, data)
     }
 
     fn normal_at(&self, pos: Coord) -> Coord {
@@ -38,7 +81,7 @@ impl Renderable for Cube {
     }
 
     fn default() -> Self where Self: Sized {
-        todo!()
+        Self { transformation: Matrix::identity(4), material: Material::default() }
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
@@ -69,5 +112,23 @@ mod tests {
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].get_time(), t1);
         assert_eq!(xs[1].get_time(), t2);
+    }
+
+    #[test_case(Coord::point(-2.0, 0.0, 0.0), Coord::vec(0.2673, 0.5345, 0.8018) ; "diag 1")]
+    #[test_case(Coord::point(0.0, -2.0, 0.0), Coord::vec(0.8018, 0.2673, 0.5345) ; "diag 2")]
+    #[test_case(Coord::point(0.0, 0.0, -2.0), Coord::vec(0.5345, 0.8018, 0.2673) ; "diag 3")]
+    #[test_case(Coord::point(2.0, 0.0, 2.0), Coord::vec(0.0, 0.0, -1.0) ; "parallel z")]
+    #[test_case(Coord::point(0.0, 2.0, 2.0), Coord::vec(0.0, -1.0, 0.0) ; "parallel y")]
+    #[test_case(Coord::point(2.0, 2.0, 0.0), Coord::vec(-1.0, 0.0, 0.0) ; "parallel x")]
+    fn test_intersect_miss(origin: Coord, direction: Coord) {
+        let c = Cube::default();
+        let r = Ray::new(origin, direction);
+        let xs = c.intersect(r);
+        assert!(xs.is_none());
+    }
+
+
+    fn test_normal_at(pos: Coord, normal: Color) {
+
     }
 }

@@ -115,7 +115,7 @@ impl PartialEq for Material {
 #[cfg(test)]
 mod tests {
     use std::path::MAIN_SEPARATOR;
-    use crate::{light::{Light, lighting}, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere, tex::pattern::Pattern, world::Comps};
+    use crate::{light::{Light, lighting}, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, primitives::sphere::Sphere, tex::pattern::Pattern, world::Comps};
     use super::*;
 
     #[test]

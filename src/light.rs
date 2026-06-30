@@ -58,7 +58,7 @@ pub fn lighting(object: Arc<dyn Renderable>, light: Light, pos: Coord, camv: Coo
 }
 #[cfg(test)]
 mod tests {
-    use crate::{material::Material, renderable::RenderableBase, sphere::Sphere};
+    use crate::{material::Material, renderable::RenderableBase, primitives::sphere::Sphere};
 
     use super::*;
 

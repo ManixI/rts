@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use crate::impl_getters_setters;
-use crate::{camera::Camera, canvas::Canvas, tex::color::Color, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, sphere::Sphere};
+use crate::{camera::Camera, canvas::Canvas, tex::color::Color, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, primitives::sphere::Sphere};
 use rayon::prelude::*;
 
 // I'm going to need to re-work this to add all objects, not just renderable ones aren't I
@@ -310,7 +310,7 @@ impl World {
 mod tests {
     use std::sync::Arc;
 
-use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matrix::Matrix, plane::Plane, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, sphere::Sphere, tex::{color::Color, pattern::Pattern}, world::EPSILON};
+use crate::{camera::Camera, coord::Coord, light::Light, material::Material, matrix::Matrix, primitives::plane::Plane, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, compare_renderables}, primitives::sphere::Sphere, tex::{color::Color, pattern::Pattern}, world::EPSILON};
 
     use super::{Comps, World};
 

@@ -4,13 +4,11 @@ pub mod canvas;
 pub mod camera;
 pub mod light;
 pub mod material;
-pub mod plane;
+pub mod primitives;
 pub mod ray;
 pub mod renderable;
-pub mod sphere;
 pub mod tex;
 pub mod world;
-pub mod cube;
 use crate::coord::Coord;
 
 #[macro_export]

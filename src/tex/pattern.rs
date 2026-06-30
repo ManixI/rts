@@ -206,7 +206,7 @@ impl PartialEq for Pattern {
 mod test {
     use std::sync::Arc;
     use test_case::test_case;
-    use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, sphere::Sphere, tex::{Tex, color::Color, pattern::{Pattern, PatternType::{self, *}}}};
+    use crate::{coord::Coord, material::Material, matrix::Matrix, renderable::{Renderable, RenderableBase}, primitives::sphere::Sphere, tex::{Tex, color::Color, pattern::{Pattern, PatternType::{self, *}}}};
 
     // TODO: nested pattern tests
     // TODO: blended pattern tests

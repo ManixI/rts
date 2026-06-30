@@ -4,8 +4,6 @@ use crate::{coord::Coord, impl_renderable_base, impl_renderable_tests, material:
 
 static EPSILON: f32 = 0.005; // TODO: unify this with other epsilon values
 
-// TODO: move all primitives under primitive subdir
-
 #[derive(PartialEq, Clone)]
 pub struct Cube {
     transformation: Matrix,
@@ -44,7 +42,7 @@ impl Cube {
 
 impl_renderable_base!(Cube, RenderableType::Cube);
 
-impl_renderable_tests!(crate::cube::Cube, RenderableType::Cube);
+impl_renderable_tests!(crate::primitives::cube::Cube, RenderableType::Cube);
 
 impl Renderable for Cube {
     fn intersect(&self, ray: Ray) -> Option<Vec<Intersection>> {

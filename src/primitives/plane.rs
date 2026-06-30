@@ -71,7 +71,7 @@ impl Renderable for Plane {
     }
 }
 
-impl_renderable_tests!(crate::plane::Plane, RenderableType::Plane);
+impl_renderable_tests!(crate::primitives::plane::Plane, RenderableType::Plane);
 
 #[cfg(test)]
 mod tests {

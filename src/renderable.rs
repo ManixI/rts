@@ -253,7 +253,7 @@ macro_rules! impl_renderable_tests {
 mod tests {
     use std::sync::Arc;
 
-use crate::{coord::Coord, ray::Ray, renderable::{Renderable, RenderableBase}, sphere::Sphere};
+use crate::{coord::Coord, ray::Ray, renderable::{Renderable, RenderableBase}, primitives::sphere::Sphere};
     use super::Intersection;
 
     fn compare(a: Arc<dyn Renderable>, b: Arc<dyn Renderable>) {

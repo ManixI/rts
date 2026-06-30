@@ -10,12 +10,12 @@ use rtc::{
     matrix::Matrix,
     ray::Ray,
     renderable::{Renderable, RenderableBase},
-    sphere::Sphere,
+    primitives::sphere::Sphere,
     camera::Camera,
-    plane::Plane,
+    primitives::plane::Plane,
     tex::pattern::Pattern,
     world::World,
-    cube::Cube,
+    primitives::cube::Cube,
 };
 
 #[derive(Debug, Clone, Copy)]

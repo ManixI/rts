@@ -6,7 +6,7 @@ use crate::matrix::Matrix;
 use crate::ray::Ray;
 use crate::renderable::{Intersection, Renderable, RenderableType};
 use crate::tex::color::Color;
-use super::Coord;
+use crate::coord::Coord;
 
 
 #[derive(/*Debug, */PartialEq, Clone)]
@@ -159,7 +159,7 @@ fn quadratic_formula_helper(a: f32,b: f32, c: f32) -> Option<[f32; 2]> {
 //const EPSILON: f32 = 0.02;
 impl_renderable_base!(Sphere, RenderableType::Sphere);
 
-impl_renderable_tests!(crate::sphere::Sphere, RenderableType::Sphere);
+impl_renderable_tests!(crate::primitives::sphere::Sphere, RenderableType::Sphere);
 
 impl Renderable for Sphere { 
     
@@ -220,7 +220,7 @@ impl Renderable for Sphere {
 mod tests {
     use core::f32;
     use std::thread::spawn;
-    use crate::{renderable::RenderableBase, sphere};
+    use crate::{renderable::RenderableBase, primitives::sphere};
 
     use super::*;
     //use crate::{coord::Coord, matrix::Matrix, ray::{Intersect, Ray}, sphere::Sphere};

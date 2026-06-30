@@ -372,6 +372,17 @@ mod tests {
     }
 
     #[test]
+    fn test_normal_at_world_to_local() {
+        // translating the sphere forces normal_at to convert the world-space
+        // point into object space before computing the surface normal; without
+        // that conversion a translated sphere yields the wrong normal
+        let mut s = Sphere::default();
+        s.set_transformation(Matrix::translation(0.0, 1.0, 0.0));
+        let n = s.normal_at(Coord::point(0.0, 1.70711, -0.70711));
+        assert_eq!(n, Coord::vec(0.0, 0.7071068, -0.70710677));
+    }
+
+    #[test]
     fn test_glass_sphere() {
         let s = Sphere::glass_sphere();
         let mat = s.get_material();

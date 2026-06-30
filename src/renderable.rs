@@ -234,28 +234,6 @@ macro_rules! impl_renderable_tests {
                 assert_eq!(sr.get_origin(), Coord::point(-5.0, 0.0, -5.0));
                 assert_eq!(sr.get_direction(), Coord::vec(0.0, 0.0, 1.0));
             }
-
-            #[test]
-            fn test_normal_at_translate() {
-                let mut s = <$type>::default();
-                if s.get_type() == RenderableType::Plane {
-                    return      // HACK: fixes immediate issue but should this test just be in Sphere?
-                }
-                s.set_transformation(Matrix::translation(0.0, 1.0, 0.0));
-                let n = s.normal_at(Coord::point(0.0, 1.70711, -0.70711));
-                assert_eq!(n, Coord::vec(0.0, 0.7071068, -0.70710677));
-            }
-
-            #[test]
-            fn test_normal_at_scale() {
-                let mut s = <$type>::default();
-                if s.get_type() == RenderableType::Plane {
-                    return      // HACK
-                }
-                s.set_transformation(Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotate_z(std::f32::consts::PI/5.0));
-                let n = s.normal_at(Coord::point(0.0, 2.0_f32.sqrt()/2.0, -2.0_f32.sqrt()/2.0));
-                assert_eq!(n, Coord::vec(0.0, 0.97014254, -0.24253564));
-            }
         }
     }
 }

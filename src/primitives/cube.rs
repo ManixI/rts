@@ -38,6 +38,34 @@ impl Cube {
         )
         //(tmin, tmax)
     }
+
+    fn normal_at_local_space(&self, pos: Coord) -> Coord {
+        let local_normal = match vec![(pos.get_x(), 'x'), (pos.get_y(), 'y'), (pos.get_z(), 'z')]
+                .into_iter().map(|x| (x.0.abs(), x.1))
+                .reduce(|x, acc| {
+                    if x.0 >= acc.0 {
+                        x
+                    } else {
+                        acc
+                    }
+                })
+                .unwrap()
+                .1 {
+            'x' => Coord::vec(pos.get_x(), 0.0, 0.0),  
+            'y' => Coord::vec(0.0, pos.get_y(), 0.0),
+            'z' => Coord::vec(0.0, 0.0, pos.get_z()),
+            _ => panic!("This should be unreachable Cube::normal_at()")
+        };
+
+        let mut out = self
+            .get_transformation()
+            .inverse()
+            .unwrap()
+            .transpose()
+            * local_normal;
+        out.set_w(0.0);
+        out.normalized()
+    }
 }
 
 impl_renderable_base!(Cube, RenderableType::Cube);
@@ -65,8 +93,8 @@ impl Renderable for Cube {
         let data = if tmax >= tmin {
             Some(
                 vec![
-                    Intersection::new(tmin, obj.clone(), self.normal_at(ray.position(tmin))),
-                    Intersection::new(tmax, obj        , self.normal_at(ray.position(tmax)))        
+                    Intersection::new(tmin, obj.clone(), self.normal_at_local_space(ray.position(tmin))),
+                    Intersection::new(tmax, obj        , self.normal_at_local_space(ray.position(tmax)))        
             ])
         } else {
             None
@@ -78,31 +106,7 @@ impl Renderable for Cube {
     // note, striking a corner or edge right on the seem is undefined, it could be a normal in any of the 3(2) valid directions
     fn normal_at(&self, pos: Coord) -> Coord {
         let pos = self.get_transformation().inverse().unwrap() * pos; // TODO: isn't this already done in intersect method
-        let local_normal = match vec![(pos.get_x(), 'x'), (pos.get_y(), 'y'), (pos.get_z(), 'z')]
-                .into_iter().map(|x| (x.0.abs(), x.1))
-                .reduce(|x, acc| {
-                    if x.0 >= acc.0 {
-                        x
-                    } else {
-                        acc
-                    }
-                })
-                .unwrap()
-                .1 {
-            'x' => Coord::vec(pos.get_x(), 0.0, 0.0),  
-            'y' => Coord::vec(0.0, pos.get_y(), 0.0),
-            'z' => Coord::vec(0.0, 0.0, pos.get_z()),
-            _ => panic!("This should be unreachable Cube::normal_at()")
-        };
-
-        let mut out = self
-            .get_transformation()
-            .inverse()
-            .unwrap()
-            .transpose()
-            * local_normal;
-        out.set_w(0.0);
-        out.normalized()
+        self.normal_at_local_space(pos)
     }
 
     fn default() -> Self where Self: Sized {
@@ -156,5 +160,14 @@ mod tests {
         let c = Cube::default();
         let n = c.normal_at(pos);
         assert_eq!(n, normal);
+    }
+
+    #[test]
+    fn test_normal_at_world_to_local() {
+        let mut c = Cube::default();
+        c.set_transformation(Matrix::rotate_z(std::f32::consts::PI / 2.0));
+        let world_point = c.get_transformation() * Coord::point(1.0, 0.3, 0.0);
+        let n = c.normal_at(world_point);
+        assert_eq!(n, Coord::vec(0.0, 1.0, 0.0));
     }
 }

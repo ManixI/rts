@@ -16,6 +16,19 @@ impl Plane {
         Self { transformation, material }
     }
 
+    /// normal is always straight up (in local space) regardless of pos, then
+    /// converted back to world space via transpose(inverse) of the transform
+    fn normal_at_local_space(&self, _pos: Coord) -> Coord {
+        let out = self.get_transformation()
+            .inverse()
+            .unwrap()
+            .transpose()
+            * Coord::vec(0.0, 1.0, 0.0);
+        out
+            .to_vec()
+            .normalized()
+    }
+
 }
 
 impl_renderable_base!(Plane, RenderableType::Plane);
@@ -36,20 +49,13 @@ impl Renderable for Plane {
         let t = -ray.get_origin().get_y() / ray.get_direction().get_y();
         // TODO: would this work if I just returned a reference to self instead of a RC box of it?
         // TODO: is there a better way to do the RC then to make a new one here?
-        let reflection = ray.get_direction().reflect(self.normal_at(Coord::point(0.0, 0.0, 0.0)));
+        let reflection = ray.get_direction().reflect(self.normal_at_local_space(Coord::point(0.0, 0.0, 0.0)));
         (ray, Some(vec![Intersection::new(t, Arc::new(self.clone()), reflection)]))
     }
 
-    /// normal is always strait up translated by local transformation regardless of the pos
-    fn normal_at(&self, _pos: Coord) -> Coord {
-        let out = self.get_transformation()
-            .inverse()
-            .unwrap()
-            .transpose() 
-            * Coord::vec(0.0, 1.0, 0.0);
-        out
-            .to_vec()
-            .normalized()
+    fn normal_at(&self, pos: Coord) -> Coord {
+        let pos = self.get_transformation().inverse().unwrap() * pos;
+        self.normal_at_local_space(pos)
     }
 
     fn default() -> Self {
@@ -76,7 +82,16 @@ mod tests {
         let tn = Coord::vec(0.0, 1.0, 0.0);
         assert_eq!(n1, tn);
         assert_eq!(n2, tn);
-        assert_eq!(n3, tn); 
+        assert_eq!(n3, tn);
+    }
+
+    #[test]
+    fn test_normal_at_world_to_local() {
+        let mut p = Plane::default();
+        p.set_transformation(Matrix::rotate_z(std::f32::consts::PI / 2.0));
+        let world_point = p.get_transformation() * Coord::point(1.0, 0.0, 0.0);
+        let n = p.normal_at(world_point);
+        assert_eq!(n, Coord::vec(-1.0, 0.0, 0.0));
     }
     
     #[test]

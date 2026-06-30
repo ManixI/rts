@@ -473,6 +473,148 @@ fn draw_bubble_sphere() {
 }
 
 
+fn test_cubes() {
+    let mut world = World::new();
+    world.add_light(Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white()));
+
+    // Checkered floor plane.
+    let mut floor = Plane::default();
+    let mut floor_mat = Material::default();
+    floor_mat.set_specular(0.0);
+    floor_mat.set_reflection(0.1);
+    floor_mat.set_texture(Arc::new(Pattern::new_checker(
+        Arc::new(Color::white()),
+        Arc::new(Color::black()),
+        Matrix::identity(4),
+    )));
+    floor.set_material(floor_mat);
+    world.add_obj(Arc::new(floor));
+
+    // Back wall plane to give the scene a backdrop.
+    let mut back = Plane::default();
+    let mut back_mat = Material::default();
+    back_mat.set_specular(0.0);
+    back_mat.set_color(Color::new(0.6, 0.6, 0.8, 0.0));
+    back.set_material(back_mat);
+    back.set_transformation(Matrix::translation(0.0, 0.0, 6.0) * Matrix::rotate_x(PI / 2.0));
+    world.add_obj(Arc::new(back));
+
+    // Enclosing walls so reflective surfaces always have something to bounce.
+    // Placed beyond the light at (-10, 10, -10) so they never block it and stay off-camera.
+
+    // Front wall, behind the camera.
+    let mut front = Plane::default();
+    let mut front_mat = Material::default();
+    front_mat.set_specular(0.0);
+    front_mat.set_color(Color::new(0.8, 0.7, 0.6, 0.0));
+    front.set_material(front_mat);
+    front.set_transformation(Matrix::translation(0.0, 0.0, -12.0) * Matrix::rotate_x(PI / 2.0));
+    world.add_obj(Arc::new(front));
+
+    // Left wall.
+    let mut left = Plane::default();
+    let mut left_mat = Material::default();
+    left_mat.set_specular(0.0);
+    left_mat.set_color(Color::new(0.7, 0.5, 0.5, 0.0));
+    left.set_material(left_mat);
+    left.set_transformation(Matrix::translation(-12.0, 0.0, 0.0) * Matrix::rotate_z(PI / 2.0));
+    world.add_obj(Arc::new(left));
+
+    // Right wall.
+    let mut right = Plane::default();
+    let mut right_mat = Material::default();
+    right_mat.set_specular(0.0);
+    right_mat.set_color(Color::new(0.5, 0.7, 0.5, 0.0));
+    right.set_material(right_mat);
+    right.set_transformation(Matrix::translation(12.0, 0.0, 0.0) * Matrix::rotate_z(PI / 2.0));
+    world.add_obj(Arc::new(right));
+
+    // Ceiling.
+    let mut ceiling = Plane::default();
+    let mut ceiling_mat = Material::default();
+    ceiling_mat.set_specular(0.0);
+    ceiling_mat.set_color(Color::new(0.6, 0.6, 0.7, 0.0));
+    ceiling.set_material(ceiling_mat);
+    ceiling.set_transformation(Matrix::translation(0.0, 12.0, 0.0));
+    world.add_obj(Arc::new(ceiling));
+
+    // Red cube, axis-aligned, sitting on the floor.
+    let mut cube_a = Cube::default();
+    let mut mat_a = Material::default();
+    mat_a.set_color(Color::red());
+    mat_a.set_diffuse(0.7);
+    mat_a.set_specular(0.3);
+    cube_a.set_material(mat_a);
+    cube_a.set_transformation(
+        Matrix::translation(-2.5, 1.0, 0.5) * Matrix::scaling(1.0, 1.0, 1.0),
+    );
+    world.add_obj(Arc::new(cube_a));
+
+    // Green cube, rotated and squashed.
+    let mut cube_b = Cube::default();
+    let mut mat_b = Material::default();
+    mat_b.set_color(Color::green());
+    mat_b.set_reflection(0.3);
+    cube_b.set_material(mat_b);
+    cube_b.set_transformation(
+        Matrix::translation(2.5, 0.75, 0.0)
+            * Matrix::rotate_y(PI / 4.0)
+            * Matrix::scaling(0.75, 0.75, 0.75),
+    );
+    world.add_obj(Arc::new(cube_b));
+
+    // Striped tall cube in the back.
+    let mut cube_c = Cube::default();
+    let mut mat_c = Material::default();
+    mat_c.set_specular(0.3);
+    mat_c.set_texture(Arc::new(Pattern::new_stripe(
+        Arc::new(Color::new(1.0, 0.8, 0.1, 0.0)),
+        Arc::new(Color::white()),
+        Matrix::scaling(0.25, 0.25, 0.25),
+    )));
+    cube_c.set_material(mat_c);
+    cube_c.set_transformation(
+        Matrix::translation(0.0, 1.5, 3.0)
+            * Matrix::rotate_y(PI / 6.0)
+            * Matrix::scaling(0.6, 1.5, 0.6),
+    );
+    world.add_obj(Arc::new(cube_c));
+
+    // Blue sphere in front, between the cubes.
+    let mut sphere_a = Sphere::default();
+    let mut sphere_mat_a = Material::default();
+    sphere_mat_a.set_color(Color::blue());
+    sphere_mat_a.set_diffuse(0.7);
+    sphere_mat_a.set_specular(0.3);
+    sphere_a.set_material(sphere_mat_a);
+    sphere_a.set_transformation(Matrix::translation(0.0, 1.0, -1.5));
+    world.add_obj(Arc::new(sphere_a));
+
+    // Small reflective sphere resting on the green cube's side.
+    let mut sphere_b = Sphere::default();
+    let mut sphere_mat_b = Material::default();
+    sphere_mat_b.set_color(Color::purple());
+    sphere_mat_b.set_diffuse(0.7);
+    sphere_mat_b.set_specular(0.3);
+    sphere_mat_b.set_shininess(100.0);
+    sphere_mat_b.set_reflection(0.15);
+    sphere_b.set_material(sphere_mat_b);
+    sphere_b.set_transformation(
+        Matrix::translation(-2.5, 2.5, 0.5) * Matrix::scaling(0.5, 0.5, 0.5),
+    );
+    world.add_obj(Arc::new(sphere_b));
+
+    let mut cam = Camera::new(1200, 1200, PI / 3.0);
+    cam.transform(Matrix::view_transformation(
+        Coord::point(0.0, 2.5, -7.0),
+        Coord::point(0.0, 1.0, 0.0),
+        Coord::vec(0.0, 1.0, 0.0),
+    ));
+    world.set_max_depth(5);
+    let canvas = world.render_world_multi(&cam);
+    let _ = canvas.to_file("cubes.ppm");
+}
+
 fn main() {
     //let mut env = Environment::new(-0.01, -0.1, 900, 550);
     //env.add_shot(Shot::new(Coord::point(0.0, 1.0, 0.0), Coord::vec(5.0, 8.2, 0.0) * 11.25));
@@ -486,5 +628,6 @@ fn main() {
     //let _ = outline_sphere("sphere.ppm", 400, Sphere::default());
 
     //draw_test_spheres();
-    draw_bubble_sphere();
+    //draw_bubble_sphere();
+    test_cubes();
 }

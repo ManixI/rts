@@ -186,7 +186,7 @@ impl Renderable for Sphere {
 
     /// func assumes pos is on the sphere, if it is not results are undefined
     fn normal_at(&self, pos: Coord) -> Coord {
-        let object_pos = self.get_transformation().inverse().unwrap() * pos;
+        let object_pos = self.get_transformation().inverse().unwrap() * pos; // TODO: isn't this already done in intersect method
         let obj_normal = self.local_normal_at(object_pos);
         let mut world_norm = self.transformation.inverse()
             .unwrap()

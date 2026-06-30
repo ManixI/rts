@@ -108,18 +108,6 @@ impl Renderable for Cube {
     fn default() -> Self where Self: Sized {
         Self { transformation: Matrix::identity(4), material: Material::default() }
     }
-
-    // TODO: move this and compare into renderable_base!    
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn compare(&self, other: Arc<dyn Renderable>) -> bool {
-        match other.as_any().downcast_ref::<Cube>() {
-            Some(p) => self == p,
-            None => false
-        }
-    }
 }
 
 #[cfg(test)]

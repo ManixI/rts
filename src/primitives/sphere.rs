@@ -198,20 +198,9 @@ impl Renderable for Sphere {
 
     /// a sphere at position (0, 0, 0) with a radius of 1
     fn default() -> Self {
-        Self { 
-            transformation: Matrix::identity(4), 
+        Self {
+            transformation: Matrix::identity(4),
             material: Material::default(),
-        }
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn compare(&self, other: Arc<dyn Renderable>) -> bool {
-        match other.as_any().downcast_ref::<Sphere>() {
-            Some(p) => self == p,
-            None => false
         }
     }
 }

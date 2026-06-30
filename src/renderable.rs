@@ -29,6 +29,10 @@ pub trait RenderableBase {
     fn clone_dyn(&self) -> Box<dyn Renderable>;
 
     fn get_color_at(&self, pos: Coord) -> Color;
+
+    fn as_any(&self) -> &dyn std::any::Any;
+
+    fn compare(&self, other: Arc<dyn Renderable>) -> bool;
 }
 
 /**
@@ -48,10 +52,22 @@ macro_rules! impl_renderable_base {
             fn get_type(&self) -> RenderableType { $variant }
             fn clone_rc(&self) -> Arc<dyn Renderable> { Arc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
+            
             fn get_color_at(&self, pos: Coord) -> Color {
                 let local_pos = self.get_transformation().inverse().unwrap() * pos;
                 self.get_material().get_color_at(local_pos)
             }
+            
+            fn as_any(&self) -> &dyn std::any::Any {
+                self
+            }
+            
+            fn compare(&self, other: Arc<dyn Renderable>) -> bool {
+                match other.as_any().downcast_ref::<$type>() {
+                    Some(p) => self == p,
+                    None => false
+                }   
+            } 
         }
         
     };
@@ -69,10 +85,6 @@ pub trait Renderable: RenderableBase + Send + Sync {
     fn normal_at(&self, pos: Coord) -> Coord;
 
     fn default() -> Self where Self: Sized;
-
-    fn as_any(&self) -> &dyn std::any::Any;
-
-    fn compare(&self, other: Arc<dyn Renderable>) -> bool;
 }
 
 impl Clone for Box<dyn Renderable> {

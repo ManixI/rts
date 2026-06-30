@@ -53,20 +53,9 @@ impl Renderable for Plane {
     }
 
     fn default() -> Self {
-        Self { 
-            transformation: Matrix::identity(4), 
-            material: Material::default() 
-        }
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn compare(&self, other: Arc<dyn Renderable>) -> bool {
-        match other.as_any().downcast_ref::<Plane>() {
-            Some(p) => self == p,
-            None => false
+        Self {
+            transformation: Matrix::identity(4),
+            material: Material::default()
         }
     }
 }

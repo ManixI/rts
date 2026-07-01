@@ -6,6 +6,8 @@ pub enum RenderableType {
     Sphere,
     Plane,
     Cube,
+    Cylinder,
+    Cone,
     Mesh
 }
 

@@ -40,21 +40,15 @@ impl Cube {
     }
 
     fn normal_at_local_space(&self, pos: Coord) -> Coord {
-        let local_normal = match vec![(pos.get_x(), 'x'), (pos.get_y(), 'y'), (pos.get_z(), 'z')]
-                .into_iter().map(|x| (x.0.abs(), x.1))
-                .reduce(|x, acc| {
-                    if x.0 >= acc.0 {
-                        x
-                    } else {
-                        acc
-                    }
-                })
-                .unwrap()
-                .1 {
-            'x' => Coord::vec(pos.get_x(), 0.0, 0.0),  
-            'y' => Coord::vec(0.0, pos.get_y(), 0.0),
-            'z' => Coord::vec(0.0, 0.0, pos.get_z()),
-            _ => panic!("This should be unreachable Cube::normal_at()")
+        let (x, y, z) = (pos.get_x(), pos.get_y(), pos.get_z());
+        let max_axis = x.abs().max(y.abs()).max(z.abs());
+
+        let local_normal = if max_axis == x.abs() {
+            Coord::vec(x, 0.0, 0.0)
+        } else if max_axis == y.abs() {
+            Coord::vec(0.0, y, 0.0)
+        } else {
+            Coord::vec(0.0, 0.0, z)
         };
 
         let mut out = self

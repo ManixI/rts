@@ -1,6 +1,4 @@
-use rayon::vec;
-
-use crate::{coord::Coord, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}, tex::color::Color};
+use crate::{coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}, tex::color::Color};
 
 use std::sync::Arc;
 
@@ -9,16 +7,21 @@ static EPSILON: f32 = 0.005;
 #[derive(PartialEq, Clone)]
 pub struct Cylinder {
     transformation: Matrix,
-    material: Material  // TODO: refactor this to a pointer
+    material: Material,  // TODO: refactor this to a pointer
+    min: f32,
+    max: f32,
+    closed: bool
 }
 
+impl_getters_setters!(Cylinder, transformation: Matrix, material: Material, min: f32, max: f32);
+
 impl Cylinder {
-    pub fn new(transformation: Matrix, material: Material) -> Self {
-        Self { transformation, material }
+    pub fn new(transformation: Matrix, material: Material, min: f32, max: f32, closed: bool) -> Self {
+        Self { transformation, material, min, max, closed }
     }
 
     fn normal_at_local_space(&self, pos: Coord) -> Coord {
-        todo!()
+        Coord::vec(pos.get_x(), 0.0, pos.get_z())
     }
 }
 
@@ -53,17 +56,31 @@ impl Renderable for Cylinder {
             return (ray, None)
         }
 
-        let t0 = (-b - disc.sqrt()) / (2.0 * a);
-        let t1 = (-b + disc.sqrt()) / (2.0 * a);
+        let mut t0 = (-b - disc.sqrt()) / (2.0 * a);
+        let mut t1 = (-b + disc.sqrt()) / (2.0 * a);
+
+        if t0 > t1 {
+            (t0, t1) = (t1, t0);
+        }
 
         let obj = Arc::new(self.clone());
-        (
-            ray,
-            Some(vec![
-                Intersection::new(t0, obj.clone(), Coord::vec(0.0, 0.0, 0.0)),
-                Intersection::new(t1, obj.clone(), Coord::vec(0.0, 0.0, 0.0))
-            ])
-        )
+        
+        let mut data = Vec::<Intersection>::new();
+        let y0 = ray.position(t0).get_y();
+        if self.get_min() < y0 && self.get_max() > y0 {
+            data.push(Intersection::new(t0, obj.clone(), self.normal_at_local_space(ray.position(t0))));
+        }
+
+        let y1 = ray.position(t1).get_y();
+        if self.get_min() < y1 && self.get_max() > y1 {
+            data.push(Intersection::new(t1, obj.clone(), self.normal_at_local_space(ray.position(t1))));
+        }
+
+        if data.len() == 0 {
+            return (ray, None);
+        }
+        
+        (ray, Some(data))
     }
 
     fn normal_at(&self, pos: Coord) -> Coord {
@@ -72,14 +89,20 @@ impl Renderable for Cylinder {
     }
 
     fn default() -> Self where Self: Sized {
-        Self { transformation: Matrix::identity(4), material: Material::default() }
+        Self { 
+            transformation: Matrix::identity(4), 
+            material: Material::default(),
+            min: -f32::INFINITY,
+            max: f32::INFINITY,
+            closed: false
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use test_case::test_case;
-    use crate::{coord::Coord, primitives::cylinder::Cylinder, ray::Ray, renderable::Renderable};
+    use crate::{coord::Coord, material::Material, matrix::Matrix, primitives::cylinder::Cylinder, ray::Ray, renderable::Renderable};
 
 
     #[test_case(Coord::point(1.0, 0.0, 0.0), Coord::vec(0.0, 1.0, 0.0) ; "case 1")]
@@ -104,5 +127,33 @@ mod tests {
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].get_time(), t0);
         assert_eq!(xs[1].get_time(), t1);
+    }
+
+    #[test_case(Coord::point(1.0, 0.0, 0.0), Coord::vec(1.0, 0.0, 0.0) ; "case 1")]
+    #[test_case(Coord::point(0.0, 5.0, -1.0), Coord::vec(0.0, 0.0, -1.0) ; "case 2")]
+    #[test_case(Coord::point(0.0, -2.0, 1.0), Coord::vec(0.0, 0.0, 1.0) ; "case 3")]
+    #[test_case(Coord::point(-1.0, 1.0, 0.0), Coord::vec(-1.0, 0.0, 0.0) ; "case 4")]
+    fn test_normal_at(pos: Coord, normal: Coord) {
+        let c = Cylinder::default();
+        let n = c.normal_at_local_space(pos);
+        assert_eq!(n, normal)
+    }
+
+    #[test_case(Coord::point(0.0, 1.5, 0.0), Coord::vec(0.1, 1.0, 0.0), 0 ; "case 1")]
+    #[test_case(Coord::point(0.0, 3.0, -5.0), Coord::vec(0.0, 0.0, 1.0), 0 ; "case 2")]
+    #[test_case(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0), 0 ; "case 3")]
+    #[test_case(Coord::point(0.0, 2.0, -5.0), Coord::vec(0.0, 0.0, 1.0), 0 ; "case 4")]
+    #[test_case(Coord::point(0.0, 1.0, -5.0), Coord::vec(0.0, 0.0, 1.0), 0 ; "case 5")]
+    #[test_case(Coord::point(0.0, 1.5, -2.0), Coord::vec(0.0, 0.0, 1.0), 2 ; "case 6")]
+    fn test_truncated_intersection(point: Coord, direction: Coord, count: usize) {
+        let c = Cylinder::new(Matrix::identity(4), Material::default(), 1.0, 2.0, false);
+        let direction = direction.normalized();
+        let ray = Ray::new(point, direction);
+        let xs =  c.intersect(ray);
+        if count == 0 {
+            assert!(xs.is_none());
+        } else {
+            assert_eq!(xs.unwrap().len(), count);
+        }
     }
 }

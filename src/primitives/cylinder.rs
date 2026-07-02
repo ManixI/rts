@@ -13,7 +13,7 @@ pub struct Cylinder {
     closed: bool
 }
 
-impl_getters_setters!(Cylinder, transformation: Matrix, material: Material, min: f32, max: f32);
+impl_getters_setters!(Cylinder, transformation: Matrix, material: Material, min: f32, max: f32, closed: bool);
 
 impl Cylinder {
     pub fn new(transformation: Matrix, material: Material, min: f32, max: f32, closed: bool) -> Self {
@@ -22,6 +22,31 @@ impl Cylinder {
 
     fn normal_at_local_space(&self, pos: Coord) -> Coord {
         Coord::vec(pos.get_x(), 0.0, pos.get_z())
+    }
+
+    /// checks if intersection lies within radius of cap
+    fn check_cap(ray: Ray, t: f32) -> bool {
+        let x = ray.get_origin().get_x() + t * ray.get_direction().get_x();
+        let z = ray.get_origin().get_z() + t * ray.get_direction().get_z();
+        x.powi(2) + z.powi(2) <= 1.0
+    }
+
+    fn intersect_caps(&self, ray: Ray, data: &mut Vec<Intersection>) {
+        if !self.get_closed() || ray.get_direction().get_y().abs() < EPSILON {
+            return;
+        }
+
+        let object = Arc::new(self.clone());
+        let t = (self.get_min() - ray.get_origin().get_y()) / ray.get_direction().get_y();
+        if Cylinder::check_cap(ray, t) {
+            data.push(Intersection::new(t, object.clone(), self.normal_at_local_space(ray.position(t))));
+        }
+
+
+        let t = (self.get_max() - ray.get_origin().get_y()) / ray.get_direction().get_y();
+        if Cylinder::check_cap(ray, t) {
+            data.push(Intersection::new(t, object.clone(), self.normal_at_local_space(ray.position(t))));
+        }
     }
 }
 
@@ -43,7 +68,18 @@ impl Renderable for Cylinder {
 
         // ray is parallel to y axis
         if a.abs() < EPSILON {
-            return (ray, None);
+            if self.get_closed() {
+                let mut data = Vec::<Intersection>::new();
+                self.intersect_caps(ray, &mut data);
+
+                if data.len() == 0 {
+                    return (ray, None);
+                }
+                
+                return (ray, Some(data));
+            } else {
+                return (ray, None);
+            }
         }
 
         let b = 2.0 * ray.get_origin().get_x() * ray.get_direction().get_x()
@@ -72,9 +108,11 @@ impl Renderable for Cylinder {
         }
 
         let y1 = ray.position(t1).get_y();
-        if self.get_min() < y1 && self.get_max() > y1 {
+        if self.get_min() < y1 && self.get_max() > y1 { // BUG: corner cases fail here bc of floating point imprecision
             data.push(Intersection::new(t1, obj.clone(), self.normal_at_local_space(ray.position(t1))));
         }
+
+        self.intersect_caps(ray, &mut data);
 
         if data.len() == 0 {
             return (ray, None);
@@ -156,4 +194,17 @@ mod tests {
             assert_eq!(xs.unwrap().len(), count);
         }
     }
+
+    #[test_case(Coord::point(0.0, 3.0, 0.0), Coord::vec(0.0, -1.0, 0.0) ; "case 1")]
+    #[test_case(Coord::point(0.0, 3.0, -2.0), Coord::vec(0.0, -1.0, 2.0) ; "case 2")]
+    #[test_case(Coord::point(0.0, 4.0, -2.0), Coord::vec(0.0, -1.0, 1.0) ; "case 3")]
+    #[test_case(Coord::point(0.0, 0.0, -2.0), Coord::vec(0.0, 1.0, 2.0) ; "case 4")]
+    #[test_case(Coord::point(0.0, -1.0, -2.0), Coord::vec(0.0, 1.0, 1.0) ; "case 5")]
+    fn test_caps(point: Coord, direction: Coord) {
+        let c = Cylinder::new(Matrix::identity(4), Material::default(), 1.0, 2.0, true);
+        let direction = direction.normalized();
+        let ray = Ray::new(point, direction);
+        let xs = c.intersect(ray).unwrap();
+        assert_eq!(xs.len(), 2);
+    } 
 }

@@ -21,6 +21,17 @@ impl Cylinder {
     }
 
     fn normal_at_local_space(&self, pos: Coord) -> Coord {
+        let dist = pos.get_x().powi(2) + pos.get_z().powi(2);
+
+        if dist < 1.0 {
+            if pos.get_y() >= self.get_max() - EPSILON {
+                return Coord::vec(0.0, 1.0, 0.0);
+            }
+            if pos.get_y() <= self.get_min() + EPSILON {
+                return Coord::vec(0.0, -1.0, 0.0)
+            }
+        }
+
         Coord::vec(pos.get_x(), 0.0, pos.get_z())
     }
 
@@ -197,7 +208,7 @@ mod tests {
 
     #[test_case(Coord::point(0.0, 3.0, 0.0), Coord::vec(0.0, -1.0, 0.0) ; "case 1")]
     #[test_case(Coord::point(0.0, 3.0, -2.0), Coord::vec(0.0, -1.0, 2.0) ; "case 2")]
-    #[test_case(Coord::point(0.0, 4.0, -2.0), Coord::vec(0.0, -1.0, 1.0) ; "case 3")]
+    #[test_case(Coord::point(0.0, 4.0, -2.0), Coord::vec(0.0, -1.0, 1.0) ; "case 3")]   // TODO: fix this and case 5 (floating point error is the cause)
     #[test_case(Coord::point(0.0, 0.0, -2.0), Coord::vec(0.0, 1.0, 2.0) ; "case 4")]
     #[test_case(Coord::point(0.0, -1.0, -2.0), Coord::vec(0.0, 1.0, 1.0) ; "case 5")]
     fn test_caps(point: Coord, direction: Coord) {
@@ -206,5 +217,16 @@ mod tests {
         let ray = Ray::new(point, direction);
         let xs = c.intersect(ray).unwrap();
         assert_eq!(xs.len(), 2);
+    }
+
+    #[test_case(Coord::point(0.0, 1.0, 0.0), Coord::vec(0.0, -1.0, 0.0) ; "case 1")]
+    #[test_case(Coord::point(0.5, 1.0, 0.0), Coord::vec(0.0, -1.0, 0.0) ; "case 2")]
+    #[test_case(Coord::point(0.0, 1.0, 0.5), Coord::vec(0.0, -1.0, 0.0) ; "case 3")]
+    #[test_case(Coord::point(0.0, 2.0, 0.0), Coord::vec(0.0, 1.0, 0.0) ; "case 4")]
+    #[test_case(Coord::point(0.5, 2.0, 0.0), Coord::vec(0.0, 1.0, 0.0) ; "case 5")]
+    #[test_case(Coord::point(0.0, 2.0, 0.5), Coord::vec(0.0, 1.0, 0.0) ; "case 6")]
+    fn test_caps_normal(point: Coord, normal: Coord) {
+        let c = Cylinder::new(Matrix::identity(4), Material::default(), 1.0, 2.0, true);
+        assert_eq!(c.normal_at(point), normal)
     } 
 }

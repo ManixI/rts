@@ -23,7 +23,7 @@ impl Cylinder {
     fn normal_at_local_space(&self, pos: Coord) -> Coord {
         let dist = pos.get_x().powi(2) + pos.get_z().powi(2);
 
-        if dist < 1.0 {
+        if dist <= 1.0 {
             if pos.get_y() >= self.get_max() - EPSILON {
                 return Coord::vec(0.0, 1.0, 0.0);
             }
@@ -134,7 +134,7 @@ impl Renderable for Cylinder {
 
     fn normal_at(&self, pos: Coord) -> Coord {
         let pos = self.get_transformation().inverse().unwrap() * pos;
-        self.normal_at_local_space(pos)
+        (self.normal_at_local_space(pos) * self.get_transformation()).normalized()
     }
 
     fn default() -> Self where Self: Sized {

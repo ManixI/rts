@@ -16,6 +16,8 @@ use rtc::{
     tex::pattern::Pattern,
     world::World,
     primitives::cube::Cube,
+    primitives::cylinder::Cylinder,
+    primitives::cone::Cone,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -127,7 +129,7 @@ fn draw_multiple_spheres(filename: &str, spheres: &[Sphere], per_row: usize, res
     let _ = canvas.to_file(filename);
 }
 
-
+#[allow(dead_code)]
 fn outline_sphere(filename: &str, resolution: usize, orb: Sphere, light: Light) -> Canvas {
     let size = resolution;
     let mut canvas = Canvas::new(size, size);
@@ -266,6 +268,7 @@ fn draw_test_spheres() {
     outline_sphere("color-add-amb.ppm", 400, orb, light);
 }
 
+#[allow(dead_code)]
 fn draw_scene() {
     let mut floor = Plane::default();
     //floor.apply_transformation(Matrix::translation(0.0, 0.0, 0.0));
@@ -472,7 +475,7 @@ fn draw_bubble_sphere() {
     let _ = canvas.to_file("bubble.ppm");
 }
 
-
+#[allow(dead_code)]
 fn test_cubes() {
     let mut world = World::new();
     world.add_light(Light::new(Coord::point(-10.0, 10.0, -10.0), Color::white()));
@@ -615,6 +618,189 @@ fn test_cubes() {
     let _ = canvas.to_file("cubes.ppm");
 }
 
+#[allow(dead_code)]
+fn draw_saturn_v() {
+    let mut world = World::new();
+    world.set_max_depth(6);
+
+    world.add_light(Light::new(Coord::point(-6.0, 15.0, -8.0), Color::white()));
+    world.add_light(Light::new(
+        Coord::point(5.0, 10.0, -4.0),
+        Color::new(0.4, 0.4, 0.45, 0.0),
+    ));
+
+    // Ground: concrete grey with slight reflection
+    let mut floor = Plane::default();
+    let mut m = Material::default();
+    m.set_color(Color::new(0.52, 0.52, 0.52, 0.0));
+    m.set_specular(0.05);
+    m.set_reflection(0.05);
+    floor.set_material(m);
+    world.add_obj(Arc::new(floor));
+
+    // Mirror: vertical reflective plane behind the rocket at z=3.5
+    let mut mirror = Plane::default();
+    mirror.set_transformation(
+        Matrix::translation(0.0, 0.0, 3.5) * Matrix::rotate_x(PI / 2.0),
+    );
+    let mut m = Material::default();
+    m.set_color(Color::new(0.05, 0.05, 0.06, 0.0));
+    m.set_reflection(0.95);
+    m.set_diffuse(0.05);
+    m.set_specular(0.9);
+    m.set_shininess(300.0);
+    mirror.set_material(m);
+    world.add_obj(Arc::new(mirror));
+
+    // Rocket palette
+    let off_white   = Color::new(0.93, 0.93, 0.91, 0.0);
+    let blk         = Color::new(0.06, 0.06, 0.06, 0.0);
+    let dark_grey   = Color::new(0.20, 0.20, 0.22, 0.0);
+    let engine_col  = Color::new(0.30, 0.28, 0.26, 0.0);
+
+    // Material closures (capture palette by copy)
+    let white_mat = || {
+        let mut m = Material::default();
+        m.set_color(off_white);
+        m.set_specular(0.2);
+        m.set_diffuse(0.85);
+        m
+    };
+    let black_mat = || {
+        let mut m = Material::default();
+        m.set_color(blk);
+        m.set_specular(0.1);
+        m.set_diffuse(0.7);
+        m
+    };
+    let dark_mat = || {
+        let mut m = Material::default();
+        m.set_color(dark_grey);
+        m.set_specular(0.15);
+        m.set_diffuse(0.75);
+        m
+    };
+    let engine_mat = || {
+        let mut m = Material::default();
+        m.set_color(engine_col);
+        m.set_specular(0.4);
+        m.set_shininess(80.0);
+        m.set_diffuse(0.6);
+        m
+    };
+
+    // ── S-IC First Stage (y 0.0–4.5, radius 0.5) ──────────────────
+    world.add_obj(Arc::new(Cylinder::new(
+        Matrix::scaling(0.5, 1.0, 0.5),
+        white_mat(), 0.0, 4.5, true,
+    )));
+    // Black interstage band at top of S-IC
+    world.add_obj(Arc::new(Cylinder::new(
+        Matrix::scaling(0.51, 1.0, 0.51),
+        black_mat(), 4.1, 4.5, true,
+    )));
+
+    // ── S-II Second Stage (y 4.5–7.0, radius 0.5) ─────────────────
+    world.add_obj(Arc::new(Cylinder::new(
+        Matrix::scaling(0.5, 1.0, 0.5),
+        white_mat(), 4.5, 7.0, true,
+    )));
+    // Black interstage band at top of S-II
+    world.add_obj(Arc::new(Cylinder::new(
+        Matrix::scaling(0.51, 1.0, 0.51),
+        black_mat(), 6.7, 7.0, true,
+    )));
+
+    // ── S-IVB Third Stage (y 7.0–8.5, radius 0.42) ────────────────
+    world.add_obj(Arc::new(Cylinder::new(
+        Matrix::scaling(0.42, 1.0, 0.42),
+        white_mat(), 7.0, 8.5, true,
+    )));
+
+    // ── Instrument Unit (y 8.5–8.7, dark ring) ────────────────────
+    world.add_obj(Arc::new(Cylinder::new(
+        Matrix::scaling(0.42, 1.0, 0.42),
+        dark_mat(), 8.5, 8.7, true,
+    )));
+
+    // ── Service Module (y 8.7–9.8, radius 0.35) ───────────────────
+    world.add_obj(Arc::new(Cylinder::new(
+        Matrix::scaling(0.35, 1.0, 0.35),
+        white_mat(), 8.7, 9.8, true,
+    )));
+
+    // ── Command Module nose cone (y 9.8–10.6) ─────────────────────
+    // Cone local: min=-1 (r=1 → world r=0.35) max=0 (tip)
+    // World y: local -1 → -1*0.8+10.6 = 9.8 ✓   local 0 → 10.6 ✓
+    world.add_obj(Arc::new(Cone::new(
+        Matrix::translation(0.0, 10.6, 0.0) * Matrix::scaling(0.35, 0.8, 0.35),
+        white_mat(), -1.0, 0.0, true,
+    )));
+
+    // ── Launch Escape System tower (y 10.6–12.4, thin) ────────────
+    world.add_obj(Arc::new(Cylinder::new(
+        Matrix::translation(0.0, 10.6, 0.0) * Matrix::scaling(0.04, 1.0, 0.04),
+        dark_mat(), 0.0, 1.8, true,
+    )));
+    // LES abort motor cap
+    let mut les_cap = Sphere::default();
+    les_cap.set_transformation(
+        Matrix::translation(0.0, 12.4, 0.0) * Matrix::scaling(0.12, 0.12, 0.12),
+    );
+    let mut m = Material::default();
+    m.set_color(dark_grey);
+    m.set_specular(0.3);
+    les_cap.set_material(m);
+    world.add_obj(Arc::new(les_cap));
+
+    // ── Fins: 4 thin cubes at base ────────────────────────────────
+    let fin_mat = {
+        let mut m = Material::default();
+        m.set_color(off_white);
+        m.set_specular(0.1);
+        m
+    };
+    for (tx, tz, sx, sz) in [
+        ( 0.62_f32,  0.0_f32, 0.13_f32, 0.05_f32),
+        (-0.62,      0.0,     0.13,      0.05    ),
+        ( 0.0,       0.62,    0.05,      0.13    ),
+        ( 0.0,      -0.62,    0.05,      0.13    ),
+    ] {
+        let mut fin = Cube::default();
+        fin.set_transformation(
+            Matrix::translation(tx, 0.7, tz) * Matrix::scaling(sx, 0.7, sz),
+        );
+        fin.set_material(fin_mat.clone());
+        world.add_obj(Arc::new(fin));
+    }
+
+    // ── F-1 Engine nozzles: 5 cones (1 centre + 4 outer) ──────────
+    // Cone min=-1 (bell opening, r=0.14 at world y=0) max=0 (throat at y=0.28)
+    for (ex, ez) in [
+        ( 0.0_f32,  0.0_f32),
+        ( 0.28,     0.0    ),
+        (-0.28,     0.0    ),
+        ( 0.0,      0.28   ),
+        ( 0.0,     -0.28   ),
+    ] {
+        world.add_obj(Arc::new(Cone::new(
+            Matrix::translation(ex, 0.28, ez) * Matrix::scaling(0.14, 0.28, 0.14),
+            engine_mat(), -1.0, 0.0, true,
+        )));
+    }
+
+    let resolution = 100;
+    let mut cam = Camera::new(7*resolution, 10*resolution, PI / 3.0);
+    cam.transform(Matrix::view_transformation(
+        Coord::point(0.0, 6.5, -9.0),
+        Coord::point(0.0, 5.5, 0.0),
+        Coord::vec(0.0, 1.0, 0.0),
+    ));
+
+    let canvas = world.render_world_multi(&cam);
+    let _ = canvas.to_file("saturn_v.ppm");
+}
+
 fn main() {
     //let mut env = Environment::new(-0.01, -0.1, 900, 550);
     //env.add_shot(Shot::new(Coord::point(0.0, 1.0, 0.0), Coord::vec(5.0, 8.2, 0.0) * 11.25));
@@ -629,5 +815,6 @@ fn main() {
 
     //draw_test_spheres();
     //draw_bubble_sphere();
-    test_cubes();
+    //test_cubes();
+    draw_saturn_v();
 }

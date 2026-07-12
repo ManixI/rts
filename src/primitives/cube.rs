@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}, tex::color::Color};
+use crate::{coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableType}, tex::color::Color};
 
 static EPSILON: f32 = 0.005; // TODO: unify this with other epsilon values
 

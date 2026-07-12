@@ -16,7 +16,7 @@ macro_rules! impl_getters {
     ($struct:ty, $($field:ident: $type:ty),*) => {
         paste::paste! {
             impl $struct {
-                $(#[inline] pub fn [<get_ $field>](&self) -> $type { self.$field.clone() })*
+                $(#[inline] #[allow(dead_code)] pub fn [<get_ $field>](&self) -> $type { self.$field.clone() })*
             }
         }
     }
@@ -27,7 +27,7 @@ macro_rules! impl_setters {
     ($struct:ty, $($field:ident: $type:ty),*) => {
         paste::paste! {
             impl $struct {
-                $(#[inline] pub fn [<set_ $field>](&mut self, new: $type) { self.$field = new })*
+                $(#[inline] #[allow(dead_code)] pub fn [<set_ $field>](&mut self, new: $type) { self.$field = new })*
             }
         }
     }
@@ -39,8 +39,8 @@ macro_rules! impl_getters_setters {
     ($struct:ty, $($field:ident: $type:ty),*) => {
         paste::paste! {
             impl $struct {
-                $(#[inline] pub fn [<get_ $field>](&self) -> $type { self.$field.clone() })*
-                $(#[inline] pub fn [<set_ $field>](&mut self, new: $type) { self.$field = new })*
+                $(#[inline] #[allow(dead_code)] pub fn [<get_ $field>](&self) -> $type { self.$field.clone() })*
+                $(#[inline] #[allow(dead_code)] pub fn [<set_ $field>](&mut self, new: $type) { self.$field = new })*
             }
         }
     };

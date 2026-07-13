@@ -8,7 +8,8 @@ pub enum RenderableType {
     Cube,
     Cylinder,
     Cone,
-    Mesh
+    Mesh,
+    Node
 }
 
 pub trait RenderableBase {
@@ -70,8 +71,7 @@ macro_rules! impl_renderable_base {
                     None => false
                 }   
             } 
-        }
-        
+        }   
     };
 }
 

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use crate::impl_getters_setters;
+use crate::primitives::node::Node;
 use crate::{camera::Camera, canvas::Canvas, tex::color::Color, coord::Coord, light::{Light, lighting}, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase}, primitives::sphere::Sphere};
 use rayon::prelude::*;
 
@@ -128,17 +129,18 @@ impl Comps {
 pub struct World {
     light: Vec<Light>,
     objects: Vec<Arc<dyn Renderable>>,
-    max_depth: usize
+    max_depth: usize,
+    root: Node  // TODO: replace objects with root node eventually
 }
 
 // TODO: need to implement way to remove objects
 
-impl_getters_setters!(World, max_depth: usize);
+impl_getters_setters!(World, max_depth: usize, root: Node);
 
 #[allow(dead_code)]
 impl World {
     pub fn new() -> Self {
-        Self { light: Vec::new(), objects: Vec::<Arc<dyn Renderable>>::new(), max_depth: 10 }
+        Self { light: Vec::new(), objects: Vec::<Arc<dyn Renderable>>::new(), max_depth: 10, root: Node::default() }
     }
 
     pub fn default() -> Self {
@@ -153,7 +155,7 @@ impl World {
         let s1 = Arc::new(s1) as Arc<dyn Renderable>;
         let s2 = Arc::new(s2) as Arc<dyn Renderable>;
         let objs = vec![s1, s2];
-        Self { light: vec![l], objects: objs, max_depth: 10 }
+        Self { light: vec![l], objects: objs, max_depth: 10, root: Node::default() }
     }
 
     pub fn get_light(&self) -> &Vec<Light> {

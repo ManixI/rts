@@ -1,4 +1,4 @@
-use crate::{coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableType}, tex::color::Color};
+use crate::{coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, primitives::node::Node, ray::Ray, renderable::{Intersection, Renderable, RenderableType}, tex::color::Color};
 
 use std::sync::Arc;
 
@@ -8,16 +8,17 @@ static EPSILON: f32 = 0.005;
 pub struct Cone {
     transformation: Matrix,
     material: Material,  // TODO: refactor this to a pointer
-    min: f32, 
+    min: f32,
     max: f32,
-    closed: bool
+    closed: bool,
+    parent: Option<Arc<Node>>,
 }
 
-impl_getters_setters!(Cone, transformation: Matrix, material: Material, min: f32, max: f32, closed: bool);
+impl_getters_setters!(Cone, transformation: Matrix, material: Material, min: f32, max: f32, closed: bool, parent: Option<Arc<Node>>);
 
 impl Cone {
     pub fn new(transformation: Matrix, material: Material, min: f32, max: f32, closed: bool) -> Self {
-        Self { transformation, material, min, max, closed }
+        Self { transformation, material, min, max, closed, parent: None }
     }
 
     fn normal_at_local_space(&self, pos: Coord) -> Coord {
@@ -146,12 +147,13 @@ impl Renderable for Cone {
     }
 
     fn default() -> Self where Self: Sized {
-        Self { 
-            transformation: Matrix::identity(4), 
+        Self {
+            transformation: Matrix::identity(4),
             material: Material::default(),
             min: -f32::INFINITY,
             max: f32::INFINITY,
-            closed: false
+            closed: false,
+            parent: None,
         }
     }
 }

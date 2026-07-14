@@ -1,19 +1,22 @@
 use std::sync::Arc;
 
-use crate::{tex::color::Color, coord::Coord, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}};
+use crate::{tex::color::Color, coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, primitives::node::Node, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}};
 
 
 #[derive(Clone, PartialEq)]
 pub struct Plane {
     transformation: Matrix,
     material: Material,
+    parent: Option<Arc<Node>>,
 }
+
+impl_getters_setters!(Plane, parent: Option<Arc<Node>>);
 
 #[allow(dead_code)]
 impl Plane {
 
     pub fn new(transformation: Matrix, material: Material) -> Self {
-        Self { transformation, material }
+        Self { transformation, material, parent: None }
     }
 
     /// normal is always straight up (in local space) regardless of pos, then
@@ -61,7 +64,8 @@ impl Renderable for Plane {
     fn default() -> Self {
         Self {
             transformation: Matrix::identity(4),
-            material: Material::default()
+            material: Material::default(),
+            parent: None,
         }
     }
 }

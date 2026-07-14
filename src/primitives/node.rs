@@ -24,6 +24,12 @@ impl Node {
 
 }
 
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        panic!("nodes can't be compared")
+    }
+}
+
 impl RenderableBase for Node {
     // TODO: there's got to be a better way to handle materials for nodes
     fn get_material(&self) -> Material { panic!("nodes do not have material") }
@@ -35,7 +41,10 @@ impl RenderableBase for Node {
     fn get_type(&self) -> RenderableType { RenderableType::Node }
     fn clone_rc(&self) -> Arc<dyn Renderable> { Arc::new(self.clone()) }
     fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
-    
+    fn get_parent(&self) -> Option<Arc<Node>> { self.parent.clone() }
+    fn set_parent(&mut self, parent: Option<Arc<Node>>) { self.parent = parent; }
+ 
+
     fn get_color_at(&self, pos: Coord) -> Color {
         let local_pos = self.get_transformation().inverse().unwrap() * pos;
         self.get_material().get_color_at(local_pos)

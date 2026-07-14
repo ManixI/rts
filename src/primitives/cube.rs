@@ -1,20 +1,21 @@
 use std::sync::Arc;
 
-use crate::{coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, ray::Ray, renderable::{Intersection, Renderable, RenderableType}, tex::color::Color};
+use crate::{coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, primitives::node::Node, ray::Ray, renderable::{Intersection, Renderable, RenderableType}, tex::color::Color};
 
 static EPSILON: f32 = 0.005; // TODO: unify this with other epsilon values
 
 #[derive(PartialEq, Clone)]
 pub struct Cube {
     transformation: Matrix,
-    material: Material
+    material: Material,
+    parent: Option<Arc<Node>>,
 }
 
-impl_getters_setters!(Cube, transformation: Matrix, material: Material);
+impl_getters_setters!(Cube, transformation: Matrix, material: Material, parent: Option<Arc<Node>>);
 
 impl Cube {
     pub fn new(transformation: Matrix, material: Material) -> Self {
-        Self { transformation, material }
+        Self { transformation, material, parent: None }
     }
 
     /// given a 1d coord and dir, returns the two times of intersection with a cube on that plane
@@ -106,7 +107,7 @@ impl Renderable for Cube {
     }
 
     fn default() -> Self where Self: Sized {
-        Self { transformation: Matrix::identity(4), material: Material::default() }
+        Self { transformation: Matrix::identity(4), material: Material::default(), parent: None }
     }
 }
 

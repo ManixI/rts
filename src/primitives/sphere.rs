@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{impl_renderable_base, impl_renderable_tests};
 use crate::material::Material;
 use crate::matrix::Matrix;
+use crate::primitives::node::Node;
 use crate::ray::Ray;
 use crate::renderable::{Intersection, Renderable, RenderableType};
 use crate::tex::color::Color;
@@ -15,6 +16,7 @@ pub struct Sphere {
     //radius: f32,
     transformation: Matrix,
     material: Material,
+    parent: Option<Arc<Node>>,
 }
 
 #[allow(dead_code)]
@@ -31,9 +33,10 @@ impl Sphere {
      */
     pub fn new(origin: Coord) -> Self {
         assert!(origin.is_point());
-        Self { 
+        Self {
             transformation: Matrix::from_point(&origin),
             material: Material::default(),
+            parent: None,
         }
     }
 
@@ -43,7 +46,8 @@ impl Sphere {
         mat.set_refractive_index(1.5);
         Self {
             transformation: Matrix::identity(4),
-            material: mat
+            material: mat,
+            parent: None,
         }
     }
     
@@ -201,6 +205,7 @@ impl Renderable for Sphere {
         Self {
             transformation: Matrix::identity(4),
             material: Material::default(),
+            parent: None,
         }
     }
 }

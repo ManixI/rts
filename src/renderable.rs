@@ -1,5 +1,5 @@
 use std::{fmt::Debug, sync::Arc};
-use crate::{coord::Coord, material::Material, matrix::Matrix, ray::Ray, tex::color::Color};
+use crate::{coord::Coord, material::Material, matrix::Matrix, primitives::node::Node, ray::Ray, tex::color::Color};
 
 #[derive(PartialEq, Debug)]
 pub enum RenderableType {
@@ -36,6 +36,10 @@ pub trait RenderableBase {
     fn as_any(&self) -> &dyn std::any::Any;
 
     fn compare(&self, other: Arc<dyn Renderable>) -> bool;
+
+    fn get_parent(&self) -> Option<Arc<Node>>;
+
+    fn set_parent(&mut self, parent: Option<Arc<Node>>);
 }
 
 /**
@@ -55,6 +59,8 @@ macro_rules! impl_renderable_base {
             fn get_type(&self) -> RenderableType { $variant }
             fn clone_rc(&self) -> Arc<dyn Renderable> { Arc::new(self.clone()) }
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
+            fn set_parent(&mut self, parent: Option<Arc<crate::primitives::node::Node>>) { self.parent = parent; }
+            fn get_parent(&self) -> Option<Arc<crate::primitives::node::Node>> { self.parent.clone() }
             
             fn get_color_at(&self, pos: Coord) -> Color {
                 let local_pos = self.get_transformation().inverse().unwrap() * pos;

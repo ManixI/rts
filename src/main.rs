@@ -644,7 +644,7 @@ fn draw_saturn_v() {
         Matrix::translation(0.0, 0.0, 3.5) * Matrix::rotate_x(PI / 2.0),
     );
     let mut m = Material::default();
-    m.set_color(Color::new(0.05, 0.05, 0.06, 0.0));
+    m.set_color(Color::new(0.95, 0.95, 0.96, 0.0));
     m.set_reflection(0.95);
     m.set_diffuse(0.05);
     m.set_specular(0.9);

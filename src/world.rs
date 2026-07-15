@@ -75,7 +75,7 @@ impl Comps {
             }
             let mut skip_push = true;
             for i in 0..containers.len() {
-                if containers[i].get_object().compare(obj.get_object()) {
+                if containers[i].get_object().compare(&obj.get_object()) {
                     containers.remove(i);
                     skip_push = false;
                     break;

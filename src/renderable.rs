@@ -35,7 +35,7 @@ pub trait RenderableBase {
 
     fn as_any(&self) -> &dyn std::any::Any;
 
-    fn compare(&self, other: Arc<dyn Renderable>) -> bool;
+    fn compare(&self, other: &Arc<dyn Renderable>) -> bool;
 
     fn get_parent(&self) -> Option<Arc<Node>>;
 
@@ -57,7 +57,7 @@ macro_rules! impl_renderable_base {
             fn set_transformation(&mut self, transform: Matrix) { self.transformation = transform }
             fn apply_transformation(&mut self, transform: Matrix) { self.transformation = self.get_transformation() * transform }
             fn get_type(&self) -> RenderableType { $variant }
-            fn clone_rc(&self) -> Arc<dyn Renderable> { Arc::new(self.clone()) }
+            fn clone_rc(&self) -> Arc<dyn Renderable> { Arc::new(self.clone()) }    // TODO: why did I impellent this and clone_dyn?
             fn clone_dyn(&self) -> Box<dyn Renderable> { Box::new(self.clone()) }
             fn set_parent(&mut self, parent: Option<Arc<crate::primitives::node::Node>>) { self.parent = parent; }
             fn get_parent(&self) -> Option<Arc<crate::primitives::node::Node>> { self.parent.clone() }
@@ -71,7 +71,7 @@ macro_rules! impl_renderable_base {
                 self
             }
             
-            fn compare(&self, other: Arc<dyn Renderable>) -> bool {
+            fn compare(&self, other: &Arc<dyn Renderable>) -> bool {
                 match other.as_any().downcast_ref::<$type>() {
                     Some(p) => self == p,
                     None => false
@@ -163,7 +163,7 @@ impl Intersection {
 
 impl PartialEq for Intersection{
     fn eq(&self, other: &Self) -> bool {
-        self.t == other.t && self.object.compare(other.object.clone()) && self.reflectv == other.reflectv
+        self.t == other.t && self.object.compare(&other.object) && self.reflectv == other.reflectv
     }
 }
 
@@ -250,8 +250,7 @@ macro_rules! impl_renderable_tests {
 #[cfg(test)]
 mod tests {
     use std::sync::Arc;
-
-use crate::{coord::Coord, ray::Ray, renderable::{Renderable, RenderableBase}, primitives::sphere::Sphere};
+    use crate::{coord::Coord, ray::Ray, renderable::{Renderable, RenderableBase}, primitives::sphere::Sphere};
     use super::Intersection;
 
     fn compare(a: Arc<dyn Renderable>, b: Arc<dyn Renderable>) {

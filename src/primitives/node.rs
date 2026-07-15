@@ -22,10 +22,14 @@ impl Node {
         self.children.push(child);
     }
 
+    // TODO: this should just be a Renderable method
+    fn get_normal_at_local_space(&self, pos: Coord) -> Coord {
+        todo!()
+    }
 }
 
 impl PartialEq for Node {
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, _other: &Self) -> bool {
         panic!("nodes can't be compared")
     }
 }
@@ -54,29 +58,69 @@ impl RenderableBase for Node {
         self
     }
     
-    // TODO: is there a better way to do this?
-    fn compare(&self, other: Arc<dyn Renderable>) -> bool {
-        match other.as_any().downcast_ref::<Node>() {
-            Some(_p) => false,
-            None => false
-        }   
-    } 
+    fn compare(&self, _other: &Arc<dyn Renderable>) -> bool {
+        false
+    }
 }
 
 impl Renderable for Node {
     fn intersect(&self, ray: Ray) -> Option<Vec<Intersection>> {
-        todo!()
+        let (_, out) = self.intersect_get_ray(ray);
+        out
     }
 
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>) {
+        let ray = ray.transform(self.get_transformation().inverse().unwrap());
         todo!()
     }
 
     fn normal_at(&self, pos: Coord) -> Coord {
-        todo!()
+        let pos = self.get_transformation().inverse().unwrap() * pos;
+        // TODO: can I do better then a double normalization without duplicating code?
+        (self.get_normal_at_local_space(pos) * self.get_transformation()).normalized()
     }
 
     fn default() -> Self where Self: Sized {
         Self { transformation: Matrix::identity(4), children: Vec::<Arc<dyn Renderable>>::new(), parent: None }
+    }
+}
+
+mod tests {
+    use std::sync::Arc;
+
+use crate::{coord::Coord, matrix::Matrix, primitives::{node::Node, sphere::Sphere}, ray::Ray, renderable::{Renderable, RenderableBase}};
+
+    #[test]
+    fn test_empty_intersect() {
+        let g = Node::default();
+        let r = Ray::new(Coord::point(0.0, 0.0, 0.0), Coord::vec(0.0, 0.0, 1.0));
+        let xs = g.intersect(r);
+        assert!(xs.is_none())
+    }
+
+    #[test]
+    fn test_intersection() {
+        let mut g = Node::default();
+        let s1 = Sphere::default();
+        let mut s2 = Sphere::default();
+        s2.set_transformation(Matrix::translation(0.0, 0.0, -3.0));
+        let mut s3 = Sphere::default();
+        s3.set_transformation(Matrix::translation(5.0, 0.0, 0.0));
+
+        let s1: Arc<dyn Renderable> = Arc::new(s1);
+        let s2: Arc<dyn Renderable> = Arc::new(s2);
+        let s3: Arc<dyn Renderable> = Arc::new(s3);
+
+        g.add_child(s1.clone());
+        g.add_child(s2.clone());
+        g.add_child(s3.clone());
+
+        let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
+        let xs = g.intersect(ray).unwrap();
+        assert_eq!(xs.len(), 4);
+        assert!(Arc::ptr_eq(&xs[0].get_object(), &s2));
+        assert!(Arc::ptr_eq(&xs[1].get_object(), &s2));
+        assert!(Arc::ptr_eq(&xs[2].get_object(), &s1));
+        assert!(Arc::ptr_eq(&xs[3].get_object(), &s1));
     }
 }

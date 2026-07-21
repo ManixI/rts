@@ -4,7 +4,7 @@ use crate::{coord::Coord, impl_getters_setters, material::Material, matrix::Matr
 
 
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Node {
     transformation: Matrix,
     children: Vec<Arc<dyn Renderable>>,
@@ -30,7 +30,7 @@ impl Node {
 
 impl PartialEq for Node {
     fn eq(&self, _other: &Self) -> bool {
-        panic!("nodes can't be compared")
+        todo!("need to make this a pointer comparison")
     }
 }
 
@@ -71,7 +71,19 @@ impl Renderable for Node {
 
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>) {
         let ray = ray.transform(self.get_transformation().inverse().unwrap());
-        todo!()
+        let mut xs = Vec::<Intersection>::new();
+        for child in self.get_children() {
+            let intrs = child.intersect(ray);
+            if intrs.is_some() {
+                let mut inters = intrs.unwrap();
+                xs.append(&mut inters);
+            }
+        }
+        if xs.len() == 0 {
+            return (ray, None)
+        }
+        let xs = Intersection::aggregate_intersections(xs);
+        (ray, Some(xs))
     }
 
     fn normal_at(&self, pos: Coord) -> Coord {
@@ -88,7 +100,7 @@ impl Renderable for Node {
 mod tests {
     use std::sync::Arc;
 
-use crate::{coord::Coord, matrix::Matrix, primitives::{node::Node, sphere::Sphere}, ray::Ray, renderable::{Renderable, RenderableBase}};
+use crate::{coord::Coord, matrix::Matrix, primitives::{node::Node, sphere::Sphere}, ray::Ray, renderable::{compare_renderables, Renderable, RenderableBase}};
 
     #[test]
     fn test_empty_intersect() {
@@ -118,9 +130,9 @@ use crate::{coord::Coord, matrix::Matrix, primitives::{node::Node, sphere::Spher
         let ray = Ray::new(Coord::point(0.0, 0.0, -5.0), Coord::vec(0.0, 0.0, 1.0));
         let xs = g.intersect(ray).unwrap();
         assert_eq!(xs.len(), 4);
-        assert!(Arc::ptr_eq(&xs[0].get_object(), &s2));
-        assert!(Arc::ptr_eq(&xs[1].get_object(), &s2));
-        assert!(Arc::ptr_eq(&xs[2].get_object(), &s1));
-        assert!(Arc::ptr_eq(&xs[3].get_object(), &s1));
+        compare_renderables(&*xs[0].get_object(), &*s2);
+        compare_renderables(&*xs[1].get_object(), &*s2);
+        compare_renderables(&*xs[2].get_object(), &*s1);
+        compare_renderables(&*xs[3].get_object(), &*s1);
     }
 }

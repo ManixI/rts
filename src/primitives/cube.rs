@@ -4,7 +4,7 @@ use crate::{coord::Coord, impl_getters_setters, impl_renderable_base, impl_rende
 
 static EPSILON: f32 = 0.005; // TODO: unify this with other epsilon values
 
-#[derive(PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Cube {
     transformation: Matrix,
     material: Material,

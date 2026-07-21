@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{tex::color::Color, coord::Coord, impl_getters_setters, impl_renderable_base, impl_renderable_tests, material::Material, matrix::Matrix, primitives::node::Node, ray::Ray, renderable::{Intersection, Renderable, RenderableBase, RenderableType}};
 
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Plane {
     transformation: Matrix,
     material: Material,

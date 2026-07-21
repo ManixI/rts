@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 static EPSILON: f32 = 0.005;
 
-#[derive(PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Cylinder {
     transformation: Matrix,
     material: Material,  // TODO: refactor this to a pointer

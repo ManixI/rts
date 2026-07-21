@@ -10,7 +10,7 @@ use crate::tex::color::Color;
 use crate::coord::Coord;
 
 
-#[derive(/*Debug, */PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Sphere {
     //origin: Coord,
     //radius: f32,

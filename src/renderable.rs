@@ -85,7 +85,7 @@ macro_rules! impl_renderable_base {
  * trait to define an object as renderable by the engine
  * requires RenderableBase implementation (use impl_renderable_base(Type, RenderableBase:Type))
  */
-pub trait Renderable: RenderableBase + Send + Sync {
+pub trait Renderable: RenderableBase + Send + Sync + Debug {
     fn intersect(&self, ray: Ray) -> Option<Vec<Intersection>>;
 
     fn intersect_get_ray(&self, ray: Ray) -> (Ray, Option<Vec<Intersection>>);

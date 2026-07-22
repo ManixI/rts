@@ -135,4 +135,17 @@ use crate::{coord::Coord, matrix::Matrix, primitives::{node::Node, sphere::Spher
         compare_renderables(&*xs[2].get_object(), &*s1);
         compare_renderables(&*xs[3].get_object(), &*s1);
     }
+
+    #[test]
+    fn test_group_transform() {
+        let mut g = Node::default();
+        g.apply_transformation(Matrix::scaling(2.0, 2.0, 2.0));
+        let mut s = Sphere::default();
+        s.apply_transformation(Matrix::translation(5.0, 0.0, 0.0));
+        g.add_child(Arc::new(s));
+
+        let r = Ray::new(Coord::point(10.0, 0.0, -10.0), Coord::vec(0.0, 0.0, 1.0));
+        let xs = g.intersect(r).unwrap();
+        assert_eq!(xs.len(), 2);
+    }
 }

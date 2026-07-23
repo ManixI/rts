@@ -24,8 +24,11 @@ impl Node {
 
     // TODO: this should just be a Renderable method
     fn get_normal_at_local_space(&self, pos: Coord) -> Coord {
-        todo!()
+        // TODO: find a better solution then this
+        panic!("get the normal by calling it on the object or from the intersection")
     }
+
+
 }
 
 impl PartialEq for Node {
@@ -60,6 +63,27 @@ impl RenderableBase for Node {
     
     fn compare(&self, _other: &Arc<dyn Renderable>) -> bool {
         false
+    }
+
+    fn world_to_object(&self, normal: Coord) -> Coord {
+        let normal = self.get_transformation() * normal;
+        match self.get_parent() {
+            None => normal.normalized(),
+            Some(p) => p.world_to_object(normal)
+        }
+    }
+
+    fn object_to_world(&self, normal: Coord) -> Coord {
+        let normal = self
+            .get_transformation()
+            .inverse()
+            .unwrap()
+            .transpose()
+            * normal;
+        match self.get_parent() {
+            None => normal.normalized(),
+            Some(p) => p.object_to_world(normal)
+        }
     }
 }
 
@@ -100,7 +124,7 @@ impl Renderable for Node {
 mod tests {
     use std::sync::Arc;
 
-use crate::{coord::Coord, matrix::Matrix, primitives::{node::Node, sphere::Sphere}, ray::Ray, renderable::{compare_renderables, Renderable, RenderableBase}};
+    use crate::{coord::Coord, matrix::Matrix, primitives::{node::Node, sphere::Sphere}, ray::Ray, renderable::{compare_renderables, Renderable, RenderableBase}};
 
     #[test]
     fn test_empty_intersect() {
@@ -147,5 +171,20 @@ use crate::{coord::Coord, matrix::Matrix, primitives::{node::Node, sphere::Spher
         let r = Ray::new(Coord::point(10.0, 0.0, -10.0), Coord::vec(0.0, 0.0, 1.0));
         let xs = g.intersect(r).unwrap();
         assert_eq!(xs.len(), 2);
+    }
+
+    #[test]
+    fn test_object_to_world() {
+        todo!()
+    }
+
+    #[test]
+    fn test_world_to_object() {
+        todo!()
+    }
+
+    #[test]
+    fn test_get_normal_of_group() {
+        todo!()
     }
 }

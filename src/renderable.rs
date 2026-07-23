@@ -40,6 +40,10 @@ pub trait RenderableBase {
     fn get_parent(&self) -> Option<Arc<Node>>;
 
     fn set_parent(&mut self, parent: Option<Arc<Node>>);
+
+    fn world_to_object(&self, normal: Coord) -> Coord;
+
+    fn object_to_world(&self, normal: Coord) -> Coord;
 }
 
 /**
@@ -77,6 +81,27 @@ macro_rules! impl_renderable_base {
                     None => false
                 }   
             } 
+
+            fn world_to_object(&self, normal: Coord) -> Coord {
+                let normal = self.get_transformation() * normal;
+                match self.get_parent() {
+                    None => normal.normalized(),
+                    Some(p) => p.world_to_object(normal)
+                }
+            }
+
+            fn object_to_world(&self, normal: Coord) -> Coord {
+                let normal = self
+                    .get_transformation()
+                    .inverse()
+                    .unwrap()
+                    .transpose()
+                    * normal;
+                match self.get_parent() {
+                    None => normal.normalized(),
+                    Some(p) => p.object_to_world(normal)
+                }
+            }
         }   
     };
 }
